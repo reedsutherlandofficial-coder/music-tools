@@ -1,0 +1,2113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fretboard &amp; Circle of Fifths</title>
+<meta name="description" content="Two tools for lesson prep: a fretboard diagram builder and an interactive circle of fifths.">
+<meta name="theme-color" content="#F5F2EA">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Space+Grotesk:wght@400;500;700&family=Zilla+Slab:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ---- shell ---------------------------------------------------------------
+   The bar holds the two things that apply to the whole page: which tool is
+   showing, and which theme both are wearing. It uses the same shared tokens
+   the tools do, so it repaints with them. */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;overflow-x:hidden}
+:root{
+  --paper:#F5F2EA; --paper-raised:#EFEBE0;
+  --ink:#1B1A17; --ink-soft:#5B584E; --ink-mute:#948F80;
+  --line:#D8D2C2; --line-strong:#B9B29C;
+  --red:#C1272D; --red-ink:#7A1519; --on-red:#F5F2EA;
+  --radius:0;
+  --font-display:'Space Grotesk', sans-serif;
+  --font-body:'IBM Plex Sans', sans-serif;
+  --font-mono:'IBM Plex Mono', monospace;
+}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  transition:background-color .3s ease;
+}
+.shell-bar{
+  position:sticky;
+  top:0;
+  z-index:60;
+  background:var(--paper);
+  border-bottom:1px solid var(--line-strong);
+  padding:env(safe-area-inset-top,0) 0 0;
+  transition:background-color .3s ease, border-color .3s ease;
+}
+@supports (backdrop-filter:blur(6px)){
+  .shell-bar{
+    background:color-mix(in srgb, var(--paper) 86%, transparent);
+    backdrop-filter:blur(10px) saturate(1.1);
+  }
+}
+.shell-inner{
+  max-width:1180px;
+  margin:0 auto;
+  padding:9px 1.75rem;
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+.shell-mark{
+  font-family:var(--font-mono);
+  font-size:10px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--ink-mute);
+  white-space:nowrap;
+}
+.theme-pick{display:flex;align-items:center;gap:8px}
+.theme-pick span{
+  font-family:var(--font-mono);
+  font-size:10px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+}
+.theme-pick select{
+  height:32px;
+  padding:0 26px 0 9px;
+  font-family:var(--font-body);
+  font-size:13px;
+  color:var(--ink);
+  background-color:var(--paper-raised);
+  border:1px solid var(--line-strong);
+  border-radius:var(--radius);
+  appearance:none;
+  -webkit-appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--ink-soft) 50%),
+                   linear-gradient(135deg,var(--ink-soft) 50%,transparent 50%);
+  background-position:calc(100% - 14px) center, calc(100% - 9px) center;
+  background-size:5px 5px, 5px 5px;
+  background-repeat:no-repeat;
+  cursor:pointer;
+}
+.theme-pick select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.tabs{
+  display:flex;
+  gap:2px;
+  margin-left:auto;
+  border:1px solid var(--line-strong);
+  border-radius:var(--radius);
+  padding:3px;
+}
+.tab{
+  font-family:var(--font-mono);
+  font-size:11px;
+  font-weight:500;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  border:0;
+  background:transparent;
+  color:var(--ink-soft);
+  padding:8px 16px;
+  border-radius:var(--radius);
+  cursor:pointer;
+  white-space:nowrap;
+  transition:background-color .18s ease, color .18s ease;
+}
+.tab:hover{background:var(--paper-raised);color:var(--ink)}
+.tab.on{background:var(--red);color:var(--on-red)}
+.tab:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.app-panel[hidden]{display:none !important}
+@media (max-width:720px){
+  .shell-inner{padding:8px 1.25rem;gap:10px;flex-wrap:wrap}
+  .shell-mark{display:none}
+  .theme-pick{flex:1}
+  .theme-pick select{width:100%}
+  .tabs{margin-left:0;width:100%;order:3}
+  .tab{flex:1;padding:9px 8px;font-size:10px;letter-spacing:.06em}
+}
+@media (prefers-reduced-motion:reduce){
+  body,.shell-bar,.tab{transition:none}
+}
+
+
+/* ================= FRETBOARD ================= */
+
+#fretApp{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:4rem;
+}
+#fretApp header,#fretApp .toolbar,#fretApp #diagrams,#fretApp footer.credits{
+  max-width:1180px;
+  margin-left:auto;
+  margin-right:auto;
+  padding-left:1.75rem;
+  padding-right:1.75rem;
+}
+#fretApp header{padding-top:2rem;padding-bottom:.25rem}
+#fretApp .eyebrow{
+  font-family:var(--font-mono);
+  font-size:11px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--ink-mute);
+  display:flex;
+  justify-content:space-between;
+  border-bottom:1px solid var(--line);
+  padding-bottom:10px;
+  margin-bottom:10px;
+}
+#fretApp h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:28px;
+  letter-spacing:-.01em;
+  margin:0 0 .5rem;
+}
+#fretApp header p{
+  margin:0;
+  max-width:60ch;
+  font-size:14px;
+  line-height:1.6;
+  color:var(--ink-soft);
+}
+
+#fretApp .toolbar{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  padding-top:1.5rem;
+  padding-bottom:1.5rem;
+}
+#fretApp .toolbar .spacer{flex:1}
+
+/* controls ---------------------------------------------------------------- */
+#fretApp button{
+  font-family:var(--font-mono);
+  font-size:11px;
+  font-weight:500;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  height:38px;
+  padding:0 15px;
+  border:1px solid var(--line-strong);
+  border-radius:var(--radius);
+  background:var(--paper-raised);
+  color:var(--ink);
+  cursor:pointer;
+  transition:background-color 120ms, color 120ms, border-color 120ms, transform 80ms;
+}
+#fretApp button:hover{background:var(--line)}
+#fretApp button:active{transform:scale(.97)}
+#fretApp button:disabled{opacity:.4;cursor:not-allowed}
+#fretApp button:disabled:hover{background:var(--paper-raised)}
+#fretApp button:focus-visible,
+#fretApp select:focus-visible,
+#fretApp input:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+#fretApp button.small{height:30px;padding:0 11px;font-size:10px;letter-spacing:.08em}
+#fretApp button.primary{background:var(--red);border-color:var(--red);color:var(--on-red)}
+#fretApp button.primary:hover{background:var(--red-ink);border-color:var(--red-ink)}
+#fretApp button.ghost{background:transparent;border-color:transparent;color:var(--ink-soft)}
+#fretApp button.ghost:hover{background:transparent;border-color:var(--line-strong);color:var(--ink)}
+#fretApp button.danger-text{background:transparent;border-color:transparent;color:var(--ink-soft)}
+#fretApp button.danger-text:hover{background:transparent;border-color:var(--red);color:var(--red-ink)}
+/* an engaged toggle echoes the tonic marker on the chord ring: raised, ringed */
+#fretApp button.toggle.active{
+  background:var(--paper-raised);
+  border-color:var(--red);
+  color:var(--red-ink);
+}
+
+#fretApp select,#fretApp input[type=number]{
+  height:30px;
+  padding:0 8px;
+  font-family:var(--font-body);
+  font-size:13px;
+  color:var(--ink);
+  background-color:var(--paper-raised);
+  border:1px solid var(--line-strong);
+  border-radius:var(--radius);
+}
+#fretApp select{
+  appearance:none;
+  -webkit-appearance:none;
+  padding-right:26px;
+  background-image:linear-gradient(45deg,transparent 50%,var(--ink-soft) 50%),
+                   linear-gradient(135deg,var(--ink-soft) 50%,transparent 50%);
+  background-position:calc(100% - 14px) center, calc(100% - 9px) center;
+  background-size:5px 5px, 5px 5px;
+  background-repeat:no-repeat;
+}
+#fretApp input[type=number]{width:56px}
+
+#fretApp .controls .group,#fretApp .toolbar .group{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:3px 8px;
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+}
+#fretApp .controls label,#fretApp .toolbar label{
+  font-family:var(--font-mono);
+  font-size:10px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+}
+#fretApp .shiftLabel{
+  font-family:var(--font-mono);
+  font-size:12px;
+  min-width:24px;
+  text-align:center;
+  color:var(--ink);
+}
+
+/* diagram cards ----------------------------------------------------------- */
+#fretApp #diagrams{display:flex;flex-wrap:wrap;gap:1.5rem}
+#fretApp .diagram-card{
+  flex:1 1 100%;
+  background:var(--paper);
+  border:1px solid var(--line-strong);
+  border-radius:var(--radius);
+  padding:1rem 1rem .875rem;
+}
+#fretApp .diagram-card.paired{flex:1 1 calc(50% - .75rem);min-width:420px}
+#fretApp .card-top{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  border-bottom:1px solid var(--line);
+  padding-bottom:8px;
+  margin-bottom:12px;
+}
+#fretApp .card-top input.title-input{
+  flex:1;
+  font-family:var(--font-display);
+  font-weight:500;
+  font-size:16px;
+  color:var(--ink);
+  background:transparent;
+  border:0;
+  border-bottom:1px solid transparent;
+  padding:2px;
+}
+#fretApp .card-top input.title-input:hover,
+#fretApp .card-top input.title-input:focus{border-bottom-color:var(--line-strong);outline:none}
+#fretApp .card-top input.title-input::placeholder{color:var(--ink-mute)}
+#fretApp .controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px 10px;
+  align-items:center;
+  margin-bottom:12px;
+  padding-bottom:12px;
+  border-bottom:1px solid var(--line);
+}
+#fretApp .canvas-wrap{
+  overflow-x:auto;
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+}
+#fretApp canvas{display:block;cursor:pointer;touch-action:none}
+#fretApp .card-footer{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-top:10px;
+}
+#fretApp .card-footer .hint{
+  font-family:var(--font-mono);
+  font-size:10px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:var(--ink-mute);
+}
+#fretApp .card-footer .hint strong{color:var(--red-ink);font-weight:500}
+#fretApp footer.credits{
+  margin-top:2rem;
+  padding-top:1rem;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);
+  font-size:10px;
+  line-height:1.7;
+  letter-spacing:.06em;
+  color:var(--ink-mute);
+}
+@media (max-width:640px){
+  #fretApp .diagram-card.paired{flex:1 1 100%;min-width:0}
+  #fretApp header,#fretApp .toolbar,#fretApp #diagrams,#fretApp footer.credits{
+    padding-left:1.25rem;padding-right:1.25rem;
+  }
+}
+@media (prefers-reduced-motion:reduce){
+  #fretApp button{transition:none}
+}
+
+
+/* ============ CIRCLE OF FIFTHS ============ */
+/* rotated .slot squares have bounding boxes wider than the dial they sit in;
+   nothing visible lies out there, so clip the axis rather than scroll it */
+#circleApp{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0);
+}
+#circleApp .wrap{width:100%;max-width:480px;padding:2rem 1.5rem 3rem;--dial:min(100%,340px)}
+#circleApp header{margin-bottom:1.75rem}
+#circleApp .eyebrow{
+  font-family:var(--font-mono);
+  font-size:11px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--ink-mute);
+  display:flex;
+  justify-content:space-between;
+  border-bottom:1px solid var(--line);
+  padding-bottom:10px;
+  margin-bottom:10px;
+}
+#circleApp h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:28px;
+  letter-spacing:-.01em;
+  margin:0;
+}
+#circleApp .ctl{display:flex;justify-content:center;align-items:center;gap:14px;margin:1.5rem 0 1.25rem}
+#circleApp .arrow-btn{
+  width:56px;height:48px;
+  border-radius:var(--radius);
+  border:1px solid var(--line-strong);
+  background:var(--paper-raised);
+  color:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  transition:background 120ms, transform 80ms;
+}
+#circleApp .arrow-btn:active{transform:scale(.96);background:var(--line)}
+#circleApp .arrow-btn:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+#circleApp .arrow-btn svg{width:20px;height:20px}
+#circleApp .modes{display:flex;flex-direction:column;gap:8px;margin-bottom:6px}
+#circleApp .mrow{display:grid;grid-template-columns:52px 1fr;align-items:center;gap:10px}
+#circleApp .mrow label{
+  font-family:var(--font-mono);
+  font-size:11px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  text-align:right;
+}
+#circleApp select{
+  width:100%;
+  height:38px;
+  padding:0 10px;
+  font-family:var(--font-body);
+  font-size:14px;
+  color:var(--ink);
+  background:var(--paper-raised);
+  border:1px solid var(--line-strong);
+  border-radius:var(--radius);
+  appearance:none;
+  -webkit-appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--ink-soft) 50%),linear-gradient(135deg,var(--ink-soft) 50%,transparent 50%);
+  background-position:calc(100% - 16px) center, calc(100% - 11px) center;
+  background-size:5px 5px, 5px 5px;
+  background-repeat:no-repeat;
+}
+#circleApp select:focus{outline:none;border-color:var(--ink)}
+#circleApp .stage{position:relative;width:var(--dial);aspect-ratio:1;margin:0 auto}
+#circleApp .wheel{
+  position:absolute;inset:0;
+  border-radius:50%;
+  border:1px solid var(--ink);
+  transition:transform 620ms cubic-bezier(.4,0,.2,1);
+}
+#circleApp .ring2{
+  position:absolute;left:50%;top:50%;
+  width:65%;height:65%;
+  margin-left:-32.5%;margin-top:-32.5%;
+  border-radius:50%;
+  border:1px solid var(--line-strong);
+}
+#circleApp .spoke{
+  position:absolute;left:50%;top:0;
+  margin-left:-.5px;width:1px;height:33.4%;
+  background:var(--line);
+  transform-origin:50% 150%;
+}
+#circleApp .slot{position:absolute;inset:0}
+#circleApp .pos{position:absolute;left:50%;top:2%;width:20.5%;margin-left:-10.25%;text-align:center}
+#circleApp .ipos{position:absolute;left:50%;top:21.5%;width:15%;margin-left:-7.5%;text-align:center}
+#circleApp .fix{display:block;width:100%}
+#circleApp .lbl{display:block;width:100%;transition:transform 620ms cubic-bezier(.4,0,.2,1);cursor:pointer;color:var(--ink-soft)}
+#circleApp .lbl .n{font-family:var(--font-display);font-weight:500;font-size:max(14px,calc(var(--dial)*.047));line-height:1.15;color:var(--ink)}
+#circleApp .lbl .c{font-family:var(--font-mono);font-size:max(9px,calc(var(--dial)*.029));line-height:1.5;letter-spacing:.02em}
+#circleApp .lbl .x{font-family:var(--font-mono);font-size:max(8px,calc(var(--dial)*.0265));line-height:1.4;color:var(--ink-mute)}
+#circleApp .ilbl{font-family:var(--font-display);font-size:max(11px,calc(var(--dial)*.038));line-height:1.2;color:var(--ink-soft)}
+#circleApp .lbl.on{color:var(--red-ink)}
+#circleApp .lbl.on .n, #circleApp .lbl.on .c{color:var(--red-ink)}
+#circleApp .hub{
+  position:absolute;left:50%;top:50%;
+  width:34%;height:34%;
+  margin-left:-17%;margin-top:-17%;
+  border-radius:50%;
+  border:1px solid var(--ink);
+  background:var(--paper);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+}
+#circleApp .hub .hk{font-family:var(--font-display);font-weight:700;font-size:max(18px,calc(var(--dial)*.065));line-height:1}
+#circleApp .hub .hm{font-family:var(--font-mono);font-size:max(9px,calc(var(--dial)*.029));color:var(--ink-soft);margin-top:5px;letter-spacing:.04em}
+#circleApp .ptr{
+  position:absolute;left:50%;top:-8px;margin-left:-7px;
+  width:0;height:0;
+  border-left:7px solid transparent;
+  border-right:7px solid transparent;
+  border-top:12px solid var(--red);
+}
+#circleApp .seg{display:flex;gap:0;border-radius:var(--radius);overflow:hidden;margin:1.75rem 0 1rem;border:1px solid var(--line-strong)}
+#circleApp .seg-b{flex:1;height:38px;border:0;background:transparent;color:var(--ink-soft);
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+#circleApp .seg-b+.seg-b{border-left:1px solid var(--line-strong)}
+#circleApp .seg-b.on{background:var(--paper-raised);color:var(--ink)}
+#circleApp .panel.off{display:none}
+#circleApp .chead{display:flex;justify-content:space-between;align-items:center;
+  border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:10px}
+#circleApp .sw{display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);cursor:pointer}
+#circleApp .sw input{width:14px;height:14px;accent-color:var(--red);cursor:pointer}
+#circleApp .ring{display:block;width:100%;max-width:320px;margin:0 auto;height:auto}
+#circleApp .rline{stroke:var(--line-strong);fill:none;stroke-width:.8}
+#circleApp .rseam{stroke:var(--ink-mute);fill:none;stroke-width:.8;stroke-dasharray:3 3}
+#circleApp .rhead{fill:var(--line-strong)}
+#circleApp .cnode rect{fill:var(--paper);stroke:var(--line-strong);stroke-width:.8;cursor:pointer}
+#circleApp .cnode .cn{font-family:var(--font-display);font-size:13px;fill:var(--ink);pointer-events:none}
+#circleApp .cnode .cnum{font-family:var(--font-mono);font-size:10px;fill:var(--ink-soft);pointer-events:none}
+#circleApp .cnode.tonic rect{stroke:var(--red);stroke-width:1.4}
+#circleApp .cnode.tonic .cn{fill:var(--red-ink)}
+#circleApp .cnode.sel rect{fill:var(--paper-raised)}
+#circleApp .seamnote{font-family:var(--font-mono);font-size:10px;color:var(--ink-mute);text-align:center;
+  line-height:1.6;margin-top:2px}
+#circleApp .tones{font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);text-align:center;
+  border-top:1px solid var(--line);padding-top:12px;margin-top:6px;line-height:1.7}
+#circleApp .scores{margin-top:1rem}
+#circleApp .score{margin-bottom:1.25rem}
+#circleApp .scorehead{
+  display:flex;justify-content:space-between;align-items:baseline;
+  border-bottom:1px solid var(--line);
+  padding-bottom:6px;margin-bottom:6px;
+}
+#circleApp .role{
+  font-family:var(--font-mono);font-size:10px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--ink-mute);
+}
+#circleApp .sname{font-family:var(--font-display);font-weight:500;font-size:15px;color:var(--ink)}
+#circleApp .staff{display:block;width:100%;max-width:280px;height:auto}
+#circleApp .staffline, #circleApp .barline{stroke:var(--ink-soft);stroke-width:.8}
+#circleApp .barline{stroke:var(--line-strong)}
+#circleApp .acc{stroke:var(--ink);fill:none;stroke-linecap:round}
+#circleApp .acc-bar{stroke:var(--ink);stroke-width:2.4;stroke-linecap:butt}
+#circleApp .acc-stem{stroke:var(--ink);stroke-width:1.1}
+#circleApp .head{stroke:var(--red);fill:none;stroke-width:1.8}
+#circleApp .clef{fill:var(--ink)}
+#circleApp .enh{
+  font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);
+  text-align:center;border-top:1px solid var(--line);padding-top:12px;margin-top:4px;
+}
+#circleApp footer{margin-top:1.5rem;text-align:center}
+#circleApp footer p{font-family:var(--font-mono);font-size:10px;color:var(--ink-mute);letter-spacing:.06em;margin:0}
+@media (prefers-reduced-motion: reduce){
+#circleApp .wheel, #circleApp .lbl{transition:none}
+}
+/* Wide viewports — desktop, and any device turned landscape — put the dial
+   beside the controls and notation instead of above them. The grid areas do
+   the reordering, so the DOM order stays correct for reading and tabbing. */
+@media (min-width:720px) and (min-aspect-ratio:1/1){
+#circleApp .wrap{
+    max-width:1080px;
+    padding:2.5rem 2.5rem 3rem;
+    --dial:min(100%,64vh,440px);
+    display:grid;
+    grid-template-columns:minmax(0,1.05fr) minmax(300px,400px);
+    grid-template-areas:
+      "head head"
+      "dial ctl"
+      "dial modes"
+      "dial seg"
+      "dial scores"
+      "dial chords"
+      "dial foot";
+    column-gap:3rem;
+    align-content:start;
+  }
+#circleApp header{grid-area:head}
+#circleApp .ctl{grid-area:ctl;margin:0 0 1rem;justify-content:flex-start}
+#circleApp .modes{grid-area:modes}
+#circleApp .stage{grid-area:dial;align-self:start;margin-top:.5rem}
+#circleApp .seg{grid-area:seg;margin:1.25rem 0 1rem}
+#circleApp .scores{grid-area:scores;margin-top:0}
+#circleApp .chords{grid-area:chords}
+#circleApp footer{grid-area:foot;align-self:end;text-align:left;margin-top:1.5rem}
+#circleApp h1{font-size:38px}
+#circleApp .staff{max-width:340px}
+#circleApp .ring{max-width:380px}
+#circleApp .scores{margin-top:0}
+}
+/* Phone or tablet held landscape: same two-column idea, driven by height so
+   the dial always fits between the top and bottom of the screen. */
+@media (orientation:landscape) and (max-height:600px){
+#circleApp .wrap{
+    max-width:none;
+    padding:1.25rem 1.5rem 2rem;
+    --dial:min(100%,58vh,340px);
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(280px,380px);
+    grid-template-areas:
+      "head head"
+      "dial ctl"
+      "dial modes"
+      "dial seg"
+      "dial scores"
+      "dial chords"
+      "dial foot";
+    column-gap:2rem;
+    align-content:start;
+  }
+#circleApp header{grid-area:head;margin-bottom:1rem}
+#circleApp h1{font-size:22px}
+#circleApp .ctl{grid-area:ctl;margin:0 0 .75rem;justify-content:flex-start}
+#circleApp .modes{grid-area:modes}
+#circleApp .stage{grid-area:dial;align-self:start}
+#circleApp .scores{grid-area:scores;margin-top:0}
+#circleApp .chords{grid-area:chords}
+#circleApp .score{margin-bottom:.75rem}
+#circleApp footer{grid-area:foot;text-align:left;margin-top:1rem}
+#circleApp .seg{grid-area:seg;margin:.75rem 0}
+}
+/* Large desktop: let the dial and notation breathe. */
+@media (min-width:1200px) and (min-height:800px){
+#circleApp .wrap{--dial:min(100%,62vh,500px)}
+#circleApp .staff{max-width:380px}
+}
+</style>
+</head>
+<body data-tab="fretboard">
+
+<div class="shell-bar">
+  <div class="shell-inner">
+    <span class="shell-mark">Lesson tools</span>
+    <label class="theme-pick"><span>Theme</span><select id="themePick" aria-label="Theme"></select></label>
+    <div class="tabs" role="tablist" aria-label="Tools">
+      <button class="tab on" id="tab-fretboard" role="tab" aria-controls="fretApp" aria-selected="true">Fretboard</button>
+      <button class="tab" id="tab-circle" role="tab" aria-controls="circleApp" aria-selected="false" tabindex="-1">Circle of fifths</button>
+    </div>
+  </div>
+</div>
+
+<section class="app-panel" id="fretApp" role="tabpanel" aria-labelledby="tab-fretboard">
+<header>
+  <div class="eyebrow"><span>Diagram sheet</span><span id="fretCount">Diagrams 01</span></div>
+  <h1>Fretboard</h1>
+  <p>Build scale, chord, and interval diagrams for your lessons. Click the neck to place notes, or generate a shape below. Export the page as a PNG when you're ready to print or share.</p>
+</header>
+
+<div class="toolbar">
+  <button class="primary" id="addDiagramBtn">+ Add diagram</button>
+  <div class="group">
+    <label>Layout</label>
+    <button class="small toggle" id="landscapeBtn">Landscape</button>
+    <button class="small toggle" id="portraitBtn">Portrait</button>
+  </div>
+  <div class="spacer"></div>
+  <button id="exportPngBtn">Export PNG</button>
+</div>
+
+<div id="diagrams"></div>
+
+<footer class="credits">Built for lesson prep — click the fretboard to toggle notes, use octave mode to fill every matching pitch, and set a root to color by interval.</footer>
+</section>
+<section class="app-panel" id="circleApp" role="tabpanel" aria-labelledby="tab-circle" hidden>
+<div class="wrap">
+<header>
+  <div class="eyebrow"><span>Diagram no. 5ths</span><span id="posLabel">Position 00</span></div>
+  <h1>Circle of fifths</h1>
+</header>
+
+<div class="ctl">
+  <button class="arrow-btn" id="ccw" aria-label="Move counter-clockwise around the circle">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 7 4 12l5 5"/><path d="M4 12h11a5 5 0 0 1 0 10h-1"/></svg>
+  </button>
+  <button class="arrow-btn" id="cw" aria-label="Move clockwise around the circle">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m15 7 5 5-5 5"/><path d="M20 12H9a5 5 0 0 0 0 10h1"/></svg>
+  </button>
+</div>
+
+<div class="modes">
+  <div class="mrow"><label for="mo">Outer</label><select id="mo"></select></div>
+  <div class="mrow"><label for="mi">Inner</label><select id="mi"></select></div>
+</div>
+
+<div class="stage">
+  <div class="wheel" id="wheel"><div class="ring2"></div></div>
+  <div class="hub"><div class="hk" id="hk">C</div><div class="hm" id="hm">major · —</div></div>
+  <div class="ptr"></div>
+</div>
+
+<div class="seg">
+  <button class="seg-b on" id="tabN">Notation</button>
+  <button class="seg-b" id="tabC">Chords</button>
+</div>
+
+<div class="scores panel" id="panelN">
+  <div class="score">
+    <div class="scorehead"><span class="role">Outer ring</span><span class="sname" id="n1"></span></div>
+    <div id="s1"></div>
+  </div>
+  <div class="score">
+    <div class="scorehead"><span class="role">Inner ring</span><span class="sname" id="n2"></span></div>
+    <div id="s2"></div>
+  </div>
+  <div class="enh" id="enh"></div>
+</div>
+
+<div class="chords panel off" id="panelC">
+  <div class="chead">
+    <span class="role">Diatonic chords</span>
+    <label class="sw"><input type="checkbox" id="sev"> Sevenths</label>
+  </div>
+  <div id="ring"></div>
+  <div class="seamnote" id="seam"></div>
+  <div class="tones" id="tones"></div>
+</div>
+
+<footer><p>Tap a position, or use the arrows, to rotate</p></footer>
+</div>
+</section>
+<script>
+(function(){
+
+const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const INTERVAL_LABELS = ['R','\u266d2','2','\u266d3','3','4','\u266d5','5','\u266d6','6','\u266d7','7'];
+
+// ---- THEMES ----
+// Palette for the neck drawing only. The surrounding interface reads the
+// shared CSS tokens the shell writes to :root, so a theme change repaints
+// both tools at once. Keys here must match the shell's theme ids.
+const THEMES = {
+  paper: { canvas: {
+    bg:'#F5F2EA', titleInk:'#1B1A17', titleFont:'700 17px "Space Grotesk", sans-serif',
+    neckGradTop:'#3A2A1C', neckGradBottom:'#241A12', inlay:'rgba(245,242,234,0.32)',
+    nutColor:'#EFEBE0', fretWire:'rgba(217,210,194,0.5)', string:'rgba(216,210,194,0.85)',
+    stringLabel:'#1B1A17', stringLabelFont:'500 12px "IBM Plex Mono", monospace',
+    fretNum:'#948F80', fretNumFont:'500 11px "IBM Plex Mono", monospace',
+    markerDefault:'#5B584E', markerStroke:'rgba(27,26,23,0.35)',
+    markerText:'#F5F2EA', markerFont:'500 10.5px "IBM Plex Mono", monospace',
+    intervals:['#C1272D','#8A6F5C','#6E7F63','#3F6B5C','#B5562E','#6E7B8C',
+               '#8A5A80','#3E6E92','#8C6E3E','#4F7A5E','#4A4E8C','#7A1519']
+  }},
+  night: { canvas: {
+    bg:'#17160F', titleInk:'#F2EEE1', titleFont:'700 17px "Space Grotesk", sans-serif',
+    neckGradTop:'#2A2418', neckGradBottom:'#14120C', inlay:'rgba(242,238,225,0.18)',
+    nutColor:'#B6B09B', fretWire:'rgba(242,238,225,0.18)', string:'rgba(182,176,155,0.55)',
+    stringLabel:'#F2EEE1', stringLabelFont:'500 12px "IBM Plex Mono", monospace',
+    fretNum:'#7A7462', fretNumFont:'500 11px "IBM Plex Mono", monospace',
+    markerDefault:'#4A4530', markerStroke:'rgba(242,238,225,0.3)',
+    markerText:'#17160F', markerFont:'500 10.5px "IBM Plex Mono", monospace',
+    intervals:['#E2453D','#C9A227','#8FBF7A','#6FB3A0','#E08A55','#8FA5C4',
+               '#C77FB5','#5FA8D3','#D0A55E','#7FC49A','#8A8FD8','#F4938C']
+  }},
+  terminal: { canvas: {
+    bg:'#0A0A08', titleInk:'#FFB000', titleFont:'600 17px "JetBrains Mono", monospace',
+    neckGradTop:'#161610', neckGradBottom:'#0E0E0A', inlay:'rgba(255,176,0,0.15)',
+    nutColor:'#FFB000', fretWire:'rgba(255,176,0,0.3)', string:'rgba(255,176,0,0.5)',
+    stringLabel:'#FFB000', stringLabelFont:'600 12px "JetBrains Mono", monospace',
+    fretNum:'#B87800', fretNumFont:'500 11px "JetBrains Mono", monospace',
+    markerDefault:'#664800', markerStroke:'rgba(255,176,0,0.4)',
+    markerText:'#0A0A08', markerFont:'700 10.5px "JetBrains Mono", monospace',
+    intervals:['#FFB000','#CC8E00','#E6A200','#FF8C00','#FFD060','#B87800',
+               '#FF6600','#FFCC00','#E67300','#D49500','#CC7000','#FF4400']
+  }},
+  prog: { canvas: {
+    bg:'#0C0E2A', titleInk:'#D4AF37', titleFont:'700 17px "Zilla Slab", serif',
+    neckGradTop:'#1A1040', neckGradBottom:'#0A0820', inlay:'rgba(212,175,55,0.18)',
+    nutColor:'#D4AF37', fretWire:'rgba(212,175,55,0.25)', string:'rgba(180,160,120,0.5)',
+    stringLabel:'#D4AF37', stringLabelFont:'600 12px "JetBrains Mono", monospace',
+    fretNum:'#8A7A4A', fretNumFont:'500 11px "JetBrains Mono", monospace',
+    markerDefault:'#3A2A6A', markerStroke:'rgba(212,175,55,0.35)',
+    markerText:'#F0E0FF', markerFont:'700 10.5px "JetBrains Mono", monospace',
+    intervals:['#D4AF37','#8B5E3C','#5C8A5E','#7B2D8E','#CC5500','#4A6A8A',
+               '#9A3070','#2E7EB8','#AA7030','#3E8A5A','#5A3E9A','#CC3344']
+  }},
+  jazz: { canvas: {
+    bg:'#00183A', titleInk:'#F5E6C8', titleFont:'600 17px "Zilla Slab", serif',
+    neckGradTop:'#1A0E00', neckGradBottom:'#0D0700', inlay:'rgba(245,230,200,0.15)',
+    nutColor:'#F5E6C8', fretWire:'rgba(245,230,200,0.25)', string:'rgba(200,180,140,0.5)',
+    stringLabel:'#F5E6C8', stringLabelFont:'600 12px "JetBrains Mono", monospace',
+    fretNum:'#A89878', fretNumFont:'500 11px "JetBrains Mono", monospace',
+    markerDefault:'#334466', markerStroke:'rgba(245,230,200,0.3)',
+    markerText:'#F5E6C8', markerFont:'700 10.5px "JetBrains Mono", monospace',
+    intervals:['#CC6633','#8A6A50','#5A8A6A','#3366AA','#CC8844','#607888',
+               '#886A5A','#2E6E88','#AA7744','#4A7A5A','#445588','#AA4444']
+  }},
+  psychedelic: { canvas: {
+    bg:'#0D001A', titleInk:'#FF00FF', titleFont:'700 17px "Space Grotesk", sans-serif',
+    neckGradTop:'#1A0033', neckGradBottom:'#0D001A', inlay:'rgba(255,0,255,0.15)',
+    nutColor:'#FF00FF', fretWire:'rgba(0,255,136,0.25)', string:'rgba(255,0,255,0.4)',
+    stringLabel:'#FF00FF', stringLabelFont:'500 12px "IBM Plex Mono", monospace',
+    fretNum:'#CC66FF', fretNumFont:'500 11px "IBM Plex Mono", monospace',
+    markerDefault:'#6600AA', markerStroke:'rgba(255,0,255,0.4)',
+    markerText:'#FFFFFF', markerFont:'500 10.5px "IBM Plex Mono", monospace',
+    intervals:['#FF00FF','#FF6600','#00FFFF','#00FF88','#FF0066','#FFFF00',
+               '#FF3300','#00AAFF','#FF9900','#88FF00','#AA00FF','#FF0040']
+  }}
+};
+
+let currentTheme = 'paper';
+
+function getTheme(){ return THEMES[currentTheme] || THEMES.paper; }
+
+// The shell owns theme selection for the whole page; this only repaints the
+// canvases, since every other fretboard colour comes from CSS tokens.
+function applyTheme(themeKey){
+  currentTheme = THEMES[themeKey] ? themeKey : 'paper';
+  diagrams.forEach(d => render(d));
+}
+window.setFretboardTheme = applyTheme;
+
+const TUNINGS = {
+  guitar: {
+    label: 'Guitar',
+    presets: {
+      standard6:   { label: 'Standard (E A D G B E)', strings: ['E','B','G','D','A','E'] },
+      dropD:       { label: 'Drop D', strings: ['E','B','G','D','A','D'] },
+      halfstep:    { label: 'Half Step Down', strings: ['D#','A#','F#','C#','G#','D#'] },
+      openG:       { label: 'Open G (D G D G B D)', strings: ['D','B','G','D','G','D'] },
+      openD:       { label: 'Open D (D A D F# A D)', strings: ['D','A','F#','D','A','D'] },
+      standard7:   { label: '7-String Standard', strings: ['E','B','G','D','A','E','B'] }
+    }
+  },
+  bass: {
+    label: 'Bass',
+    presets: {
+      standard4: { label: 'Standard (E A D G)', strings: ['G','D','A','E'] },
+      standard5: { label: '5-String (B E A D G)', strings: ['G','D','A','E','B'] },
+      dropD4:    { label: 'Drop D', strings: ['G','D','A','D'] },
+      standard6: { label: '6-String (B E A D G C)', strings: ['C','G','D','A','E','B'] }
+    }
+  }
+};
+
+const SCALES = {
+  major:          { label: 'Major (Ionian)',        intervals: [0,2,4,5,7,9,11] },
+  naturalMinor:   { label: 'Natural Minor (Aeolian)',intervals: [0,2,3,5,7,8,10] },
+  harmonicMinor:  { label: 'Harmonic Minor',         intervals: [0,2,3,5,7,8,11] },
+  melodicMinor:   { label: 'Melodic Minor (asc.)',   intervals: [0,2,3,5,7,9,11] },
+  majorPentatonic:{ label: 'Major Pentatonic',       intervals: [0,2,4,7,9] },
+  minorPentatonic:{ label: 'Minor Pentatonic',       intervals: [0,3,5,7,10] },
+  blues:          { label: 'Blues Scale',            intervals: [0,3,5,6,7,10] },
+  dorian:         { label: 'Dorian',                 intervals: [0,2,3,5,7,9,10] },
+  phrygian:       { label: 'Phrygian',                intervals: [0,1,3,5,7,8,10] },
+  lydian:         { label: 'Lydian',                  intervals: [0,2,4,6,7,9,11] },
+  mixolydian:     { label: 'Mixolydian',              intervals: [0,2,4,5,7,9,10] },
+  locrian:        { label: 'Locrian',                 intervals: [0,1,3,5,6,8,10] }
+};
+
+const CHORDS = {
+  major:      { label: 'Major',       intervals: [0,4,7] },
+  minor:      { label: 'Minor',       intervals: [0,3,7] },
+  diminished: { label: 'Diminished',  intervals: [0,3,6] },
+  augmented:  { label: 'Augmented',   intervals: [0,4,8] },
+  maj7:       { label: 'Major 7',     intervals: [0,4,7,11] },
+  min7:       { label: 'Minor 7',     intervals: [0,3,7,10] },
+  dom7:       { label: 'Dominant 7',  intervals: [0,4,7,10] },
+  min7b5:     { label: 'Min7 \u266d5',intervals: [0,3,6,10] },
+  dim7:       { label: 'Diminished 7',intervals: [0,3,6,9] }
+};
+
+const STANDARD_INLAYS = [3,5,7,9,15,17,19,21];
+const DOUBLE_INLAYS = [12,24];
+
+// ---- layout constants ----
+// Horizontal orientation: frets run left-to-right, strings run top-to-bottom.
+const LEFT_PAD = 58, RIGHT_PAD = 22, TOP_PAD = 50, BOTTOM_PAD = 30;
+// Vertical orientation: frets run top-to-bottom, strings run left-to-right
+// (like a chord-chart neck). Text labels are never rotated in either mode —
+// only the neck geometry itself changes axis.
+const V_TOP_PAD = 78, V_LEFT_PAD = 30, V_RIGHT_PAD = 44, V_BOTTOM_PAD = 22;
+const FRET_W = 46, STRING_H = 28, MARKER_R = 11;
+const DPR = Math.max(1, window.devicePixelRatio || 1);
+
+// A real fretboard marks a fret in the gap BEFORE its wire, not on the wire itself.
+// fretStart is the left boundary wire we need to draw so fret `firstFret` has a gap to sit in.
+function fretStart(state){ return Math.max(state.firstFret - 1, 0); }
+function totalFretUnits(state){ return state.lastFret - fretStart(state); }
+// Both of these are relative offsets along the neck's length (the "primary"
+// axis), measured from the first drawn wire — orientation-independent.
+function wireX(state, f){ return (f - fretStart(state)) * FRET_W; }
+function markerX(state, f){
+  return f === 0 ? 0 : wireX(state, f) - FRET_W / 2;
+}
+
+let diagramCounter = 0;
+let pageOrientation = 'landscape'; // 'landscape' | 'portrait'
+const diagrams = []; // {id, state, canvas, elements...}
+
+function pc(noteName){ return NOTE_NAMES.indexOf(noteName); }
+
+function stringPitchClasses(state){
+  return state.strings.map(n => pc(n));
+}
+
+function fretPC(state, stringIdx, fret){
+  const open = stringPitchClasses(state)[stringIdx];
+  return ((open + fret) % 12 + 12) % 12;
+}
+
+function defaultState(){
+  return {
+    instrument: 'guitar',
+    preset: 'standard6',
+    strings: TUNINGS.guitar.presets.standard6.strings.slice(),
+    firstFret: 0,
+    lastFret: 22,
+    notes: new Set(),       // "stringIdx_fret"
+    rootPC: null,
+    displayMode: 'name',    // name | interval | blank
+    octaveMode: false,
+    rootPickActive: false,
+    shiftSemitones: 0,      // cumulative half-step shift applied to placed markers via Shift control
+    title: ''
+  };
+}
+
+function createDiagram(initial){
+  diagramCounter += 1;
+  const id = 'dg' + diagramCounter;
+  const state = Object.assign(defaultState(), initial || {});
+  const card = document.createElement('div');
+  card.className = 'diagram-card';
+  card.dataset.id = id;
+
+  card.innerHTML = `
+    <div class="card-top">
+      <input class="title-input" type="text" value="${escapeHtml(state.title)}" placeholder="Fretboard label" aria-label="Diagram title">
+      <button class="small ghost removeBtn" title="Remove diagram">Remove</button>
+    </div>
+    <div class="controls">
+      <div class="group">
+        <label>Instrument</label>
+        <select class="instrumentSel">
+          <option value="guitar">Guitar</option>
+          <option value="bass">Bass</option>
+        </select>
+      </div>
+      <div class="group">
+        <label>Tuning</label>
+        <select class="presetSel"></select>
+      </div>
+      <div class="group">
+        <label>From fret</label>
+        <input type="number" class="firstFretInput" min="0" max="24" value="${state.firstFret}">
+      </div>
+      <div class="group">
+        <label>To fret</label>
+        <input type="number" class="lastFretInput" min="1" max="30" value="${state.lastFret}">
+      </div>
+      <div class="group">
+        <label>Shift</label>
+        <button class="small shiftDownBtn" title="Move every placed marker down a half step — shape and intervals stay the same, note names update">&minus;</button>
+        <span class="shiftLabel">0</span>
+        <button class="small shiftUpBtn" title="Move every placed marker up a half step — shape and intervals stay the same, note names update">+</button>
+      </div>
+      <div class="group">
+        <label>Show</label>
+        <select class="displaySel">
+          <option value="name">Note names</option>
+          <option value="interval">Intervals</option>
+          <option value="blank">Blank dots</option>
+        </select>
+      </div>
+      <div class="group">
+        <button class="small toggle octaveBtn" title="When on, clicking a note also fills every octave/unison of it">Octave mode</button>
+      </div>
+      <div class="group">
+        <button class="small toggle rootBtn" title="Click a note on the neck to set it as root">Set root</button>
+        <button class="small ghost clearRootBtn" title="Clear root">&times;</button>
+      </div>
+      <div class="group">
+        <label>Invert</label>
+        <button class="small invertDownBtn" title="Drop the highest-pitched note down one octave">&darr;</button>
+        <button class="small invertUpBtn" title="Move the lowest-pitched note up one octave">&uarr;</button>
+      </div>
+      <div class="group">
+        <button class="small danger-text clearNotesBtn">Clear notes</button>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="group">
+        <label>Key</label>
+        <select class="keySel"></select>
+      </div>
+      <div class="group">
+        <label>Scale</label>
+        <select class="scaleSel"></select>
+        <button class="small primary genScaleBtn">Generate</button>
+      </div>
+      <div class="group">
+        <label>Chord</label>
+        <select class="chordSel"></select>
+        <button class="small primary genChordBtn">Generate</button>
+      </div>
+    </div>
+    <div class="canvas-wrap">
+      <canvas class="fretCanvas"></canvas>
+    </div>
+    <div class="card-footer">
+      <span class="hint">Click the neck to toggle a note. Root: <strong class="rootLabel">none</strong></span>
+    </div>
+  `;
+
+  document.getElementById('diagrams').appendChild(card);
+
+  const el = {
+    card,
+    titleInput: card.querySelector('.title-input'),
+    instrumentSel: card.querySelector('.instrumentSel'),
+    presetSel: card.querySelector('.presetSel'),
+    firstFretInput: card.querySelector('.firstFretInput'),
+    lastFretInput: card.querySelector('.lastFretInput'),
+    displaySel: card.querySelector('.displaySel'),
+    octaveBtn: card.querySelector('.octaveBtn'),
+    rootBtn: card.querySelector('.rootBtn'),
+    clearRootBtn: card.querySelector('.clearRootBtn'),
+    clearNotesBtn: card.querySelector('.clearNotesBtn'),
+    invertUpBtn: card.querySelector('.invertUpBtn'),
+    invertDownBtn: card.querySelector('.invertDownBtn'),
+    shiftDownBtn: card.querySelector('.shiftDownBtn'),
+    shiftUpBtn: card.querySelector('.shiftUpBtn'),
+    shiftLabel: card.querySelector('.shiftLabel'),
+    keySel: card.querySelector('.keySel'),
+    scaleSel: card.querySelector('.scaleSel'),
+    chordSel: card.querySelector('.chordSel'),
+    genScaleBtn: card.querySelector('.genScaleBtn'),
+    genChordBtn: card.querySelector('.genChordBtn'),
+    canvas: card.querySelector('.fretCanvas'),
+    rootLabel: card.querySelector('.rootLabel'),
+    removeBtn: card.querySelector('.removeBtn')
+  };
+
+  const diagram = { id, state, el };
+  diagrams.push(diagram);
+
+  populateInstrumentControls(diagram);
+  populateKeySelect(el.keySel);
+  populateOptionGroup(el.scaleSel, SCALES);
+  populateOptionGroup(el.chordSel, CHORDS);
+  el.displaySel.value = state.displayMode;
+
+  wireEvents(diagram);
+  render(diagram);
+  layoutCards();
+  return diagram;
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function populateOptionGroup(selectEl, dict){
+  selectEl.innerHTML = Object.keys(dict).map(k => `<option value="${k}">${dict[k].label}</option>`).join('');
+}
+
+function populateKeySelect(selectEl){
+  selectEl.innerHTML = NOTE_NAMES.map(n => `<option value="${n}">${n}</option>`).join('');
+}
+
+function populateInstrumentControls(diagram){
+  const { el, state } = diagram;
+  el.instrumentSel.value = state.instrument;
+  const presets = TUNINGS[state.instrument].presets;
+  el.presetSel.innerHTML = Object.keys(presets).map(k => `<option value="${k}">${presets[k].label}</option>`).join('');
+  el.presetSel.value = state.preset;
+}
+
+function wireEvents(diagram){
+  const { el, state } = diagram;
+
+  el.titleInput.addEventListener('input', () => {
+    state.title = el.titleInput.value;
+    render(diagram);
+  });
+
+  el.instrumentSel.addEventListener('change', () => {
+    state.instrument = el.instrumentSel.value;
+    const presets = TUNINGS[state.instrument].presets;
+    const firstKey = Object.keys(presets)[0];
+    state.preset = firstKey;
+    state.strings = presets[firstKey].strings.slice();
+    state.notes.clear();
+    state.rootPC = null;
+    state.shiftSemitones = 0;
+    populateInstrumentControls(diagram);
+    render(diagram);
+  });
+
+  el.presetSel.addEventListener('change', () => {
+    state.preset = el.presetSel.value;
+    state.strings = TUNINGS[state.instrument].presets[state.preset].strings.slice();
+    state.notes.clear();
+    state.rootPC = null;
+    state.shiftSemitones = 0;
+    render(diagram);
+  });
+
+  el.firstFretInput.addEventListener('change', () => {
+    let v = parseInt(el.firstFretInput.value, 10);
+    if (isNaN(v) || v < 0) v = 0;
+    if (v >= state.lastFret) v = state.lastFret - 1 >= 0 ? state.lastFret - 1 : 0;
+    state.firstFret = v;
+    el.firstFretInput.value = v;
+    pruneOutOfRangeNotes(state);
+    render(diagram);
+  });
+
+  el.lastFretInput.addEventListener('change', () => {
+    let v = parseInt(el.lastFretInput.value, 10);
+    if (isNaN(v) || v <= state.firstFret) v = state.firstFret + 1;
+    if (v > 30) v = 30;
+    state.lastFret = v;
+    el.lastFretInput.value = v;
+    pruneOutOfRangeNotes(state);
+    render(diagram);
+  });
+
+  el.displaySel.addEventListener('change', () => {
+    state.displayMode = el.displaySel.value;
+    render(diagram);
+  });
+
+  el.octaveBtn.addEventListener('click', () => {
+    state.octaveMode = !state.octaveMode;
+    el.octaveBtn.classList.toggle('active', state.octaveMode);
+  });
+
+  el.rootBtn.addEventListener('click', () => {
+    state.rootPickActive = !state.rootPickActive;
+    el.rootBtn.classList.toggle('active', state.rootPickActive);
+  });
+
+  el.clearRootBtn.addEventListener('click', () => {
+    state.rootPC = null;
+    state.rootPickActive = false;
+    el.rootBtn.classList.remove('active');
+    render(diagram);
+  });
+
+  el.clearNotesBtn.addEventListener('click', () => {
+    state.notes.clear();
+    state.shiftSemitones = 0;
+    render(diagram);
+  });
+
+  el.invertUpBtn.addEventListener('click', () => invertVoicing(diagram, 1));
+  el.invertDownBtn.addEventListener('click', () => invertVoicing(diagram, -1));
+
+  el.shiftDownBtn.addEventListener('click', () => shiftMarkers(diagram, -1));
+  el.shiftUpBtn.addEventListener('click', () => shiftMarkers(diagram, 1));
+
+  el.genScaleBtn.addEventListener('click', () => {
+    generateFromFormula(diagram, SCALES[el.scaleSel.value].intervals, el.keySel.value);
+  });
+
+  el.genChordBtn.addEventListener('click', () => {
+    generateFromFormula(diagram, CHORDS[el.chordSel.value].intervals, el.keySel.value);
+  });
+
+  el.removeBtn.addEventListener('click', () => {
+    if (diagrams.length <= 1) return;
+    const idx = diagrams.findIndex(d => d.id === diagram.id);
+    if (idx >= 0) diagrams.splice(idx, 1);
+    el.card.remove();
+    layoutCards();
+  });
+
+  el.canvas.addEventListener('click', (evt) => handleCanvasClick(diagram, evt));
+}
+
+function pruneOutOfRangeNotes(state){
+  const toRemove = [];
+  state.notes.forEach(key => {
+    const fret = parseInt(key.split('_')[1], 10);
+    if (fret < state.firstFret || fret > state.lastFret) toRemove.push(key);
+  });
+  toRemove.forEach(k => state.notes.delete(k));
+}
+
+function allPositionsForPC(state, targetPC){
+  const result = [];
+  const pcs = stringPitchClasses(state);
+  for (let s = 0; s < pcs.length; s++){
+    for (let f = state.firstFret; f <= state.lastFret; f++){
+      const p = ((pcs[s] + f) % 12 + 12) % 12;
+      if (p === targetPC) result.push(s + '_' + f);
+    }
+  }
+  return result;
+}
+
+function generateFromFormula(diagram, intervals, keyName){
+  const { state } = diagram;
+  const rootPC = pc(keyName);
+  state.rootPC = rootPC;
+  state.notes.clear();
+  const allowed = new Set(intervals.map(iv => (rootPC + iv) % 12));
+  const pcs = stringPitchClasses(state);
+  for (let s = 0; s < pcs.length; s++){
+    for (let f = state.firstFret; f <= state.lastFret; f++){
+      const p = ((pcs[s] + f) % 12 + 12) % 12;
+      if (allowed.has(p)) state.notes.add(s + '_' + f);
+    }
+  }
+  render(diagram);
+}
+
+// Compute base pitches for each string so we can compare absolute pitch
+// across strings. Strings are ordered highest to lowest in our data model.
+// We assign string 0 a base pitch derived from its pitch class, then walk
+// downward: each successive string is lower, with the interval derived from
+// the pitch-class difference (taking the smallest downward step).
+function stringBasePitches(state){
+  const pcs = stringPitchClasses(state);
+  const bases = [60 + pcs[0]]; // arbitrary octave reference for string 0
+  for (let i = 1; i < pcs.length; i++){
+    let drop = ((pcs[i - 1] - pcs[i]) % 12 + 12) % 12;
+    if (drop === 0) drop = 12; // same note name = full octave lower
+    bases.push(bases[i - 1] - drop);
+  }
+  return bases;
+}
+
+function absolutePitch(state, bases, stringIdx, fret){
+  return bases[stringIdx] + fret;
+}
+
+// Inversion: direction = 1 moves the lowest-pitched note up one octave;
+// direction = -1 moves the highest-pitched note down one octave.
+// This is classic voicing inversion — ABC → BCA' (up) or CBA → C'AB (down).
+//
+// Two playability constraints:
+// 1. The inverted note cannot land on a string already used by another note.
+// 2. The inverted note's fret cannot be more than 4 frets away from the
+//    farthest fret in the remaining voicing — this is about physical hand
+//    reach on the neck, not musical intervals.
+function invertVoicing(diagram, direction){
+  const { state } = diagram;
+  if (state.notes.size < 2) return;
+
+  const bases = stringBasePitches(state);
+  let target = null, targetPitch = null;
+
+  const markers = [];
+  state.notes.forEach(key => {
+    const [sStr, fStr] = key.split('_');
+    const s = parseInt(sStr, 10), f = parseInt(fStr, 10);
+    const ap = absolutePitch(state, bases, s, f);
+    markers.push({ key, s, f, ap });
+    if (targetPitch === null ||
+        (direction === 1 && ap < targetPitch) ||
+        (direction === -1 && ap > targetPitch)){
+      targetPitch = ap;
+      target = { key, s, f, ap };
+    }
+  });
+
+  if (!target) return;
+
+  const remaining = markers.filter(m => m.key !== target.key);
+
+  // Strings already occupied by the remaining notes — the inverted note
+  // must avoid these.
+  const occupiedStrings = new Set(remaining.map(m => m.s));
+
+  // Fret range of the remaining voicing — the inverted note must land
+  // within 4 frets of this range (hand reach).
+  const remainingFrets = remaining.map(m => m.f);
+  const minFret = Math.min(...remainingFrets);
+  const maxFret = Math.max(...remainingFrets);
+  const REACH = 4;
+
+  // Centroid of remaining notes for tie-breaking (nearest = most playable)
+  const avgFret = remaining.reduce((sum, m) => sum + m.f, 0) / remaining.length;
+  const avgString = remaining.reduce((sum, m) => sum + m.s, 0) / remaining.length;
+
+  // Try octave shifts: start with the standard +/-12, then try +/-24, etc.
+  // This lets us find an octave that satisfies the reach constraint even if
+  // the first one doesn't.
+  const candidates = [];
+  for (let oct = 1; oct <= 3; oct++){
+    const newPitch = target.ap + (direction * 12 * oct);
+    for (let s = 0; s < state.strings.length; s++){
+      // Constraint 1: skip strings already occupied
+      if (occupiedStrings.has(s)) continue;
+
+      const f = newPitch - bases[s];
+      if (f < state.firstFret || f > state.lastFret) continue;
+
+      // Constraint 2: must be within REACH frets of the remaining voicing
+      if (f < minFret - REACH || f > maxFret + REACH) continue;
+
+      const dist = Math.abs(f - avgFret) + Math.abs(s - avgString) * 2;
+      candidates.push({ s, f, dist });
+    }
+    if (candidates.length > 0) break; // use the first octave that works
+  }
+
+  state.notes.delete(target.key);
+
+  if (candidates.length > 0){
+    candidates.sort((a, b) => a.dist - b.dist);
+    state.notes.add(candidates[0].s + '_' + candidates[0].f);
+  } else {
+    // No valid position found — put the note back
+    state.notes.add(target.key);
+  }
+
+  render(diagram);
+}
+
+
+// marker's fret number and wrapping it individually (which loses markers
+// whenever the visible window is wide enough to contain the same pitch
+// class twice on a string — any window over about an octave), this works
+// at the pitch-class level: figure out which pitch classes are currently
+// marked on each string, shift those, then re-resolve to actual frets by
+// scanning the (fixed) visible window fresh. That keeps the operation
+// exact and fully reversible — shifting by a full 12 half-steps always
+// reproduces the original pattern exactly, with no notes dropped.
+function shiftMarkers(diagram, delta){
+  const { state } = diagram;
+  if (state.notes.size === 0) return;
+
+  const pcsByString = {};
+  state.notes.forEach(key => {
+    const [sStr, fStr] = key.split('_');
+    const s = parseInt(sStr, 10), f = parseInt(fStr, 10);
+    if (!pcsByString[s]) pcsByString[s] = new Set();
+    pcsByString[s].add(fretPC(state, s, f));
+  });
+
+  const newNotes = new Set();
+  Object.keys(pcsByString).forEach(sKey => {
+    const s = parseInt(sKey, 10);
+    const targetPCs = new Set([...pcsByString[s]].map(p => ((p + delta) % 12 + 12) % 12));
+    for (let f = state.firstFret; f <= state.lastFret; f++){
+      if (targetPCs.has(fretPC(state, s, f))) newNotes.add(s + '_' + f);
+    }
+  });
+
+  state.notes = newNotes;
+  if (state.rootPC !== null) state.rootPC = ((state.rootPC + delta) % 12 + 12) % 12;
+  state.shiftSemitones += delta;
+  // ±12 half-steps is a full octave — mathematically identical to the
+  // starting pattern — so cycle the counter back to 0 rather than letting
+  // it climb indefinitely or stopping the user at the edge.
+  if (state.shiftSemitones === 12 || state.shiftSemitones === -12) state.shiftSemitones = 0;
+
+  render(diagram);
+}
+
+function handleCanvasClick(diagram, evt){
+  const { state, el } = diagram;
+  const rect = el.canvas.getBoundingClientRect();
+  const clickX = evt.clientX - rect.left;
+  const clickY = evt.clientY - rect.top;
+
+  const vertical = pageOrientation === 'portrait';
+  const numStrings = state.strings.length;
+  const primaryOrigin = vertical ? V_TOP_PAD : LEFT_PAD;
+  const secondaryOrigin = vertical ? V_LEFT_PAD : TOP_PAD;
+
+  // "Primary" = along the neck's length (frets). "Secondary" = across the
+  // strings. Which screen axis each maps to depends on orientation.
+  const primaryRel = (vertical ? clickY : clickX) - primaryOrigin;
+  const secondaryRel = (vertical ? clickX : clickY) - secondaryOrigin;
+
+  const rawIdx = Math.round(secondaryRel / STRING_H);
+  if (rawIdx < 0 || rawIdx >= numStrings) return;
+  if (Math.abs(secondaryRel - rawIdx * STRING_H) > STRING_H * 0.48) return;
+  // In vertical mode string order is mirrored (low string on the left), so
+  // undo that to recover the real string index.
+  const stringIdx = vertical ? (numStrings - 1 - rawIdx) : rawIdx;
+
+  // Find the nearest fret wire — note markers sit on the wire itself.
+  let fret = null, bestDist = Infinity;
+  for (let f = state.firstFret; f <= state.lastFret; f++){
+    const d = Math.abs(primaryRel - wireX(state, f));
+    if (d < bestDist){ bestDist = d; fret = f; }
+  }
+  if (fret === null || bestDist > FRET_W * 0.46) return;
+
+  const key = stringIdx + '_' + fret;
+  const targetPC = fretPC(state, stringIdx, fret);
+
+  if (state.rootPickActive){
+    state.rootPC = targetPC;
+    state.notes.add(key);
+    state.rootPickActive = false;
+    diagram.el.rootBtn.classList.remove('active');
+    render(diagram);
+    return;
+  }
+
+  const has = state.notes.has(key);
+  if (state.octaveMode){
+    const positions = allPositionsForPC(state, targetPC);
+    if (has) positions.forEach(k => state.notes.delete(k));
+    else positions.forEach(k => state.notes.add(k));
+  } else {
+    if (has) state.notes.delete(key);
+    else state.notes.add(key);
+  }
+  render(diagram);
+}
+
+function render(diagram){
+  const { state, el } = diagram;
+  const vertical = pageOrientation === 'portrait';
+  const t = getTheme().canvas;
+  const units = totalFretUnits(state);
+  const numStrings = state.strings.length;
+  const primaryExtent = units * FRET_W;             // length of the neck (along the frets)
+  const secondaryExtent = (numStrings - 1) * STRING_H; // spread of the strings
+
+  const primaryOrigin = vertical ? V_TOP_PAD : LEFT_PAD;
+  const secondaryOrigin = vertical ? V_LEFT_PAD : TOP_PAD;
+
+  const width = vertical
+    ? V_LEFT_PAD + secondaryExtent + V_RIGHT_PAD
+    : LEFT_PAD + primaryExtent + RIGHT_PAD;
+  const height = vertical
+    ? V_TOP_PAD + primaryExtent + V_BOTTOM_PAD
+    : TOP_PAD + secondaryExtent + BOTTOM_PAD + 24;
+
+  // Maps a (primary, secondary) offset pair — primary = along the neck's
+  // length, secondary = across the strings — onto actual canvas x/y. This
+  // is the only place orientation logic lives; every drawing routine below
+  // works purely in primary/secondary terms. Text is always drawn upright;
+  // only these positions swap axes.
+  function toXY(primaryRel, secondaryRel){
+    return vertical
+      ? { x: secondaryOrigin + secondaryRel, y: primaryOrigin + primaryRel }
+      : { x: primaryOrigin + primaryRel, y: secondaryOrigin + secondaryRel };
+  }
+  // String display order is mirrored in vertical mode so the low string
+  // ends up on the left, matching how chord charts are conventionally drawn.
+  function secondaryForString(s){
+    const idx = vertical ? (numStrings - 1 - s) : s;
+    return idx * STRING_H;
+  }
+
+  const canvas = el.canvas;
+  canvas.style.width = width + 'px';
+  canvas.style.height = height + 'px';
+  canvas.width = width * DPR;
+  canvas.height = height * DPR;
+
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.clearRect(0, 0, width, height);
+
+  // background
+  ctx.fillStyle = t.bg;
+  ctx.fillRect(0, 0, width, height);
+
+  // title (always top-left, unrotated, regardless of neck orientation)
+  if (state.title){
+    ctx.fillStyle = t.titleInk;
+    ctx.font = t.titleFont;
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(state.title, 14, 28);
+  }
+
+  // neck bounding box, in primary/secondary terms
+  const pPad0 = -6, pPad1 = primaryExtent + 6;
+  const sPad0 = -STRING_H / 2 + 4, sPad1 = secondaryExtent + STRING_H / 2 - 4;
+  const cornerA = toXY(pPad0, sPad0);
+  const cornerB = toXY(pPad1, sPad1);
+  const neckX = Math.min(cornerA.x, cornerB.x);
+  const neckY = Math.min(cornerA.y, cornerB.y);
+  const neckW = Math.abs(cornerB.x - cornerA.x);
+  const neckH = Math.abs(cornerB.y - cornerA.y);
+
+  // wood neck background
+  roundRect(ctx, neckX, neckY, neckW, neckH, 6);
+  const gradStart = toXY(pPad0, sPad0);
+  const gradEnd = toXY(pPad0, sPad1);
+  const grad = ctx.createLinearGradient(gradStart.x, gradStart.y, gradEnd.x, gradEnd.y);
+  grad.addColorStop(0, t.neckGradTop);
+  grad.addColorStop(1, t.neckGradBottom);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // inlays
+  const midSecondary = secondaryExtent / 2;
+  for (let f = state.firstFret; f <= state.lastFret; f++){
+    const p = markerX(state, f);
+    if (DOUBLE_INLAYS.includes(f)){
+      ctx.fillStyle = t.inlay;
+      let d = toXY(p, midSecondary - STRING_H * 0.9);
+      ctx.beginPath(); ctx.arc(d.x, d.y, 4, 0, Math.PI * 2); ctx.fill();
+      d = toXY(p, midSecondary + STRING_H * 0.9);
+      ctx.beginPath(); ctx.arc(d.x, d.y, 4, 0, Math.PI * 2); ctx.fill();
+    } else if (STANDARD_INLAYS.includes(f)){
+      ctx.fillStyle = t.inlay;
+      const d = toXY(p, midSecondary);
+      ctx.beginPath(); ctx.arc(d.x, d.y, 4.5, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // fret wires
+  for (let f = fretStart(state); f <= state.lastFret; f++){
+    const p = wireX(state, f);
+    const a = toXY(p, sPad0 + 2);
+    const b = toXY(p, sPad1 - 2);
+    ctx.strokeStyle = (f === 0) ? t.nutColor : t.fretWire;
+    ctx.lineWidth = (f === 0) ? 5 : 1.4;
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+  }
+
+  // strings + string (tuning) labels
+  for (let s = 0; s < numStrings; s++){
+    const secRel = secondaryForString(s);
+    const a = toXY(-2, secRel);
+    const b = toXY(primaryExtent + 2, secRel);
+    ctx.strokeStyle = t.string;
+    ctx.lineWidth = 1.2 + s * 0.35;
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+
+    // string label — sits just before the nut, on the secondary-axis
+    // position for that string (left of the neck when horizontal, above
+    // the neck when vertical).
+    const labelPos = toXY(-16, secRel);
+    ctx.fillStyle = t.stringLabel;
+    ctx.font = t.stringLabelFont;
+    if (!vertical){
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(state.strings[s], labelPos.x, labelPos.y + 4);
+    } else {
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(state.strings[s], labelPos.x, labelPos.y);
+    }
+  }
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+
+  // fret numbers — sit just past the far edge of the string spread (below
+  // the neck when horizontal, to the right of the neck when vertical).
+  ctx.fillStyle = t.fretNum;
+  ctx.font = t.fretNumFont;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = vertical ? 'middle' : 'alphabetic';
+  for (let f = state.firstFret; f <= state.lastFret; f++){
+    const p = wireX(state, f);
+    const pos = toXY(p, secondaryExtent + STRING_H / 2 + 14);
+    ctx.fillText(String(f), pos.x, pos.y);
+  }
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+
+  // markers
+  state.notes.forEach(key => {
+    const [sStr, fStr] = key.split('_');
+    const s = parseInt(sStr, 10), f = parseInt(fStr, 10);
+    if (f < state.firstFret || f > state.lastFret) return;
+    const pos = toXY(wireX(state, f), secondaryForString(s));
+    const x = pos.x, y = pos.y;
+    const p = fretPC(state, s, f);
+
+    let color = t.markerDefault;
+    let label = '';
+    if (state.rootPC !== null){
+      const interval = ((p - state.rootPC) % 12 + 12) % 12;
+      color = t.intervals[interval];
+      if (state.displayMode === 'name') label = NOTE_NAMES[p];
+      else if (state.displayMode === 'interval') label = INTERVAL_LABELS[interval];
+    } else {
+      if (state.displayMode === 'name') label = NOTE_NAMES[p];
+    }
+
+    ctx.beginPath();
+    ctx.arc(x, y, MARKER_R, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = t.markerStroke;
+    ctx.stroke();
+
+    if (label){
+      // Labels are always drawn centered and upright — never rotated —
+      // regardless of the neck's orientation.
+      ctx.fillStyle = t.markerText;
+      ctx.font = t.markerFont;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, x, y + 0.5);
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+    }
+  });
+
+  // footer state sync
+  el.rootLabel.textContent = state.rootPC !== null ? NOTE_NAMES[state.rootPC] : 'none';
+  el.octaveBtn.classList.toggle('active', state.octaveMode);
+  el.rootBtn.classList.toggle('active', state.rootPickActive);
+  el.shiftLabel.textContent = (state.shiftSemitones > 0 ? '+' : '') + state.shiftSemitones;
+}
+
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function layoutCards(){
+  // Landscape: diagrams stack full-width, one per row (bigger, print-friendly landscape).
+  // Portrait: diagrams arrange two-up side by side when there's more than one.
+  const usePaired = pageOrientation === 'portrait' && diagrams.length > 1;
+  diagrams.forEach(d => d.el.card.classList.toggle('paired', usePaired));
+}
+
+function setPageOrientation(orientation){
+  pageOrientation = orientation;
+  document.getElementById('landscapeBtn').classList.toggle('active', orientation === 'landscape');
+  document.getElementById('portraitBtn').classList.toggle('active', orientation === 'portrait');
+  diagrams.forEach(d => render(d));
+  layoutCards();
+}
+
+function downloadDataUrl(dataUrl, filename){
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+function exportAllAsPng(){
+  if (diagrams.length === 0) return;
+  const gap = 24;
+  const widths = diagrams.map(d => d.el.canvas.width / DPR);
+  const heights = diagrams.map(d => d.el.canvas.height / DPR);
+  const totalW = Math.max(...widths) + 40;
+  const totalH = heights.reduce((a, b) => a + b + gap, 0) + 20;
+
+  const combo = document.createElement('canvas');
+  combo.width = totalW * DPR;
+  combo.height = totalH * DPR;
+  const ctx = combo.getContext('2d');
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.fillStyle = getTheme().canvas.bg;
+  ctx.fillRect(0, 0, totalW, totalH);
+
+  let y = 20;
+  diagrams.forEach((d, i) => {
+    ctx.drawImage(d.el.canvas, 20, y, widths[i], heights[i]);
+    y += heights[i] + gap;
+  });
+
+  downloadDataUrl(combo.toDataURL('image/png'), 'fretboard-diagrams.png');
+}
+
+document.getElementById('addDiagramBtn').addEventListener('click', () => {
+  createDiagram({ title: '' });
+});
+document.getElementById('exportPngBtn').addEventListener('click', exportAllAsPng);
+document.getElementById('landscapeBtn').addEventListener('click', () => setPageOrientation('landscape'));
+document.getElementById('portraitBtn').addEventListener('click', () => setPageOrientation('portrait'));
+
+// initial state - the shell applies the chosen theme once it loads
+setPageOrientation('landscape');
+createDiagram({ title: '' });
+
+})();
+</script>
+<script>
+(function(){
+'use strict';
+var NS='http://www.w3.org/2000/svg';
+var CLEF='M21.5 28.1C21.5 27.6 21.5 27.6 21.8 27.4C22.3 26.8 23.1 26.1 23.8 25.3C26.8 22.0 28.6 17.7 28.6 13.7C28.6 10.5 27.7 7.4 26.3 5.3C25.7 4.5 24.8 3.5 24.4 3.5C23.9 3.5 22.8 4.4 22.0 5.2C19.4 8.2 18.5 12.7 18.5 16.4C18.5 18.5 18.8 20.8 19.0 22.3C19.1 22.7 19.1 22.8 18.7 23.2C16.4 25.1 13.9 27.3 12.0 29.6C9.5 32.7 8.0 36.0 8.0 39.9C8.0 46.1 12.3 52.1 21.1 52.1C21.9 52.1 22.9 52.0 23.6 51.9C24.0 51.8 24.1 51.7 24.1 52.2C24.6 54.6 25.1 57.7 25.1 59.4C25.1 64.7 21.5 65.4 19.4 65.4C17.4 65.4 16.5 64.8 16.5 64.3C16.5 64.1 16.8 64.0 17.6 63.7C18.8 63.4 20.1 62.4 20.1 60.4C20.1 58.4 18.8 56.7 16.6 56.7C14.2 56.7 12.8 58.6 12.8 60.8C12.8 63.2 14.2 66.7 19.6 66.7C22.0 66.7 26.7 65.6 26.7 59.5C26.7 57.4 26.0 54.0 25.6 51.8C25.6 51.4 25.6 51.4 26.1 51.2C29.7 49.7 32.2 46.7 32.2 42.6C32.2 38.0 28.8 33.9 23.5 33.9C22.5 33.9 22.5 33.9 22.4 33.3ZM24.9 9.1C26.1 9.1 27.1 10.0 27.1 12.0C27.1 14.5 25.9 16.8 23.1 19.6C22.5 20.2 21.6 21.0 20.8 21.7C20.6 21.9 20.4 21.9 20.3 21.4C20.2 20.5 20.1 19.3 20.1 18.1C20.1 12.5 22.7 9.1 24.9 9.1ZM21.0 33.6C21.1 34.3 21.1 34.2 20.5 34.4C17.3 35.5 15.2 38.4 15.2 41.4C15.2 44.7 16.9 47.0 19.4 47.8C19.7 47.9 20.1 48.0 20.3 48.0C20.6 48.0 20.8 47.8 20.8 47.6C20.8 47.4 20.5 47.2 20.2 47.1C18.7 46.5 17.6 44.9 17.6 43.3C17.6 41.2 19.1 39.7 21.2 39.1C21.8 38.9 21.9 39.0 22.0 39.4L23.8 50.1C23.8 50.5 23.8 50.5 23.3 50.6C22.7 50.7 22.0 50.8 21.2 50.8C14.9 50.8 10.9 47.3 10.9 42.3C10.9 40.2 11.2 37.3 14.2 33.9C16.4 31.5 18.0 30.2 19.7 28.8C20.1 28.5 20.2 28.6 20.2 29.0ZM23.5 39.3C23.4 38.9 23.4 38.8 23.9 38.8C26.8 39.0 29.2 41.5 29.2 44.7C29.2 46.9 27.8 48.8 25.8 49.8C25.4 50.0 25.3 50.0 25.2 49.6Z';
+
+/* ---- model -------------------------------------------------------------
+   FIFTHS is the line of fifths: every note name, key signature, mode tonic
+   and accidental order in the app is derived from it.
+   STEP is the treble-staff position of each letter, 0 = E4, +1 per degree. */
+var FIFTHS=['F','C','G','D','A','E','B'];
+var STEP={F:1,G:2,A:3,B:4,C:5,D:6,E:7};
+
+var MODES=[
+  {id:'ionian',     off: 0, q:'',  label:'Ionian — major'},
+  {id:'dorian',     off: 2, q:'m'},
+  {id:'phrygian',   off: 4, q:'m'},
+  {id:'lydian',     off:-1, q:''},
+  {id:'mixolydian', off: 1, q:''},
+  {id:'aeolian',    off: 3, q:'m', label:'Aeolian — minor'},
+  {id:'locrian',    off: 5, q:'°'}
+];
+
+/* twelve wheel positions; n = signed accidental count, alt = enharmonic twin */
+var POS=[],i,n;
+for(i=0;i<12;i++){
+  n = i<7 ? i : i-12;
+  POS.push({n:n, alt: Math.abs(n)>=5 ? (n>0 ? n-12 : n+12) : null});
+}
+
+function fname(f){
+  var i=((f+1)%7+7)%7, k=Math.floor((f+1)/7);
+  return FIFTHS[i]+(k>0 ? '♯'.repeat(k) : k<0 ? '♭'.repeat(-k) : '');
+}
+function tonic(n,m){return fname(n+m.off)+m.q}
+function tag(n){return n===0 ? '—' : Math.abs(n)+(n>0?'♯':'♭')}
+function words(n){
+  if(n===0) return 'no sharps or flats';
+  var a=Math.abs(n);
+  return a+(n>0 ? (a===1?' sharp':' sharps') : (a===1?' flat':' flats'));
+}
+/* accidental order and staff placement, both read off the line of fifths.
+   sharps run F C G D A E B and sit an octave up for F and G; flats run the
+   same letters backwards and sit exactly where STEP puts them. */
+function accSteps(n){
+  var out=[],k=Math.abs(n),L,j;
+  for(j=0;j<k;j++){
+    L = n>0 ? FIFTHS[j] : FIFTHS[6-j];
+    out.push(STEP[L] + (n>0 && (L==='F'||L==='G') ? 7 : 0));
+  }
+  return out;
+}
+
+/* ---- staff engraving ---------------------------------------------------- */
+var SP=9, BOT=52, X0=6, X1=169, NX=146;
+function py(step){return BOT-step*(SP/2)}
+function el(t,a){var e=document.createElementNS(NS,t),k;for(k in a)e.setAttribute(k,a[k]);return e}
+
+function sharpAt(g,x,y){
+  g.appendChild(el('line',{x1:x-2.4,y1:y-5.5,x2:x-2.4,y2:y+7,'class':'acc-stem'}));
+  g.appendChild(el('line',{x1:x+2.4,y1:y-7,x2:x+2.4,y2:y+5.5,'class':'acc-stem'}));
+  g.appendChild(el('line',{x1:x-5,y1:y-.6,x2:x+5,y2:y-2.6,'class':'acc-bar'}));
+  g.appendChild(el('line',{x1:x-5,y1:y+4.2,x2:x+5,y2:y+2.2,'class':'acc-bar'}));
+}
+function flatAt(g,x,y){
+  g.appendChild(el('line',{x1:x-2.6,y1:y-11,x2:x-2.6,y2:y+2.2,'class':'acc-stem'}));
+  g.appendChild(el('path',{d:'M '+(x-2.6)+' '+(y+2.2)+' C '+(x+4.4)+' '+y+' '+(x+3.6)+' '+(y-4.8)+' '+(x-2.6)+' '+(y-2.4),'class':'acc','stroke-width':1.3}));
+}
+
+var staffCache={};
+function staff(n,mi){
+  var key=n+'|'+mi;
+  if(!staffCache[key]) staffCache[key]=engrave(n,MODES[mi]);
+  return staffCache[key].cloneNode(true);
+}
+function engrave(n,m){
+  var svg=el('svg',{viewBox:'0 0 175 70','class':'staff',role:'img'}),j;
+  for(j=0;j<5;j++) svg.appendChild(el('line',{x1:X0,y1:BOT-j*SP,x2:X1,y2:BOT-j*SP,'class':'staffline'}));
+  svg.appendChild(el('path',{d:CLEF,'class':'clef'}));
+  var g=el('g',{}), steps=accSteps(n), x=46;
+  for(j=0;j<steps.length;j++){ (n>0?sharpAt:flatAt)(g,x,py(steps[j])); x+=11; }
+  svg.appendChild(g);
+  var bx=Math.max(x+4,62);
+  svg.appendChild(el('line',{x1:bx,y1:BOT-4*SP,x2:bx,y2:BOT,'class':'barline'}));
+  var name=fname(n+m.off), y=py(STEP[name.charAt(0)]);
+  svg.appendChild(el('ellipse',{cx:NX,cy:y,rx:5.4,ry:3.8,'class':'head',transform:'rotate(-20 '+NX+' '+y+')'}));
+  var t=el('title',{});
+  t.textContent=name+' '+m.id+', key signature of '+words(n);
+  svg.appendChild(t);
+  return svg;
+}
+
+
+/* ---- diatonic chords ----------------------------------------------------
+   The seven diatonic triads are seven consecutive positions on the same line
+   of fifths the wheel uses. Let s be a root's offset from the signature, so
+   s runs -1..5 (IV I V ii vi iii vii in a major key). Chord quality is a pure
+   function of s and never changes with mode - only the roman numeral does,
+   because that is measured from the selected tonic instead. */
+var ROM=['I','II','III','IV','V','VI','VII'];
+var SPAN=[5,4,3,2,1,0,-1];            /* clockwise = descending fifths */
+
+function quality(s,sev){
+  if(s===5)   return sev ? 'ø7'   : '°';
+  if(s>=2)    return sev ? 'm7'   : 'm';
+  if(s===1)   return sev ? '7'    : '';
+  return           sev ? 'maj7' : '';
+}
+function chordName(n,s,sev){return fname(n+s)+quality(s,sev)}
+
+function numeral(s,off,sev){
+  var d=s-off;
+  var deg=((d*4)%7+7)%7;                       /* fifths distance -> degree */
+  var acc=d<-1 ? '♭' : d>5 ? '♯' : '';         /* outside the parallel major */
+  var r=ROM[deg];
+  if(s>=2) r=r.toLowerCase();
+  return acc+r+(s===5 ? (sev?'ø7':'°') : sev ? (s<=0?'maj7':'7') : '');
+}
+/* stack diatonic thirds by folding back into the -1..5 span */
+function chordTones(n,s,sev){
+  var f=function(k){return k>5 ? k-7 : k};
+  var t=[s,f(s+4),f(s+1)];
+  if(sev) t.push(f(s+5));
+  return t.map(function(k){return fname(n+k)}).join('  ');
+}
+
+var RC=150, RR=106, NW=62, NH=36, STEPA=360/7;
+function chordRing(n,off,sev,sel){
+  var svg=el('svg',{viewBox:'0 0 300 300','class':'ring',role:'img'});
+  var tonicK=SPAN.indexOf(off), j;
+  var ang=function(k){return (k-tonicK)*STEPA};
+  var pt=function(a,r){var t=a*Math.PI/180;return [RC+r*Math.sin(t), RC-r*Math.cos(t)]};
+
+  for(j=0;j<7;j++){
+    var a0=ang(j)+16.5, a1=ang(j+1)-16.5;
+    var p0=pt(a0,RR), p1=pt(a1,RR);
+    /* the one link that is a diminished fifth, IV -> vii */
+    var seam=(SPAN[j]===-1);
+    svg.appendChild(el('path',{d:'M '+p0[0].toFixed(1)+' '+p0[1].toFixed(1)+
+      ' A '+RR+' '+RR+' 0 0 1 '+p1[0].toFixed(1)+' '+p1[1].toFixed(1),
+      'class':seam?'rseam':'rline'}));
+    var am=ang(j)+STEPA/2, pm=pt(am,RR);
+    svg.appendChild(el('path',{d:'M -4 -3.4 L 4 0 L -4 3.4 Z','class':'rhead',
+      transform:'translate('+pm[0].toFixed(1)+' '+pm[1].toFixed(1)+') rotate('+am.toFixed(1)+')'}));
+  }
+
+  SPAN.forEach(function(s,k){
+    var p=pt(ang(k),RR);
+    var g=el('g',{'class':'cnode'+(s===off?' tonic':'')+(s===sel?' sel':'')});
+    g.appendChild(el('rect',{x:p[0]-NW/2,y:p[1]-NH/2,width:NW,height:NH,rx:6}));
+    var t1=el('text',{x:p[0],y:p[1]-3,'text-anchor':'middle','class':'cn'});
+    t1.textContent=chordName(n,s,sev);
+    var t2=el('text',{x:p[0],y:p[1]+11,'text-anchor':'middle','class':'cnum'});
+    t2.textContent=numeral(s,off,sev);
+    g.appendChild(t1); g.appendChild(t2);
+    g.addEventListener('click',function(){selChord=s;renderChords()});
+    svg.appendChild(g);
+  });
+  var ttl=el('title',{});
+  ttl.textContent='Diatonic chords arranged by descending fifths';
+  svg.insertBefore(ttl,svg.firstChild);
+  return svg;
+}
+
+/* ---- build ------------------------------------------------------------- */
+var $=function(id){return document.getElementById(id)};
+var wheel=$('wheel'), outer=[], inner=[], step=0, prev=-1, mo=0, mi=5;
+var selChord=null, sevenths=false;
+
+MODES.forEach(function(m,j){
+  var text=m.label||m.id.charAt(0).toUpperCase()+m.id.slice(1);
+  ['mo','mi'].forEach(function(id){
+    var o=document.createElement('option');
+    o.value=j; o.textContent=text;
+    $(id).appendChild(o);
+  });
+});
+$('mo').value=mo; $('mi').value=mi;
+
+/* Each label needs a world rotation of zero, i.e. -(slotAngle + wheelAngle).
+   The slot part is constant, so it is baked into a static wrapper at build
+   time; that leaves -wheelAngle, which is identical for all 24 labels and so
+   can be driven by a single shared CSS rule instead of 24 style writes. */
+function div(cls){var d=document.createElement('div');d.className=cls;return d}
+POS.forEach(function(p,j){
+  var ang=j*30, back='rotate('+(-ang)+'deg)';
+  var sp=div('spoke'); sp.style.transform='rotate('+(ang+15)+'deg)'; wheel.appendChild(sp);
+  var slot=div('slot'); slot.style.transform='rotate('+ang+'deg)';
+
+  var a=div('lbl cr'), b=div('lbl ilbl cr');
+  a.addEventListener('click',function(){goTo(j)});
+  b.addEventListener('click',function(){goTo(j)});
+
+  var fa=div('fix'); fa.style.transform=back; fa.appendChild(a);
+  var fb=div('fix'); fb.style.transform=back; fb.appendChild(b);
+  var pa=div('pos'); pa.appendChild(fa);
+  var pb=div('ipos'); pb.appendChild(fb);
+  slot.appendChild(pa); slot.appendChild(pb); wheel.appendChild(slot);
+  outer.push(a); inner.push(b);
+});
+
+var spin=document.createElement('style');
+document.head.appendChild(spin);
+spin.sheet.insertRule('.cr{transform:rotate(0deg)}',0);
+var spinRule=spin.sheet.cssRules[0];
+
+/* label text depends only on the chosen modes, so it is written on mode
+   change - not on every rotation. */
+function label(){
+  var m1=MODES[mo], m2=MODES[mi];
+  POS.forEach(function(p,j){
+    outer[j].innerHTML='<div class="n">'+tonic(p.n,m1)+'</div><div class="c">'+tag(p.n)+'</div>'+
+      (p.alt!==null ? '<div class="x">'+tonic(p.alt,m1)+' '+tag(p.alt)+'</div>' : '');
+    inner[j].textContent=tonic(p.n,m2);
+  });
+}
+
+/* rotation touches one custom property plus four class flips. */
+function place(){
+  var idx=((step%12)+12)%12, p=POS[idx], m1=MODES[mo], m2=MODES[mi];
+  var deg=-step*30;
+  wheel.style.transform='rotate('+deg+'deg)';
+  spinRule.style.transform='rotate('+(-deg)+'deg)';
+  if(prev!==-1){ outer[prev].classList.remove('on'); inner[prev].classList.remove('on'); }
+  outer[idx].classList.add('on'); inner[idx].classList.add('on');
+  prev=idx;
+
+  $('hk').textContent=fname(p.n);
+  $('hm').textContent='major · '+tag(p.n);
+  $('posLabel').textContent='Position '+String(idx).padStart(2,'0');
+  $('n1').textContent=fname(p.n+m1.off)+' '+m1.id;
+  $('n2').textContent=fname(p.n+m2.off)+' '+m2.id;
+  $('s1').replaceChildren(staff(p.n,mo));
+  $('s2').replaceChildren(staff(p.n,mi));
+  renderChords();
+  $('enh').textContent = p.alt!==null
+    ? words(p.n)+' — enharmonically '+fname(p.alt)+' major, '+words(p.alt)
+    : words(p.n)+' — both rings share these seven notes';
+}
+
+function renderChords(){
+  var p=POS[((step%12)+12)%12], off=MODES[mo].off;
+  if(selChord===null||SPAN.indexOf(selChord)<0) selChord=off;
+  $('ring').replaceChildren(chordRing(p.n,off,sevenths,selChord));
+  $('seam').textContent='clockwise = descending fifths · dashed '+
+    numeral(-1,off,false)+'→'+numeral(5,off,false)+' is a tritone';
+  $('tones').textContent=chordName(p.n,selChord,sevenths)+'   '+
+    numeral(selChord,off,sevenths)+'   ·   '+chordTones(p.n,selChord,sevenths);
+}
+
+function goTo(j){ step += ((j-(((step%12)+12)%12))+18)%12-6; place(); }
+
+$('cw').addEventListener('click',function(){step++;place()});
+$('ccw').addEventListener('click',function(){step--;place()});
+$('mo').addEventListener('change',function(){mo=+this.value;selChord=null;label();place()});
+$('sev').addEventListener('change',function(){sevenths=this.checked;renderChords()});
+$('tabN').addEventListener('click',function(){
+  $('panelN').classList.remove('off'); $('panelC').classList.add('off');
+  this.classList.add('on'); $('tabC').classList.remove('on');
+});
+$('tabC').addEventListener('click',function(){
+  $('panelC').classList.remove('off'); $('panelN').classList.add('off');
+  this.classList.add('on'); $('tabN').classList.remove('on');
+});
+$('mi').addEventListener('change',function(){mi=+this.value;label();place()});
+
+label(); place();
+})();
+</script>
+<script>
+(function(){
+  'use strict';
+
+  // One palette drives both tools. Every value here is a CSS custom property
+  // written to :root; the fretboard's canvas colours are keyed to the same
+  // theme ids inside its own script.
+  var THEMES = {
+    paper:{label:'Paper', vars:{
+      '--paper':"#F5F2EA",
+      '--paper-raised':"#EFEBE0",
+      '--ink':"#1B1A17",
+      '--ink-soft':"#5B584E",
+      '--ink-mute':"#948F80",
+      '--line':"#D8D2C2",
+      '--line-strong':"#B9B29C",
+      '--red':"#C1272D",
+      '--red-ink':"#7A1519",
+      '--on-red':"#F5F2EA",
+      '--radius':"0",
+      '--font-display':"'Space Grotesk', sans-serif",
+      '--font-body':"'IBM Plex Sans', sans-serif",
+      '--font-mono':"'IBM Plex Mono', monospace"
+    }},
+    night:{label:'Night', vars:{
+      '--paper':"#17160F",
+      '--paper-raised':"#1F1D14",
+      '--ink':"#F2EEE1",
+      '--ink-soft':"#B6B09B",
+      '--ink-mute':"#7A7462",
+      '--line':"#332F22",
+      '--line-strong':"#4A4530",
+      '--red':"#E2453D",
+      '--red-ink':"#F4938C",
+      '--on-red':"#17160F",
+      '--radius':"0",
+      '--font-display':"'Space Grotesk', sans-serif",
+      '--font-body':"'IBM Plex Sans', sans-serif",
+      '--font-mono':"'IBM Plex Mono', monospace"
+    }},
+    terminal:{label:'Terminal', vars:{
+      '--paper':"#0A0A08",
+      '--paper-raised':"#141410",
+      '--ink':"#FFB000",
+      '--ink-soft':"#B87800",
+      '--ink-mute':"#8A5C00",
+      '--line':"#2A2A20",
+      '--line-strong':"#3D3D2C",
+      '--red':"#FFB000",
+      '--red-ink':"#FFC94D",
+      '--on-red':"#0A0A08",
+      '--radius':"2px",
+      '--font-display':"'JetBrains Mono', monospace",
+      '--font-body':"'JetBrains Mono', monospace",
+      '--font-mono':"'JetBrains Mono', monospace"
+    }},
+    prog:{label:'70\'s Prog', vars:{
+      '--paper':"#0C0E2A",
+      '--paper-raised':"#141840",
+      '--ink':"#E8DCB5",
+      '--ink-soft':"#B9A46A",
+      '--ink-mute':"#8A7A4A",
+      '--line':"#2A305A",
+      '--line-strong':"#3D4470",
+      '--red':"#D4AF37",
+      '--red-ink':"#E9C765",
+      '--on-red':"#0C0E2A",
+      '--radius':"6px",
+      '--font-display':"'Zilla Slab', serif",
+      '--font-body':"'Inter', sans-serif",
+      '--font-mono':"'JetBrains Mono', monospace"
+    }},
+    jazz:{label:'60\'s Jazz', vars:{
+      '--paper':"#00183A",
+      '--paper-raised':"#002050",
+      '--ink':"#F5E6C8",
+      '--ink-soft':"#A89878",
+      '--ink-mute':"#7E7057",
+      '--line':"#003366",
+      '--line-strong':"#14497E",
+      '--red':"#CC6633",
+      '--red-ink':"#E08A55",
+      '--on-red':"#00183A",
+      '--radius':"4px",
+      '--font-display':"'Zilla Slab', serif",
+      '--font-body':"'Inter', sans-serif",
+      '--font-mono':"'JetBrains Mono', monospace"
+    }},
+    psychedelic:{label:'Psychedelic', vars:{
+      '--paper':"#0D001A",
+      '--paper-raised':"#1A0033",
+      '--ink':"#F0D6FF",
+      '--ink-soft':"#CC66FF",
+      '--ink-mute':"#8A5AA8",
+      '--line':"#3D0066",
+      '--line-strong':"#5A1090",
+      '--red':"#FF00FF",
+      '--red-ink':"#FF7BE8",
+      '--on-red':"#0D001A",
+      '--radius':"12px",
+      '--font-display':"'Space Grotesk', sans-serif",
+      '--font-body':"'IBM Plex Sans', sans-serif",
+      '--font-mono':"'IBM Plex Mono', monospace"
+    }}
+  };
+
+  var ORDER = ['fretboard','circle'];
+  var PANEL = {fretboard:'fretApp', circle:'circleApp'};
+  var tabs = {}, panels = {};
+  ORDER.forEach(function(k){
+    tabs[k] = document.getElementById('tab-' + k);
+    panels[k] = document.getElementById(PANEL[k]);
+  });
+  var pick = document.getElementById('themePick');
+  var meta = document.querySelector('meta[name="theme-color"]');
+  var tab = ORDER[0], theme = 'paper';
+
+  Object.keys(THEMES).forEach(function(k){
+    var o = document.createElement('option');
+    o.value = k; o.textContent = THEMES[k].label;
+    pick.appendChild(o);
+  });
+
+  function applyTheme(key, writeHash){
+    theme = THEMES[key] ? key : 'paper';
+    var vars = THEMES[theme].vars, root = document.documentElement.style;
+    Object.keys(vars).forEach(function(name){ root.setProperty(name, vars[name]); });
+    if(meta) meta.setAttribute('content', vars['--paper']);
+    if(pick.value !== theme) pick.value = theme;
+    if(window.setFretboardTheme) window.setFretboardTheme(theme);
+    if(writeHash) writeHashSafely();
+  }
+
+  function showTab(key, writeHash){
+    tab = PANEL[key] ? key : ORDER[0];
+    ORDER.forEach(function(k){
+      var on = (k === tab);
+      panels[k].hidden = !on;
+      tabs[k].classList.toggle('on', on);
+      tabs[k].setAttribute('aria-selected', on ? 'true' : 'false');
+      tabs[k].tabIndex = on ? 0 : -1;
+    });
+    document.body.setAttribute('data-tab', tab);
+    if(writeHash) writeHashSafely();
+  }
+
+  // The hash carries both choices, so a link restores the exact view.
+  // Opened straight off disk the page has a null origin and Chrome refuses
+  // replaceState, so fall back to setting the hash outright.
+  function writeHashSafely(){
+    var want = tab + (theme === 'paper' ? '' : '/' + theme);
+    if(location.hash.slice(1) === want) return;
+    try{ history.replaceState(null, '', '#' + want); }
+    catch(err){ location.hash = want; }
+  }
+
+  function readHash(){
+    var parts = location.hash.slice(1).split('/');
+    showTab(parts[0], false);
+    applyTheme(parts[1] || 'paper', false);
+  }
+
+  ORDER.forEach(function(k, i){
+    tabs[k].addEventListener('click', function(){ showTab(k, true); });
+    tabs[k].addEventListener('keydown', function(e){
+      if(e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      e.preventDefault();
+      var next = ORDER[(i + (e.key === 'ArrowRight' ? 1 : ORDER.length - 1)) % ORDER.length];
+      showTab(next, true);
+      tabs[next].focus();
+    });
+  });
+  pick.addEventListener('change', function(){ applyTheme(pick.value, true); });
+  window.addEventListener('hashchange', readHash);
+
+  // the eyebrow reports how many diagrams are on the sheet
+  var count = document.getElementById('fretCount');
+  var sheet = document.getElementById('diagrams');
+  if(count && sheet){
+    var tally = function(){
+      var n = sheet.querySelectorAll('.diagram-card').length;
+      count.textContent = 'Diagrams ' + String(n < 10 ? '0' + n : n);
+    };
+    new MutationObserver(tally).observe(sheet, {childList:true});
+    tally();
+  }
+
+  readHash();
+})();
+</script>
+</body>
+</html>
