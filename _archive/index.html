@@ -8,9 +8,7 @@
 <meta name="theme-color" content="#F5F2EA">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link id="baseFontLink" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
-<!-- Inter, JetBrains Mono, and Zilla Slab are only used by non-default themes;
-     the shell script injects them on first use instead of loading them eagerly. -->
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Space+Grotesk:wght@400;500;700&family=Zilla+Slab:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 /* ---- shell ---------------------------------------------------------------
    The bar holds the two things that apply to the whole page: which tool is
@@ -18,7 +16,6 @@
    the tools do, so it repaints with them. */
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0;overflow-x:hidden}
-html{scrollbar-gutter:stable}
 :root{
   --paper:#F5F2EA; --paper-raised:#EFEBE0;
   --ink:#1B1A17; --ink-soft:#5B584E; --ink-mute:#948F80;
@@ -383,7 +380,7 @@ body{
   letter-spacing:-.01em;
   margin:0;
 }
-#circleApp .ctl{display:flex;justify-content:center;align-items:center;gap:14px;margin:1.25rem 0 1.5rem}
+#circleApp .ctl{display:flex;justify-content:center;align-items:center;gap:14px;margin:1.5rem 0 1.25rem}
 #circleApp .arrow-btn{
   width:56px;height:48px;
   border-radius:var(--radius);
@@ -438,42 +435,22 @@ body{
   margin-left:-32.5%;margin-top:-32.5%;
   border-radius:50%;
   border:1px solid var(--line-strong);
-  pointer-events:none;
 }
 #circleApp .spoke{
   position:absolute;left:50%;top:0;
   margin-left:-.5px;width:1px;height:33.4%;
   background:var(--line);
   transform-origin:50% 150%;
-  pointer-events:none;
 }
-/* Every slot is a full-size absolute layer, so the twelve of them stack and
-   the last one painted would otherwise swallow all clicks over the dial.
-   The layers stay transparent to the pointer and the targets opt back in. */
-#circleApp .slot{position:absolute;inset:0;pointer-events:none}
+#circleApp .slot{position:absolute;inset:0}
 #circleApp .pos{position:absolute;left:50%;top:2%;width:20.5%;margin-left:-10.25%;text-align:center}
 #circleApp .ipos{position:absolute;left:50%;top:21.5%;width:15%;margin-left:-7.5%;text-align:center}
 #circleApp .fix{display:block;width:100%}
-#circleApp .lbl{
-  display:block;width:100%;
-  transition:transform 620ms cubic-bezier(.4,0,.2,1);
-  cursor:pointer;color:var(--ink-soft);
-  pointer-events:auto;
-  touch-action:manipulation;
-}
-/* the wedge layer: one transparent sector per position, sitting under the
-   labels so the whole slice is a target rather than just the text */
-#circleApp .hit{position:absolute;inset:0}
-#circleApp .hit path{fill:transparent;pointer-events:all;cursor:pointer;touch-action:manipulation}
-#circleApp .lbl:hover,#circleApp .lbl.hov{color:var(--red-ink)}
-#circleApp .lbl:hover .n,#circleApp .lbl.hov .n{color:var(--red-ink)}
-#circleApp .lbl:active{opacity:.65}
+#circleApp .lbl{display:block;width:100%;transition:transform 620ms cubic-bezier(.4,0,.2,1);cursor:pointer;color:var(--ink-soft)}
 #circleApp .lbl .n{font-family:var(--font-display);font-weight:500;font-size:max(14px,calc(var(--dial)*.047));line-height:1.15;color:var(--ink)}
 #circleApp .lbl .c{font-family:var(--font-mono);font-size:max(9px,calc(var(--dial)*.029));line-height:1.5;letter-spacing:.02em}
 #circleApp .lbl .x{font-family:var(--font-mono);font-size:max(8px,calc(var(--dial)*.0265));line-height:1.4;color:var(--ink-mute)}
-/* negative margin cancels the padding, so the inner ring keeps its position
-   and only gains vertical tap area */
-#circleApp .ilbl{font-family:var(--font-display);font-size:max(11px,calc(var(--dial)*.038));line-height:1.2;color:var(--ink-soft);padding:6px 0;margin:-6px 0}
+#circleApp .ilbl{font-family:var(--font-display);font-size:max(11px,calc(var(--dial)*.038));line-height:1.2;color:var(--ink-soft)}
 #circleApp .lbl.on{color:var(--red-ink)}
 #circleApp .lbl.on .n, #circleApp .lbl.on .c{color:var(--red-ink)}
 #circleApp .hub{
@@ -506,14 +483,17 @@ body{
   letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);cursor:pointer}
 #circleApp .sw input{width:14px;height:14px;accent-color:var(--red);cursor:pointer}
 #circleApp .ring{display:block;width:100%;max-width:320px;margin:0 auto;height:auto}
-#circleApp .rline{fill:var(--line-strong);stroke:none}
+#circleApp .rline{stroke:var(--line-strong);fill:none;stroke-width:.8}
 #circleApp .rseam{stroke:var(--ink-mute);fill:none;stroke-width:.8;stroke-dasharray:3 3}
+#circleApp .rhead{fill:var(--line-strong)}
 #circleApp .cnode rect{fill:var(--paper);stroke:var(--line-strong);stroke-width:.8;cursor:pointer}
 #circleApp .cnode .cn{font-family:var(--font-display);font-size:13px;fill:var(--ink);pointer-events:none}
 #circleApp .cnode .cnum{font-family:var(--font-mono);font-size:10px;fill:var(--ink-soft);pointer-events:none}
 #circleApp .cnode.tonic rect{stroke:var(--red);stroke-width:1.4}
 #circleApp .cnode.tonic .cn{fill:var(--red-ink)}
 #circleApp .cnode.sel rect{fill:var(--paper-raised)}
+#circleApp .seamnote{font-family:var(--font-mono);font-size:10px;color:var(--ink-mute);text-align:center;
+  line-height:1.6;margin-top:2px}
 #circleApp .tones{font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);text-align:center;
   border-top:1px solid var(--line);padding-top:12px;margin-top:6px;line-height:1.7}
 #circleApp .scores{margin-top:1rem}
@@ -528,14 +508,12 @@ body{
   letter-spacing:.14em;text-transform:uppercase;color:var(--ink-mute);
 }
 #circleApp .sname{font-family:var(--font-display);font-weight:500;font-size:15px;color:var(--ink)}
-#circleApp .staff{display:block;width:100%;max-width:305px;height:auto}
+#circleApp .staff{display:block;width:100%;max-width:280px;height:auto}
 #circleApp .staffline, #circleApp .barline{stroke:var(--ink-soft);stroke-width:.8}
 #circleApp .barline{stroke:var(--line-strong)}
 #circleApp .acc{stroke:var(--ink);fill:none;stroke-linecap:round}
 #circleApp .acc-bar{stroke:var(--ink);stroke-width:2.4;stroke-linecap:butt}
 #circleApp .acc-stem{stroke:var(--ink);stroke-width:1.1}
-/* the single accidental a non-major family adds on top of the key signature */
-#circleApp .acc-alt{stroke:var(--red-ink)}
 #circleApp .head{stroke:var(--red);fill:none;stroke-width:1.8}
 #circleApp .clef{fill:var(--ink)}
 #circleApp .enh{
@@ -559,20 +537,18 @@ body{
     grid-template-columns:minmax(0,1.05fr) minmax(300px,400px);
     grid-template-areas:
       "head head"
-      "dial modes"
       "dial ctl"
-      "dial keys"
+      "dial modes"
       "dial seg"
-      "dial opts"
-      "dial focus"
-      "dial sheet"
+      "dial scores"
+      "dial chords"
       "dial foot";
     column-gap:3rem;
     align-content:start;
   }
 #circleApp header{grid-area:head}
-#circleApp .modes{grid-area:modes;margin:0 0 1rem}
-#circleApp .ctl{grid-area:ctl;margin:0 0 .5rem;justify-content:flex-start}
+#circleApp .ctl{grid-area:ctl;margin:0 0 1rem;justify-content:flex-start}
+#circleApp .modes{grid-area:modes}
 #circleApp .stage{grid-area:dial;align-self:start;margin-top:.5rem}
 #circleApp .seg{grid-area:seg;margin:1.25rem 0 1rem}
 #circleApp .scores{grid-area:scores;margin-top:0}
@@ -594,21 +570,19 @@ body{
     grid-template-columns:minmax(0,1fr) minmax(280px,380px);
     grid-template-areas:
       "head head"
-      "dial modes"
       "dial ctl"
-      "dial keys"
+      "dial modes"
       "dial seg"
-      "dial opts"
-      "dial focus"
-      "dial sheet"
+      "dial scores"
+      "dial chords"
       "dial foot";
     column-gap:2rem;
     align-content:start;
   }
 #circleApp header{grid-area:head;margin-bottom:1rem}
 #circleApp h1{font-size:22px}
-#circleApp .modes{grid-area:modes;margin:0 0 .75rem}
-#circleApp .ctl{grid-area:ctl;margin:0 0 .5rem;justify-content:flex-start}
+#circleApp .ctl{grid-area:ctl;margin:0 0 .75rem;justify-content:flex-start}
+#circleApp .modes{grid-area:modes}
 #circleApp .stage{grid-area:dial;align-self:start}
 #circleApp .scores{grid-area:scores;margin-top:0}
 #circleApp .chords{grid-area:chords}
@@ -620,110 +594,6 @@ body{
 @media (min-width:1200px) and (min-height:800px){
 #circleApp .wrap{--dial:min(100%,62vh,500px)}
 #circleApp .staff{max-width:380px}
-}
-
-/* ---- merged chord + notation panel -------------------------------------- */
-#circleApp .keyline{
-  margin:1.5rem 0 0;
-  border-top:1px solid var(--line);
-  padding-top:10px;
-}
-#circleApp .klrow{
-  display:flex;justify-content:space-between;align-items:baseline;
-  padding:3px 0;
-}
-#circleApp .keyline .enh{border:0;margin:6px 0 0;padding:0;text-align:left;line-height:1.6}
-#circleApp .detail{margin-top:1.25rem}
-#circleApp .dhead{
-  display:flex;align-items:baseline;gap:12px;
-  border-bottom:1px solid var(--line-strong);padding-bottom:6px;
-}
-#circleApp .dname{font-family:var(--font-display);font-weight:700;font-size:26px;color:var(--red-ink);line-height:1}
-#circleApp .dnum{font-family:var(--font-mono);font-size:14px;color:var(--ink-soft)}
-#circleApp .dsub{
-  display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
-  font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);
-  padding:7px 0 0;line-height:1.6;
-}
-#circleApp .dtones{color:var(--ink-soft)}
-#circleApp .fig{margin-top:1.1rem}
-#circleApp .figbar{
-  display:flex;justify-content:space-between;align-items:baseline;
-  border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:4px;
-}
-#circleApp .rng{font-family:var(--font-mono);font-size:10px;color:var(--ink-mute);letter-spacing:.03em}
-#circleApp .gstaff{display:block;width:100%;max-width:430px;height:auto;margin:0 auto}
-#circleApp .ledger{stroke:var(--ink-soft);stroke-width:.8}
-#circleApp .bracket{stroke:var(--ink);stroke-width:1.4;fill:none;stroke-linejoin:miter}
-#circleApp .clef-hook{stroke:var(--ink);stroke-width:2;fill:none;stroke-linecap:round}
-#circleApp .clef-dot{fill:var(--ink)}
-#circleApp .head.root{stroke:var(--red-ink);stroke-width:2.4}
-#circleApp .deg{font-family:var(--font-mono);font-size:9.5px;fill:var(--ink-mute)}
-#circleApp .deg.rootdeg{fill:var(--red-ink)}
-/* reminders sit back from the notes they annotate */
-#circleApp .acc-court{stroke:var(--ink-mute)}
-#circleApp .paren{stroke:var(--ink-mute);stroke-width:.9;fill:none;stroke-linecap:round}
-#circleApp .viewopts{
-  display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;
-  border-bottom:1px solid var(--line);padding-bottom:10px;margin:-.35rem 0 1rem;
-}
-#circleApp .ottline{stroke:var(--ink-soft);stroke-width:.9;fill:none;stroke-dasharray:3 2.5}
-#circleApp .otttext{font-family:var(--font-mono);font-size:10px;fill:var(--ink-soft);font-style:italic}
-
-#circleApp .reg{
-  display:flex;align-items:center;justify-content:center;gap:10px;
-  margin-top:1.1rem;border-top:1px solid var(--line);padding-top:12px;
-}
-#circleApp .regb{
-  height:32px;padding:0 12px;
-  background:var(--paper-raised);border:1px solid var(--line-strong);border-radius:var(--radius);
-  font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--ink-soft);cursor:pointer;
-}
-#circleApp .regb:hover:not(:disabled){color:var(--ink);border-color:var(--ink)}
-#circleApp .regb:disabled{opacity:.4;cursor:default}
-#circleApp .regr{font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);min-width:9ch;text-align:center}
-
-/* ---- sheet view --------------------------------------------------------- */
-#circleApp .segsm{display:flex;border:1px solid var(--line-strong);border-radius:var(--radius);overflow:hidden}
-#circleApp .segsm button{
-  height:26px;padding:0 10px;border:0;background:transparent;color:var(--ink-mute);
-  font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
-}
-#circleApp .segsm button+button{border-left:1px solid var(--line-strong)}
-#circleApp .segsm button.on{background:var(--paper-raised);color:var(--ink)}
-#circleApp .srow{
-  display:grid;grid-template-columns:74px minmax(0,1fr);
-  gap:10px;align-items:center;
-  padding:8px 0;border-bottom:1px solid var(--line);
-}
-#circleApp .srow:last-child{border-bottom:0}
-#circleApp .srow.tonic .snum{color:var(--red-ink)}
-#circleApp .srow.tonic{background:var(--paper-raised)}
-#circleApp .sgut{padding-left:2px}
-#circleApp .snum{font-family:var(--font-mono);font-size:12px;color:var(--ink)}
-#circleApp .ssym{font-family:var(--font-display);font-weight:500;font-size:15px;color:var(--ink);line-height:1.25}
-#circleApp .smode{font-family:var(--font-mono);font-size:9.5px;color:var(--ink-mute);line-height:1.35;margin-top:2px}
-#circleApp .srow .gstaff{max-width:none}
-
-/* the merged panel takes the grid slots the old Notation/Chords tabs held */
-@media (min-width:720px) and (min-aspect-ratio:1/1){
-#circleApp .keyline{grid-area:keys;margin:0 0 .25rem}
-#circleApp .viewopts{grid-area:opts}
-#circleApp #panelF{grid-area:focus}
-#circleApp #panelS{grid-area:sheet}
-#circleApp .gstaff{max-width:none}
-/* the notation column now carries two full systems, so it takes more of the
-   width than the old single-note staves needed */
-#circleApp .wrap{grid-template-columns:minmax(0,.92fr) minmax(360px,540px);--dial:min(100%,56vh,400px)}
-#circleApp .ring{max-width:440px}
-}
-@media (orientation:landscape) and (max-height:600px){
-#circleApp .keyline{grid-area:keys;margin:0}
-#circleApp .viewopts{grid-area:opts}
-#circleApp #panelF{grid-area:focus}
-#circleApp #panelS{grid-area:sheet}
-#circleApp .gstaff{max-width:none}
 }
 </style>
 </head>
@@ -769,12 +639,6 @@ body{
   <h1>Circle of fifths</h1>
 </header>
 
-<div class="modes">
-  <div class="mrow"><label for="mf">Scale</label><select id="mf"></select></div>
-  <div class="mrow"><label for="mo">Outer</label><select id="mo"></select></div>
-  <div class="mrow"><label for="mi">Inner</label><select id="mi"></select></div>
-</div>
-
 <div class="ctl">
   <button class="arrow-btn" id="ccw" aria-label="Move counter-clockwise around the circle">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M19 12H5"/><path d="m11 6-6 6 6 6"/></svg>
@@ -784,74 +648,52 @@ body{
   </button>
 </div>
 
+<div class="modes">
+  <div class="mrow"><label for="mo">Outer</label><select id="mo"></select></div>
+  <div class="mrow"><label for="mi">Inner</label><select id="mi"></select></div>
+</div>
+
 <div class="stage">
   <div class="wheel" id="wheel"><div class="ring2"></div></div>
   <div class="hub"><div class="hk" id="hk">C</div><div class="hm" id="hm">major · —</div></div>
   <div class="ptr"></div>
 </div>
 
-<div class="keyline">
-  <div class="klrow"><span class="role">Outer ring</span><span class="sname" id="n1"></span></div>
-  <div class="klrow"><span class="role">Inner ring</span><span class="sname" id="n2"></span></div>
+<div class="seg">
+  <button class="seg-b on" id="tabN">Notation</button>
+  <button class="seg-b" id="tabC">Chords</button>
+</div>
+
+<div class="scores panel" id="panelN">
+  <div class="score">
+    <div class="scorehead"><span class="role">Outer ring</span><span class="sname" id="n1"></span></div>
+    <div id="s1"></div>
+  </div>
+  <div class="score">
+    <div class="scorehead"><span class="role">Inner ring</span><span class="sname" id="n2"></span></div>
+    <div id="s2"></div>
+  </div>
   <div class="enh" id="enh"></div>
 </div>
 
-<div class="seg">
-  <button class="seg-b on" id="tabF">Focus</button>
-  <button class="seg-b" id="tabS">Sheet</button>
-</div>
-
-<div class="viewopts">
-  <label class="sw"><input type="checkbox" id="sev"> Sevenths</label>
-  <label class="sw"><input type="checkbox" id="court" checked> Courtesy accidentals</label>
-</div>
-
-<div class="panel" id="panelF">
+<div class="chords panel off" id="panelC">
   <div class="chead">
     <span class="role">Diatonic chords</span>
+    <label class="sw"><input type="checkbox" id="sev"> Sevenths</label>
   </div>
   <div id="ring"></div>
-  <div class="detail">
-    <div class="dhead">
-      <div class="dname" id="dName"></div>
-      <div class="dnum" id="dNum"></div>
-    </div>
-    <div class="dsub"><span id="dMode"></span><span class="dtones" id="tones"></span></div>
-    <div class="fig">
-      <div class="figbar"><span class="role">Scale in steps</span><span class="rng" id="rngScale"></span></div>
-      <div id="figScale"></div>
-    </div>
-    <div class="fig">
-      <div class="figbar"><span class="role">Arpeggio in thirds</span><span class="rng" id="rngArp"></span></div>
-      <div id="figArp"></div>
-    </div>
-    <div class="reg">
-      <button class="regb" id="octDn" aria-label="Move the figures down an octave">Octave −</button>
-      <span class="regr" id="octRead"></span>
-      <button class="regb" id="octUp" aria-label="Move the figures up an octave">Octave +</button>
-    </div>
-  </div>
+  <div class="seamnote" id="seam"></div>
+  <div class="tones" id="tones"></div>
 </div>
 
-<div class="panel off" id="panelS">
-  <div class="chead">
-    <span class="role">All seven degrees</span>
-    <div class="segsm">
-      <button class="on" id="figScl">Scales</button>
-      <button id="figArpB">Arpeggios</button>
-    </div>
-  </div>
-  <div id="sheetRows"></div>
-</div>
-
-<footer><p>Rotate with the arrows or a tap on the dial. Pick a chord to read its mode and its stack of thirds.</p></footer>
+<footer><p>Tap a position, or use the arrows, to rotate</p></footer>
 </div>
 </section>
 <script>
 (function(){
 
 const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-const INTERVAL_LABELS = ['R','♭2','2','♭3','3','4','♭5','5','♭6','6','♭7','7'];
+const INTERVAL_LABELS = ['R','\u266d2','2','\u266d3','3','4','\u266d5','5','\u266d6','6','\u266d7','7'];
 
 // ---- THEMES ----
 // Palette for the neck drawing only. The surrounding interface reads the
@@ -984,7 +826,7 @@ const CHORDS = {
   maj7:       { label: 'Major 7',     intervals: [0,4,7,11] },
   min7:       { label: 'Minor 7',     intervals: [0,3,7,10] },
   dom7:       { label: 'Dominant 7',  intervals: [0,4,7,10] },
-  min7b5:     { label: 'Min7 ♭5',intervals: [0,3,6,10] },
+  min7b5:     { label: 'Min7 \u266d5',intervals: [0,3,6,10] },
   dim7:       { label: 'Diminished 7',intervals: [0,3,6,9] }
 };
 
@@ -1195,25 +1037,12 @@ function populateInstrumentControls(diagram){
   el.presetSel.value = state.preset;
 }
 
-// Typing in the title field fires an 'input' event per keystroke, each of
-// which would otherwise trigger a full DPR-scaled canvas redraw. Coalesce
-// those into one redraw per animation frame so fast typing stays smooth.
-const pendingRenders = new Map();
-function scheduleRender(diagram){
-  if (pendingRenders.has(diagram.id)) return;
-  const handle = requestAnimationFrame(() => {
-    pendingRenders.delete(diagram.id);
-    render(diagram);
-  });
-  pendingRenders.set(diagram.id, handle);
-}
-
 function wireEvents(diagram){
   const { el, state } = diagram;
 
   el.titleInput.addEventListener('input', () => {
     state.title = el.titleInput.value;
-    scheduleRender(diagram);
+    render(diagram);
   });
 
   el.instrumentSel.addEventListener('change', () => {
@@ -1824,778 +1653,268 @@ createDiagram({ title: '' });
 <script>
 (function(){
 'use strict';
-const NS='http://www.w3.org/2000/svg';
-const CLEF='M21.5 28.1C21.5 27.6 21.5 27.6 21.8 27.4C22.3 26.8 23.1 26.1 23.8 25.3C26.8 22.0 28.6 17.7 28.6 13.7C28.6 10.5 27.7 7.4 26.3 5.3C25.7 4.5 24.8 3.5 24.4 3.5C23.9 3.5 22.8 4.4 22.0 5.2C19.4 8.2 18.5 12.7 18.5 16.4C18.5 18.5 18.8 20.8 19.0 22.3C19.1 22.7 19.1 22.8 18.7 23.2C16.4 25.1 13.9 27.3 12.0 29.6C9.5 32.7 8.0 36.0 8.0 39.9C8.0 46.1 12.3 52.1 21.1 52.1C21.9 52.1 22.9 52.0 23.6 51.9C24.0 51.8 24.1 51.7 24.1 52.2C24.6 54.6 25.1 57.7 25.1 59.4C25.1 64.7 21.5 65.4 19.4 65.4C17.4 65.4 16.5 64.8 16.5 64.3C16.5 64.1 16.8 64.0 17.6 63.7C18.8 63.4 20.1 62.4 20.1 60.4C20.1 58.4 18.8 56.7 16.6 56.7C14.2 56.7 12.8 58.6 12.8 60.8C12.8 63.2 14.2 66.7 19.6 66.7C22.0 66.7 26.7 65.6 26.7 59.5C26.7 57.4 26.0 54.0 25.6 51.8C25.6 51.4 25.6 51.4 26.1 51.2C29.7 49.7 32.2 46.7 32.2 42.6C32.2 38.0 28.8 33.9 23.5 33.9C22.5 33.9 22.5 33.9 22.4 33.3ZM24.9 9.1C26.1 9.1 27.1 10.0 27.1 12.0C27.1 14.5 25.9 16.8 23.1 19.6C22.5 20.2 21.6 21.0 20.8 21.7C20.6 21.9 20.4 21.9 20.3 21.4C20.2 20.5 20.1 19.3 20.1 18.1C20.1 12.5 22.7 9.1 24.9 9.1ZM21.0 33.6C21.1 34.3 21.1 34.2 20.5 34.4C17.3 35.5 15.2 38.4 15.2 41.4C15.2 44.7 16.9 47.0 19.4 47.8C19.7 47.9 20.1 48.0 20.3 48.0C20.6 48.0 20.8 47.8 20.8 47.6C20.8 47.4 20.5 47.2 20.2 47.1C18.7 46.5 17.6 44.9 17.6 43.3C17.6 41.2 19.1 39.7 21.2 39.1C21.8 38.9 21.9 39.0 22.0 39.4L23.8 50.1C23.8 50.5 23.8 50.5 23.3 50.6C22.7 50.7 22.0 50.8 21.2 50.8C14.9 50.8 10.9 47.3 10.9 42.3C10.9 40.2 11.2 37.3 14.2 33.9C16.4 31.5 18.0 30.2 19.7 28.8C20.1 28.5 20.2 28.6 20.2 29.0ZM23.5 39.3C23.4 38.9 23.4 38.8 23.9 38.8C26.8 39.0 29.2 41.5 29.2 44.7C29.2 46.9 27.8 48.8 25.8 49.8C25.4 50.0 25.3 50.0 25.2 49.6Z';
+var NS='http://www.w3.org/2000/svg';
+var CLEF='M21.5 28.1C21.5 27.6 21.5 27.6 21.8 27.4C22.3 26.8 23.1 26.1 23.8 25.3C26.8 22.0 28.6 17.7 28.6 13.7C28.6 10.5 27.7 7.4 26.3 5.3C25.7 4.5 24.8 3.5 24.4 3.5C23.9 3.5 22.8 4.4 22.0 5.2C19.4 8.2 18.5 12.7 18.5 16.4C18.5 18.5 18.8 20.8 19.0 22.3C19.1 22.7 19.1 22.8 18.7 23.2C16.4 25.1 13.9 27.3 12.0 29.6C9.5 32.7 8.0 36.0 8.0 39.9C8.0 46.1 12.3 52.1 21.1 52.1C21.9 52.1 22.9 52.0 23.6 51.9C24.0 51.8 24.1 51.7 24.1 52.2C24.6 54.6 25.1 57.7 25.1 59.4C25.1 64.7 21.5 65.4 19.4 65.4C17.4 65.4 16.5 64.8 16.5 64.3C16.5 64.1 16.8 64.0 17.6 63.7C18.8 63.4 20.1 62.4 20.1 60.4C20.1 58.4 18.8 56.7 16.6 56.7C14.2 56.7 12.8 58.6 12.8 60.8C12.8 63.2 14.2 66.7 19.6 66.7C22.0 66.7 26.7 65.6 26.7 59.5C26.7 57.4 26.0 54.0 25.6 51.8C25.6 51.4 25.6 51.4 26.1 51.2C29.7 49.7 32.2 46.7 32.2 42.6C32.2 38.0 28.8 33.9 23.5 33.9C22.5 33.9 22.5 33.9 22.4 33.3ZM24.9 9.1C26.1 9.1 27.1 10.0 27.1 12.0C27.1 14.5 25.9 16.8 23.1 19.6C22.5 20.2 21.6 21.0 20.8 21.7C20.6 21.9 20.4 21.9 20.3 21.4C20.2 20.5 20.1 19.3 20.1 18.1C20.1 12.5 22.7 9.1 24.9 9.1ZM21.0 33.6C21.1 34.3 21.1 34.2 20.5 34.4C17.3 35.5 15.2 38.4 15.2 41.4C15.2 44.7 16.9 47.0 19.4 47.8C19.7 47.9 20.1 48.0 20.3 48.0C20.6 48.0 20.8 47.8 20.8 47.6C20.8 47.4 20.5 47.2 20.2 47.1C18.7 46.5 17.6 44.9 17.6 43.3C17.6 41.2 19.1 39.7 21.2 39.1C21.8 38.9 21.9 39.0 22.0 39.4L23.8 50.1C23.8 50.5 23.8 50.5 23.3 50.6C22.7 50.7 22.0 50.8 21.2 50.8C14.9 50.8 10.9 47.3 10.9 42.3C10.9 40.2 11.2 37.3 14.2 33.9C16.4 31.5 18.0 30.2 19.7 28.8C20.1 28.5 20.2 28.6 20.2 29.0ZM23.5 39.3C23.4 38.9 23.4 38.8 23.9 38.8C26.8 39.0 29.2 41.5 29.2 44.7C29.2 46.9 27.8 48.8 25.8 49.8C25.4 50.0 25.3 50.0 25.2 49.6Z';
 
 /* ---- model -------------------------------------------------------------
    FIFTHS is the line of fifths: every note name, key signature, mode tonic
    and accidental order in the app is derived from it.
    STEP is the treble-staff position of each letter, 0 = E4, +1 per degree. */
-const FIFTHS=['F','C','G','D','A','E','B'];
-const STEP={F:1,G:2,A:3,B:4,C:5,D:6,E:7};
+var FIFTHS=['F','C','G','D','A','E','B'];
+var STEP={F:1,G:2,A:3,B:4,C:5,D:6,E:7};
 
-/* Four seven-note parent scales, each described the same way. `deg` lists the
-   scale's notes as offsets along the line of fifths from the tonic of the major
-   key the wheel position names, in scale-step order from the family's home
-   tonic. That one array does double duty: it is the note set, and entry k is
-   also the tonic of mode k — so a mode only has to carry a name. Chord quality
-   and the tonic's own major/minor/dim/aug suffix are then read off the set
-   rather than hand-declared, which is what makes the extra families free.
-
-   Each family is anchored so it differs from a plain major scale by exactly one
-   altered note. That is the whole trick: one key signature plus one accidental
-   still writes any of them, so the staff, the wheel and the enharmonic pairs
-   all keep working untouched.
-     major           C D E F G A B    the signature itself
-     melodic minor   C D E♭ F G A B   major with ♭3
-     harmonic minor  A B C D E F G♯   relative minor with ♯7
-     harmonic major  C D E F G A♭ B   major with ♭6 */
-const FAMILIES=[
-  {id:'major', label:'Major scale', short:'major',
-   deg:[0,2,4,-1,1,3,5], home:[0,5],        /* relative major and minor */
-   modes:[
-     {name:'Ionian', note:'major'},
-     {name:'Dorian'},
-     {name:'Phrygian'},
-     {name:'Lydian'},
-     {name:'Mixolydian'},
-     {name:'Aeolian', note:'natural minor'},
-     {name:'Locrian'}
-   ]},
-  {id:'melodic', label:'Melodic minor', short:'melodic minor',
-   deg:[0,2,-3,-1,1,3,5], home:[0,6],       /* the tonic and its altered dominant */
-   modes:[
-     {name:'Melodic minor', note:'jazz minor'},
-     {name:'Dorian ♭2', note:'phrygian ♮6'},
-     {name:'Lydian augmented'},
-     {name:'Lydian dominant', note:'acoustic'},
-     {name:'Mixolydian ♭6'},
-     {name:'Locrian ♮2', note:'half-diminished'},
-     {name:'Altered', note:'super locrian'}
-   ]},
-  {id:'harmminor', label:'Harmonic minor', short:'harmonic minor',
-   deg:[3,5,0,2,4,-1,8], home:[0,4],        /* i and V, the sound of the scale */
-   modes:[
-     {name:'Harmonic minor', note:'aeolian ♯7'},
-     {name:'Locrian ♮6'},
-     {name:'Ionian ♯5'},
-     {name:'Dorian ♯4', note:'ukrainian minor'},
-     {name:'Phrygian dominant'},
-     {name:'Lydian ♯2'},
-     {name:'Altered ♭♭7', note:'ultralocrian'}
-   ]},
-  {id:'harmmajor', label:'Harmonic major', short:'harmonic major',
-   deg:[0,2,4,-1,1,-4,5], home:[0,1],       /* I and the borrowed iiø */
-   modes:[
-     {name:'Harmonic major', note:'ionian ♭6'},
-     {name:'Dorian ♭5'},
-     {name:'Phrygian ♭4'},
-     {name:'Lydian ♭3', note:'melodic minor ♯4'},
-     {name:'Mixolydian ♭2'},
-     {name:'Lydian augmented ♯2'},
-     {name:'Locrian ♭♭7'}
-   ]}
+var MODES=[
+  {id:'ionian',     off: 0, q:'',  label:'Ionian — major'},
+  {id:'dorian',     off: 2, q:'m'},
+  {id:'phrygian',   off: 4, q:'m'},
+  {id:'lydian',     off:-1, q:''},
+  {id:'mixolydian', off: 1, q:''},
+  {id:'aeolian',    off: 3, q:'m', label:'Aeolian — minor'},
+  {id:'locrian',    off: 5, q:'°'}
 ];
-/* the lone note that leaves the signature's seven, or null for the major */
-FAMILIES.forEach(f=>{
-  const a=f.deg.filter(d=>d<-1||d>5);
-  f.alt = a.length ? a[0] : null;
-});
 
 /* twelve wheel positions; n = signed accidental count, alt = enharmonic twin */
-const POS=[];
-for(let i=0;i<12;i++){
-  const n = i<7 ? i : i-12;
-  POS.push({n, alt: Math.abs(n)>=5 ? (n>0 ? n-12 : n+12) : null});
+var POS=[],i,n;
+for(i=0;i<12;i++){
+  n = i<7 ? i : i-12;
+  POS.push({n:n, alt: Math.abs(n)>=5 ? (n>0 ? n-12 : n+12) : null});
 }
 
 function fname(f){
-  const i=((f+1)%7+7)%7, k=Math.floor((f+1)/7);
+  var i=((f+1)%7+7)%7, k=Math.floor((f+1)/7);
   return FIFTHS[i]+(k>0 ? '♯'.repeat(k) : k<0 ? '♭'.repeat(-k) : '');
 }
+function tonic(n,m){return fname(n+m.off)+m.q}
 function tag(n){return n===0 ? '—' : Math.abs(n)+(n>0?'♯':'♭')}
 function words(n){
   if(n===0) return 'no sharps or flats';
-  const a=Math.abs(n);
+  var a=Math.abs(n);
   return a+(n>0 ? (a===1?' sharp':' sharps') : (a===1?' flat':' flats'));
 }
 /* accidental order and staff placement, both read off the line of fifths.
    sharps run F C G D A E B and sit an octave up for F and G; flats run the
    same letters backwards and sit exactly where STEP puts them. */
 function accSteps(n){
-  const out=[], k=Math.abs(n);
-  for(let j=0;j<k;j++){
-    const L = n>0 ? FIFTHS[j] : FIFTHS[6-j];
+  var out=[],k=Math.abs(n),L,j;
+  for(j=0;j<k;j++){
+    L = n>0 ? FIFTHS[j] : FIFTHS[6-j];
     out.push(STEP[L] + (n>0 && (L==='F'||L==='G') ? 7 : 0));
   }
   return out;
 }
 
 /* ---- staff engraving ---------------------------------------------------- */
-const SP=9, BOT=52, X0=6, X1=203, NX=180;
+var SP=9, BOT=52, X0=6, X1=169, NX=146;
 function py(step){return BOT-step*(SP/2)}
-function el(t,a){const e=document.createElementNS(NS,t);for(const k in a) e.setAttribute(k,a[k]);return e}
+function el(t,a){var e=document.createElementNS(NS,t),k;for(k in a)e.setAttribute(k,a[k]);return e}
 
-function sharpAt(g,x,y,c){
-  c=c?c+' ':'';
-  g.appendChild(el('line',{x1:x-2.4,y1:y-5.5,x2:x-2.4,y2:y+7,'class':c+'acc-stem'}));
-  g.appendChild(el('line',{x1:x+2.4,y1:y-7,x2:x+2.4,y2:y+5.5,'class':c+'acc-stem'}));
-  g.appendChild(el('line',{x1:x-5,y1:y-.6,x2:x+5,y2:y-2.6,'class':c+'acc-bar'}));
-  g.appendChild(el('line',{x1:x-5,y1:y+4.2,x2:x+5,y2:y+2.2,'class':c+'acc-bar'}));
+function sharpAt(g,x,y){
+  g.appendChild(el('line',{x1:x-2.4,y1:y-5.5,x2:x-2.4,y2:y+7,'class':'acc-stem'}));
+  g.appendChild(el('line',{x1:x+2.4,y1:y-7,x2:x+2.4,y2:y+5.5,'class':'acc-stem'}));
+  g.appendChild(el('line',{x1:x-5,y1:y-.6,x2:x+5,y2:y-2.6,'class':'acc-bar'}));
+  g.appendChild(el('line',{x1:x-5,y1:y+4.2,x2:x+5,y2:y+2.2,'class':'acc-bar'}));
 }
-function flatAt(g,x,y,c){
-  c=c?c+' ':'';
-  g.appendChild(el('line',{x1:x-2.6,y1:y-11,x2:x-2.6,y2:y+2.2,'class':c+'acc-stem'}));
-  g.appendChild(el('path',{d:`M ${x-2.6} ${y+2.2} C ${x+4.4} ${y} ${x+3.6} ${y-4.8} ${x-2.6} ${y-2.4}`,'class':c+'acc','stroke-width':1.3}));
-}
-/* The extra families need two glyphs the major never asks for: a natural, to
-   cancel a signature flat or sharp, and a double sharp, which shows up on the
-   raised seventh of the sharpest harmonic minors. */
-function naturalAt(g,x,y,c){
-  c=c?c+' ':'';
-  g.appendChild(el('line',{x1:x-2.2,y1:y-7,x2:x-2.2,y2:y+3.4,'class':c+'acc-stem'}));
-  g.appendChild(el('line',{x1:x+2.2,y1:y-3.4,x2:x+2.2,y2:y+7,'class':c+'acc-stem'}));
-  g.appendChild(el('line',{x1:x-2.2,y1:y-1.4,x2:x+2.2,y2:y-3.4,'class':c+'acc-bar'}));
-  g.appendChild(el('line',{x1:x-2.2,y1:y+3.4,x2:x+2.2,y2:y+1.4,'class':c+'acc-bar'}));
-}
-function dblSharpAt(g,x,y,c){
-  c=c?c+' ':'';
-  g.appendChild(el('line',{x1:x-3.2,y1:y-3.2,x2:x+3.2,y2:y+3.2,'class':c+'acc-bar'}));
-  g.appendChild(el('line',{x1:x-3.2,y1:y+3.2,x2:x+3.2,y2:y-3.2,'class':c+'acc-bar'}));
-}
-/* k is a signed accidental count: -2 ♭♭, -1 ♭, 0 ♮, 1 ♯, 2 ♯♯. Returns the
-   horizontal advance so callers can lay several out in a row. */
-function drawAcc(g,x,y,k,c){
-  if(k===0){ naturalAt(g,x,y,c); return 10 }
-  if(k===2){ dblSharpAt(g,x,y,c); return 10 }
-  if(k===1){ sharpAt(g,x,y,c); return 11 }
-  if(k===-1){ flatAt(g,x,y,c); return 10 }
-  flatAt(g,x-4,y,c); flatAt(g,x+4,y,c); return 18;
-}
-/* what the signature already says about a letter, as a signed accidental */
-function sigAcc(n,letter){
-  const i=FIFTHS.indexOf(letter);
-  if(n>0) return i<n ? 1 : 0;
-  if(n<0) return i>6+n ? -1 : 0;
-  return 0;
-}
-/* the accidental a note must be written with under signature n, or null when
-   the signature already spells it correctly */
-function needAcc(n,f){
-  const nm=fname(f);
-  const own=(nm.match(/♯/g)||[]).length - (nm.match(/♭/g)||[]).length;
-  return own===sigAcc(n,nm.charAt(0)) ? null : own;
+function flatAt(g,x,y){
+  g.appendChild(el('line',{x1:x-2.6,y1:y-11,x2:x-2.6,y2:y+2.2,'class':'acc-stem'}));
+  g.appendChild(el('path',{d:'M '+(x-2.6)+' '+(y+2.2)+' C '+(x+4.4)+' '+y+' '+(x+3.6)+' '+(y-4.8)+' '+(x-2.6)+' '+(y-2.4),'class':'acc','stroke-width':1.3}));
 }
 
-const staffCache={};
-function staff(n,fi,mi){
-  const key=`${n}|${fi}|${mi}`;
-  if(!staffCache[key]) staffCache[key]=engrave(n,FAMILIES[fi],mi);
+var staffCache={};
+function staff(n,mi){
+  var key=n+'|'+mi;
+  if(!staffCache[key]) staffCache[key]=engrave(n,MODES[mi]);
   return staffCache[key].cloneNode(true);
 }
-function engrave(n,f,mi){
-  const svg=el('svg',{viewBox:'0 0 210 70','class':'staff',role:'img'});
-  for(let j=0;j<5;j++) svg.appendChild(el('line',{x1:X0,y1:BOT-j*SP,x2:X1,y2:BOT-j*SP,'class':'staffline'}));
+function engrave(n,m){
+  var svg=el('svg',{viewBox:'0 0 175 70','class':'staff',role:'img'}),j;
+  for(j=0;j<5;j++) svg.appendChild(el('line',{x1:X0,y1:BOT-j*SP,x2:X1,y2:BOT-j*SP,'class':'staffline'}));
   svg.appendChild(el('path',{d:CLEF,'class':'clef'}));
-  const g=el('g',{}), steps=accSteps(n);
-  let x=46;
-  for(let j=0;j<steps.length;j++){ (n>0?sharpAt:flatAt)(g,x,py(steps[j])); x+=11; }
-  /* The family's one altered note, set after a small gap in signature position
-     — the same way a key change is written. Standing where a signature stands,
-     it reads as applying to the whole scale, which is exactly true. */
-  if(f.alt!==null){
-    const af=n+f.alt, k=needAcc(n,af);
-    if(k!==null){ x+=7; x+=drawAcc(g,x,py(STEP[fname(af).charAt(0)]),k,'acc-alt'); }
-  }
+  var g=el('g',{}), steps=accSteps(n), x=46;
+  for(j=0;j<steps.length;j++){ (n>0?sharpAt:flatAt)(g,x,py(steps[j])); x+=11; }
   svg.appendChild(g);
-  const bx=Math.max(x+4,62);
+  var bx=Math.max(x+4,62);
   svg.appendChild(el('line',{x1:bx,y1:BOT-4*SP,x2:bx,y2:BOT,'class':'barline'}));
-  const tf=n+f.deg[mi], name=fname(tf), y=py(STEP[name.charAt(0)]);
-  /* the tonic carries its own accidental when it is the altered note itself */
-  const ta=needAcc(n,tf);
-  if(ta!==null) drawAcc(svg,NX-(ta===-2?18:14),y,ta,'');
-  svg.appendChild(el('ellipse',{cx:NX,cy:y,rx:5.4,ry:3.8,'class':'head',transform:`rotate(-20 ${NX} ${y})`}));
-  const t=el('title',{});
-  t.textContent=`${name} ${f.modes[mi].name}, key signature of ${words(n)}`
-    +(f.alt!==null ? `, with ${fname(n+f.alt)}` : '');
+  var name=fname(n+m.off), y=py(STEP[name.charAt(0)]);
+  svg.appendChild(el('ellipse',{cx:NX,cy:y,rx:5.4,ry:3.8,'class':'head',transform:'rotate(-20 '+NX+' '+y+')'}));
+  var t=el('title',{});
+  t.textContent=name+' '+m.id+', key signature of '+words(n);
   svg.appendChild(t);
   return svg;
 }
 
-/* ---- grand staff -------------------------------------------------------
-   Both clefs are always drawn, so every figure is read against the same fixed
-   frame and you can see at a glance where in a piano's range it sits. The
-   notes themselves are written in one clef, chosen per figure, because a run
-   that hops the gap mid-scale reads as a leap that isn't there: between A3 and
-   E4 there are four steps of pitch but eight steps of paper.
 
-   d = 7*octave + letterIndex, C=0 ... B=6. So C4 = 28, E4 = 30, A3 = 26. */
-const LTR='CDEFGAB';
-const GSP=8, GHS=4;              /* line spacing, and one diatonic step */
-const TY=70, BY=102;             /* treble bottom line E4, bass top line A3 */
-const GW=430, GH=178;
-const OTT_UP=10, OTT_DN=158, LABY=170;  /* reserved lanes: ottava, ottava, captions */
-const TREBLE=[30,32,34,36,38];   /* E4 G4 B4 D5 F5 */
-const BASSL=[18,20,22,24,26];    /* G2 B2 D3 F3 A3 */
-const LX=2, CLEFX=10, SIGX=40;
-/* two ledger lines is the comfortable limit either side of either staff;
-   past that a player would rather read an ottava, so that is what we write */
-const WIN={treble:[26,42], bass:[14,30]};
-/* Courtesy accidentals restate what the key signature already said. They cost
-   clutter and buy certainty, which is the right trade when the point of the
-   staff is to show a mode's shape rather than to be played from. */
-let courtesyAcc=true;
-const yIn=(clef,d)=>clef==='treble' ? TY-(d-30)*GHS : BY+(26-d)*GHS;
-
-/* the ledger lines a note needs in a given clef, as staff steps */
-function ledgerSteps(clef,d){
-  const out=[];
-  const push=(lo,hi)=>{ for(let e=lo+(lo%2?1:0);e<=hi;e+=2) out.push(e) };
-  if(clef==='treble'){ if(d>=40) push(40,d); if(d<=28) push(d,28) }
-  else { if(d>=28) push(28,d); if(d<=16) push(d,16) }
-  return out;
-}
-
-/* the accidental a note carries in its own name, signature or no signature */
-function ownAcc(F){
-  const nm=fname(F);
-  return (nm.match(/♯/g)||[]).length-(nm.match(/♭/g)||[]).length;
-}
-/* Parentheses mark a reminder as a reminder: an accidental that changes the
-   note is written bare, so the two can never be confused at a glance. */
-function parens(svg,x,y,w){
-  svg.appendChild(el('path',{d:`M ${x-w} ${y-7.5} C ${x-w-2.4} ${y-3.6} ${x-w-2.4} ${y+3.6} ${x-w} ${y+7.5}`,'class':'paren'}));
-  svg.appendChild(el('path',{d:`M ${x+w} ${y-7.5} C ${x+w+2.4} ${y-3.6} ${x+w+2.4} ${y+3.6} ${x+w} ${y+7.5}`,'class':'paren'}));
-}
-
-/* the bass clef is built from primitives in the same hairline vocabulary the
-   accidentals use, so it sits beside the engraved treble path without looking
-   like a pasted-in glyph. Local coords: staff top line (A3) at y=0. */
-function bassClef(svg){
-  const g=el('g',{transform:`translate(${CLEFX},${BY})`});
-  g.appendChild(el('circle',{cx:5,cy:8,r:2.4,'class':'clef-dot'}));
-  g.appendChild(el('path',{d:'M 5 8 C 5 4.2 8.1 2.0 11.5 2.0 C 15.6 2.0 18.2 5.4 18.2 9.7'
-    +' C 18.2 18.2 11.2 25.6 3.2 29.8','class':'clef-hook'}));
-  g.appendChild(el('circle',{cx:21.5,cy:4,r:1.5,'class':'clef-dot'}));
-  g.appendChild(el('circle',{cx:21.5,cy:12,r:1.5,'class':'clef-dot'}));
-  svg.appendChild(g);
-}
-function trebleClef(svg){
-  const s=GSP/9, ty=yIn('treble',38)-16*s;
-  svg.appendChild(el('path',{d:CLEF,transform:`translate(${CLEFX-7.1},${ty}) scale(${s})`,'class':'clef'}));
-}
-
-/* Build absolute pitches for an ascending run of note names. Letters only ever
-   move upward within a run, so a letter that fails to rise means the octave
-   turned over - true for a scale read in steps and for thirds alike. */
-function pitchesOf(fList,oct){
-  let o=oct, prev=-1; const ds=[];
-  fList.forEach((F,i)=>{
-    const li=LTR.indexOf(fname(F).charAt(0));
-    if(i>0 && li<=prev) o++;
-    ds.push(7*o+li); prev=li;
-  });
-  return ds;
-}
-
-/* Score a clef by the ledger lines it would cost, with anything outside the
-   comfortable window priced high enough that an ottava always wins instead. */
-function clefCost(clef,ds){
-  const [lo,hi]=WIN[clef];
-  return ds.reduce((s,d)=>s+ledgerSteps(clef,d).length+(d<lo||d>hi?60:0),0);
-}
-function chooseClef(ds){
-  return clefCost('treble',ds)<=clefCost('bass',ds) ? 'treble' : 'bass';
-}
-/* The octave a player would actually write this in: the one costing fewest
-   ledger lines, breaking ties toward the middle of the system. */
-function bestOctave(fList){
-  let best=null;
-  for(let o=1;o<=6;o++){
-    const ds=pitchesOf(fList,o), clef=chooseClef(ds);
-    const mid=ds.reduce((a,b)=>a+b,0)/ds.length;
-    const score=clefCost(clef,ds)+Math.abs(mid-32)/100;
-    if(best===null||score<best.score) best={o,score};
-  }
-  return best.o;
-}
-const ottavaTag=(s)=>s===-7?'8va':s===-14?'15ma':s===7?'8vb':s===14?'15mb':'';
-
-/* fifths-distance to a scale-degree label. Distance along the line of fifths
-   already encodes both the degree and its alteration, so one formula covers
-   the flat second of locrian and the sharp eleventh of lydian alike. */
-const EXT=[1,3,5,7,9,11,13];
-function altMark(F){
-  const a=Math.floor((F+1)/7);
-  return a>0?'♯'.repeat(a):a<0?'♭'.repeat(-a):'';
-}
-
-/* the two readings of one note set: consecutive degrees, and every other
-   degree. Same seven notes either way, which is the point worth seeing. */
-function figureOf(n,f,i,kind){
-  const list=[],labs=[];
-  const cnt=kind==='scale'?8:7;
-  for(let k=0;k<cnt;k++){
-    const j=(i+(kind==='scale'?k:2*k))%7, F=f.deg[j]-f.deg[i];
-    list.push(n+f.deg[j]);
-    labs.push(kind==='scale' ? (k===7?'8':altMark(F)+(k+1)) : altMark(F)+EXT[k]);
-  }
-  return {list,labs};
-}
-/* both figures share a root pitch so they can be compared, and the wider of
-   the two - the stack of thirds - is what sets it */
-const baseOctave=(n,f,i)=>bestOctave(figureOf(n,f,i,'arp').list);
-
-function placeFigure(n,f,i,kind,oct){
-  const {list,labs}=figureOf(n,f,i,kind);
-  const ds=pitchesOf(list,oct), clef=chooseClef(ds);
-  const [lo,hi]=WIN[clef];
-  let shift=0, guard=0;
-  while(Math.max(...ds)+shift>hi && guard++<3) shift-=7;
-  guard=0;
-  while(Math.min(...ds)+shift<lo && guard++<3) shift+=7;
-  return {list,labs,clef,shift,sounding:ds,ds:ds.map(d=>d+shift)};
-}
-function rangeText(P){
-  const nm=(k)=>fname(P.list[k])+Math.floor(P.sounding[k]/7);
-  return nm(0)+' – '+nm(P.list.length-1)+(P.shift?`  ·  ${ottavaTag(P.shift)}`:'');
-}
-
-/* n is the key signature; altF is the family's one altered note, so the
-   accidental that defines the scale can be picked out from the rest. */
-function grandStaff(n,P,altF){
-  const svg=el('svg',{viewBox:`0 0 ${GW} ${GH}`,'class':'gstaff',role:'img'});
-  const R=GW-10;
-  TREBLE.forEach(d=>svg.appendChild(
-    el('line',{x1:LX+6,y1:yIn('treble',d),x2:R,y2:yIn('treble',d),'class':'staffline'})));
-  BASSL.forEach(d=>svg.appendChild(
-    el('line',{x1:LX+6,y1:yIn('bass',d),x2:R,y2:yIn('bass',d),'class':'staffline'})));
-  /* a bracket rather than a brace: straight strokes match the hairline
-     accidentals, and it says "one system" just as clearly */
-  const yT=yIn('treble',38), yB=yIn('bass',18);
-  svg.appendChild(el('path',{d:`M ${LX+5} ${yT} L ${LX} ${yT} L ${LX} ${yB} L ${LX+5} ${yB}`,'class':'bracket'}));
-  trebleClef(svg); bassClef(svg);
-
-  let x=SIGX;
-  const steps=accSteps(n);
-  for(let j=0;j<steps.length;j++){
-    const dT=30+steps[j];
-    (n>0?sharpAt:flatAt)(svg,x,yIn('treble',dT));
-    (n>0?sharpAt:flatAt)(svg,x,yIn('bass',dT-14));
-    x+=n>0?10:9;
-  }
-  const bx=Math.max(x+8,SIGX+8);
-  svg.appendChild(el('line',{x1:bx,y1:yT,x2:bx,y2:yB,'class':'barline'}));
-
-  const first=bx+30, gap=(R-16-first)/Math.max(P.ds.length-1,1);
-  const xs=[];
-  P.ds.forEach((d,i)=>{
-    const cx=first+gap*i, y=yIn(P.clef,d);
-    xs.push(cx);
-    ledgerSteps(P.clef,d).forEach(e=>svg.appendChild(el('line',
-      {x1:cx-8.5,y1:yIn(P.clef,e),x2:cx+8.5,y2:yIn(P.clef,e),'class':'ledger'})));
-    const k=needAcc(n,P.list[i]);
-    if(k!==null){
-      drawAcc(svg,cx-(k===-2?20:15),y,k,altF!==null&&P.list[i]===altF?'acc-alt':'');
-    } else if(courtesyAcc){
-      const c=ownAcc(P.list[i]);
-      if(c!==0){
-        const ax=cx-(c===-2?23:19);
-        drawAcc(svg,ax,y,c,'acc-court');
-        parens(svg,ax,y,c===-2?10.5:6.5);
-      }
-    }
-    svg.appendChild(el('ellipse',{cx,cy:y,rx:5.2,ry:3.7,
-      'class':'head'+(i===0?' root':''),transform:`rotate(-20 ${cx} ${y})`}));
-    const t=el('text',{x:cx,y:LABY,'text-anchor':'middle','class':'deg'+(i===0?' rootdeg':'')});
-    t.textContent=P.labs[i];
-    svg.appendChild(t);
-  });
-
-  if(P.shift!==0){
-    const up=P.shift<0, edge=up?Math.max(...P.ds):Math.min(...P.ds);
-    /* the bracket keeps clear of the noteheads but never leaves the frame */
-    const y=up?Math.max(yIn(P.clef,edge)-13,OTT_UP):Math.min(yIn(P.clef,edge)+15,OTT_DN);
-    const x0=xs[0]-12, x1=xs[xs.length-1]+11;
-    const g=el('g',{});
-    const tx=el('text',{x:x0,y:y+3,'class':'otttext'});
-    tx.textContent=ottavaTag(P.shift);
-    g.appendChild(tx);
-    g.appendChild(el('path',{d:`M ${x0+24} ${y} L ${x1} ${y} L ${x1} ${y+(up?7:-7)}`,'class':'ottline'}));
-    svg.appendChild(g);
-  }
-  const ttl=el('title',{});
-  ttl.textContent=P.list.map((F,i)=>fname(F)+Math.floor(P.sounding[i]/7)).join(' ');
-  svg.insertBefore(ttl,svg.firstChild);
-  return svg;
-}
-function figureStaff(n,f,i,kind,oct){
-  const P=placeFigure(n,f,i,kind,oct);
-  return {svg:grandStaff(n,P,f.alt===null?null:n+f.alt), range:rangeText(P)};
-}
-
-
-
-/* ---- diatonic chords -----------------------------------------------------
+/* ---- diatonic chords ----------------------------------------------------
    The seven diatonic triads are seven consecutive positions on the same line
    of fifths the wheel uses. Let s be a root's offset from the signature, so
    s runs -1..5 (IV I V ii vi iii vii in a major key). Chord quality is a pure
    function of s and never changes with mode - only the roman numeral does,
    because that is measured from the selected tonic instead. */
-const ROM=['I','II','III','IV','V','VI','VII'];
+var ROM=['I','II','III','IV','V','VI','VII'];
+var SPAN=[5,4,3,2,1,0,-1];            /* clockwise = descending fifths */
 
-/* Stack thirds by stepping two scale degrees at a time; the interval that
-   comes out is just a distance along the line of fifths, so quality is a
-   lookup rather than a special case per family. A third is +4 or -3, a fifth
-   +1 / -6 / +8, a seventh +5 / -2 / -9. Across all four families only these
-   combinations ever occur. */
-function d3of(f,i){return f.deg[(i+2)%7]-f.deg[i]}
-function d5of(f,i){return f.deg[(i+4)%7]-f.deg[i]}
-function d7of(f,i){return f.deg[(i+6)%7]-f.deg[i]}
+function quality(s,sev){
+  if(s===5)   return sev ? 'ø7'   : '°';
+  if(s>=2)    return sev ? 'm7'   : 'm';
+  if(s===1)   return sev ? '7'    : '';
+  return           sev ? 'maj7' : '';
+}
+function chordName(n,s,sev){return fname(n+s)+quality(s,sev)}
 
-const TRI={'4|1':'', '-3|1':'m', '-3|-6':'°', '4|8':'+'};
-const SEV={                              /* written as a chord symbol */
-  '|5':'maj7',   '|-2':'7',
-  'm|5':'mMaj7', 'm|-2':'m7',
-  '°|-2':'ø7',   '°|-9':'°7',
-  '+|5':'maj7♯5','+|-2':'7♯5'
-};
-const RSEV={                             /* written as a roman numeral, where
-                                            case already carries the third */
-  '|5':'maj7',   '|-2':'7',
-  'm|5':'maj7',  'm|-2':'7',
-  '°|-2':'ø7',   '°|-9':'°7',
-  '+|5':'+maj7', '+|-2':'+7'
-};
-function triadOf(f,i){return TRI[d3of(f,i)+'|'+d5of(f,i)] || ''}
-function suffix(f,i,sev,roman){
-  const t=triadOf(f,i);
-  if(!sev) return (roman && t==='m') ? '' : t;
-  return (roman?RSEV:SEV)[t+'|'+d7of(f,i)] || t+'7';
+function numeral(s,off,sev){
+  var d=s-off;
+  var deg=((d*4)%7+7)%7;                       /* fifths distance -> degree */
+  var acc=d<-1 ? '♭' : d>5 ? '♯' : '';         /* outside the parallel major */
+  var r=ROM[deg];
+  if(s>=2) r=r.toLowerCase();
+  return acc+r+(s===5 ? (sev?'ø7':'°') : sev ? (s<=0?'maj7':'7') : '');
 }
-function chordName(n,f,i,sev){return fname(n+f.deg[i])+suffix(f,i,sev,false)}
-
-/* Degree and accidental are measured against the parallel major of whichever
-   mode is selected, so the numeral says how the chord sits in *that* mode.
-   The extra families reach further off the line of fifths than the major ever
-   does, hence the loops — ♭♭VII is a real numeral in ultralocrian. */
-function numeral(f,i,mi,sev){
-  let d=f.deg[i]-f.deg[mi], acc='';
-  while(d<-1){ d+=7; acc+='♭' }
-  while(d>5){ d-=7; acc+='♯' }
-  const deg=((d*4)%7+7)%7;
-  let r=ROM[deg], t=triadOf(f,i);
-  if(t==='m'||t==='°') r=r.toLowerCase();
-  return acc+r+suffix(f,i,sev,true);
-}
-function chordTones(n,f,i,sev){
-  const t=[i,(i+2)%7,(i+4)%7];
-  if(sev) t.push((i+6)%7);
-  return t.map((k)=>fname(n+f.deg[k])).join('  ');
-}
-/* Ring order: the scale's seven degrees sorted by descending fifths. For the
-   major that is seven contiguous steps and the old fixed span comes straight
-   back out; the other families are gapped, and the gaps are what the dashed
-   links now mark. */
-function spanOf(f){
-  return f.deg.map((d,i)=>i).sort((a,b)=>f.deg[b]-f.deg[a]);
+/* stack diatonic thirds by folding back into the -1..5 span */
+function chordTones(n,s,sev){
+  var f=function(k){return k>5 ? k-7 : k};
+  var t=[s,f(s+4),f(s+1)];
+  if(sev) t.push(f(s+5));
+  return t.map(function(k){return fname(n+k)}).join('  ');
 }
 
-const RC=150, RR=106, NW=68, NH=36, STEPA=360/7;
-function chordRing(n,f,mi,sev,sel){
-  const svg=el('svg',{viewBox:'0 0 300 300','class':'ring',role:'img'});
-  const SPAN=spanOf(f);
-  const tonicK=SPAN.indexOf(mi);
-  const ang=(k)=>(k-tonicK)*STEPA;
-  const pt=(a,r)=>{const t=a*Math.PI/180;return [RC+r*Math.sin(t), RC-r*Math.cos(t)]};
+var RC=150, RR=106, NW=62, NH=36, STEPA=360/7;
+function chordRing(n,off,sev,sel){
+  var svg=el('svg',{viewBox:'0 0 300 300','class':'ring',role:'img'});
+  var tonicK=SPAN.indexOf(off), j;
+  var ang=function(k){return (k-tonicK)*STEPA};
+  var pt=function(a,r){var t=a*Math.PI/180;return [RC+r*Math.sin(t), RC-r*Math.cos(t)]};
 
-  /* Stands in for the old arrowhead: each link is a filled ribbon sampled
-     along the arc, hairline where the progression leaves a chord and widest
-     as it arrives at the next, so direction reads from the stroke itself.
-     SVG has no variable-width stroke, hence the two offset edges. */
-  const W0=.45, W1=2.6, SEG=28;
-  const taper=(a0,a1)=>{
-    const outer=[], inner=[];
-    for(let i=0;i<=SEG;i++){
-      const t=i/SEG, a=a0+(a1-a0)*t, w=(W0+(W1-W0)*t)/2;
-      const o=pt(a,RR+w), b=pt(a,RR-w);
-      outer.push(`${o[0].toFixed(2)} ${o[1].toFixed(2)}`);
-      inner.push(`${b[0].toFixed(2)} ${b[1].toFixed(2)}`);
-    }
-    return `M ${outer.join(' L ')} L ${inner.reverse().join(' L ')} Z`;
-  };
-
-  for(let j=0;j<7;j++){
-    const a0=ang(j)+16.5, a1=ang(j+1)-16.5;
-    /* solid only where the step really is a perfect fifth. In the major that
-       is every link but one, the diminished fifth from IV to vii; the altered
-       families break the chain in three places instead. */
-    const seam=(f.deg[SPAN[j]]-f.deg[SPAN[(j+1)%7]])!==1;
-    if(seam){
-      const p0=pt(a0,RR), p1=pt(a1,RR);
-      svg.appendChild(el('path',{
-        d:`M ${p0[0].toFixed(1)} ${p0[1].toFixed(1)} A ${RR} ${RR} 0 0 1 ${p1[0].toFixed(1)} ${p1[1].toFixed(1)}`,
-        'class':'rseam'}));
-    } else {
-      svg.appendChild(el('path',{d:taper(a0,a1),'class':'rline'}));
-    }
+  for(j=0;j<7;j++){
+    var a0=ang(j)+16.5, a1=ang(j+1)-16.5;
+    var p0=pt(a0,RR), p1=pt(a1,RR);
+    /* the one link that is a diminished fifth, IV -> vii */
+    var seam=(SPAN[j]===-1);
+    svg.appendChild(el('path',{d:'M '+p0[0].toFixed(1)+' '+p0[1].toFixed(1)+
+      ' A '+RR+' '+RR+' 0 0 1 '+p1[0].toFixed(1)+' '+p1[1].toFixed(1),
+      'class':seam?'rseam':'rline'}));
+    var am=ang(j)+STEPA/2, pm=pt(am,RR);
+    svg.appendChild(el('path',{d:'M -4 -3.4 L 4 0 L -4 3.4 Z','class':'rhead',
+      transform:'translate('+pm[0].toFixed(1)+' '+pm[1].toFixed(1)+') rotate('+am.toFixed(1)+')'}));
   }
 
-  SPAN.forEach((di,k)=>{
-    const p=pt(ang(k),RR);
-    const g=el('g',{'class':`cnode${di===mi?' tonic':''}${di===sel?' sel':''}`});
+  SPAN.forEach(function(s,k){
+    var p=pt(ang(k),RR);
+    var g=el('g',{'class':'cnode'+(s===off?' tonic':'')+(s===sel?' sel':'')});
     g.appendChild(el('rect',{x:p[0]-NW/2,y:p[1]-NH/2,width:NW,height:NH,rx:6}));
-    const t1=el('text',{x:p[0],y:p[1]-3,'text-anchor':'middle','class':'cn'});
-    t1.textContent=chordName(n,f,di,sev);
-    const t2=el('text',{x:p[0],y:p[1]+11,'text-anchor':'middle','class':'cnum'});
-    t2.textContent=numeral(f,di,mi,sev);
-    /* mMaj7 and maj7♯5 run long where the major only ever needed four glyphs */
-    if(t1.textContent.length>6) t1.setAttribute('font-size',t1.textContent.length>8?'9.5':'11');
-    if(t2.textContent.length>6) t2.setAttribute('font-size','8.5');
+    var t1=el('text',{x:p[0],y:p[1]-3,'text-anchor':'middle','class':'cn'});
+    t1.textContent=chordName(n,s,sev);
+    var t2=el('text',{x:p[0],y:p[1]+11,'text-anchor':'middle','class':'cnum'});
+    t2.textContent=numeral(s,off,sev);
     g.appendChild(t1); g.appendChild(t2);
-    g.addEventListener('click',()=>{selChord=di;renderChords()});
+    g.addEventListener('click',function(){selChord=s;renderChords()});
     svg.appendChild(g);
   });
-  const ttl=el('title',{});
-  ttl.textContent='Diatonic chords by descending fifths; dashed links are not perfect fifths';
+  var ttl=el('title',{});
+  ttl.textContent='Diatonic chords arranged by descending fifths';
   svg.insertBefore(ttl,svg.firstChild);
   return svg;
 }
 
 /* ---- build ------------------------------------------------------------- */
-const $=(id)=>document.getElementById(id);
-const wheel=$('wheel'), outer=[], inner=[];
-let step=0, prev=-1, fam=0;
-/* Every family keeps its own outer/inner pair, seeded from `home` above and
-   rewritten as you change them. Switching parent scale and back therefore
-   returns the view you left, rather than reading the old indices as positions
-   in a different scale — the same numbers mean different modes per family. */
-const memory=FAMILIES.map(f=>f.home.slice());
-let mo=memory[fam][0], mi=memory[fam][1];
-let selChord=null, sevenths=false;
+var $=function(id){return document.getElementById(id)};
+var wheel=$('wheel'), outer=[], inner=[], step=0, prev=-1, mo=0, mi=5;
+var selChord=null, sevenths=false;
 
-FAMILIES.forEach((f,j)=>{
-  const o=document.createElement('option');
-  o.value=j; o.textContent=f.label;
-  $('mf').appendChild(o);
-});
-$('mf').value=fam;
-
-function fillModes(){
-  const f=FAMILIES[fam];
-  ['mo','mi'].forEach((id)=>{
-    const sel=$(id);
-    sel.replaceChildren();
-    f.modes.forEach((m,j)=>{
-      const o=document.createElement('option');
-      o.value=j; o.textContent=m.note ? `${m.name} — ${m.note}` : m.name;
-      sel.appendChild(o);
-    });
+MODES.forEach(function(m,j){
+  var text=m.label||m.id.charAt(0).toUpperCase()+m.id.slice(1);
+  ['mo','mi'].forEach(function(id){
+    var o=document.createElement('option');
+    o.value=j; o.textContent=text;
+    $(id).appendChild(o);
   });
-  $('mo').value=mo; $('mi').value=mi;
-}
-fillModes();
+});
+$('mo').value=mo; $('mi').value=mi;
 
 /* Each label needs a world rotation of zero, i.e. -(slotAngle + wheelAngle).
    The slot part is constant, so it is baked into a static wrapper at build
    time; that leaves -wheelAngle, which is identical for all 24 labels and so
    can be driven by a single shared CSS rule instead of 24 style writes. */
-function div(cls){const d=document.createElement('div');d.className=cls;return d}
+function div(cls){var d=document.createElement('div');d.className=cls;return d}
+POS.forEach(function(p,j){
+  var ang=j*30, back='rotate('+(-ang)+'deg)';
+  var sp=div('spoke'); sp.style.transform='rotate('+(ang+15)+'deg)'; wheel.appendChild(sp);
+  var slot=div('slot'); slot.style.transform='rotate('+ang+'deg)';
 
-/* Transparent sectors, one per position. They live inside the wheel so they
-   rotate with it, and go in first so the labels paint on top — a click on the
-   text hits the label, anywhere else in the slice hits the wedge, and both
-   call goTo. The inner radius stops at the hub, which sits above and keeps
-   its own clicks. */
-const hit=el('svg',{viewBox:'0 0 100 100','class':'hit','aria-hidden':'true'});
-const HR=50, hr=17, canHover=window.matchMedia('(hover:hover)').matches;
-POS.forEach((p,j)=>{
-  const P=(a,r)=>{const t=(a-90)*Math.PI/180;
-    return [(50+r*Math.cos(t)).toFixed(2),(50+r*Math.sin(t)).toFixed(2)]};
-  const o0=P(j*30-15,HR), o1=P(j*30+15,HR), i1=P(j*30+15,hr), i0=P(j*30-15,hr);
-  const w=el('path',{d:`M ${o0[0]} ${o0[1]} A ${HR} ${HR} 0 0 1 ${o1[0]} ${o1[1]}`
-    +` L ${i1[0]} ${i1[1]} A ${hr} ${hr} 0 0 0 ${i0[0]} ${i0[1]} Z`});
-  w.addEventListener('click',()=>goTo(j));
-  /* gated on a real pointer so a tap doesn't leave a slice stuck lit */
-  if(canHover){
-    w.addEventListener('mouseenter',()=>{
-      outer[j].classList.add('hov'); inner[j].classList.add('hov');
-    });
-    w.addEventListener('mouseleave',()=>{
-      outer[j].classList.remove('hov'); inner[j].classList.remove('hov');
-    });
-  }
-  hit.appendChild(w);
-});
-wheel.appendChild(hit);
+  var a=div('lbl cr'), b=div('lbl ilbl cr');
+  a.addEventListener('click',function(){goTo(j)});
+  b.addEventListener('click',function(){goTo(j)});
 
-POS.forEach((p,j)=>{
-  const ang=j*30, back=`rotate(${-ang}deg)`;
-  const sp=div('spoke'); sp.style.transform=`rotate(${ang+15}deg)`; wheel.appendChild(sp);
-  const slot=div('slot'); slot.style.transform=`rotate(${ang}deg)`;
-
-  const a=div('lbl cr'), b=div('lbl ilbl cr');
-  a.addEventListener('click',()=>goTo(j));
-  b.addEventListener('click',()=>goTo(j));
-
-  const fa=div('fix'); fa.style.transform=back; fa.appendChild(a);
-  const fb=div('fix'); fb.style.transform=back; fb.appendChild(b);
-  const pa=div('pos'); pa.appendChild(fa);
-  const pb=div('ipos'); pb.appendChild(fb);
+  var fa=div('fix'); fa.style.transform=back; fa.appendChild(a);
+  var fb=div('fix'); fb.style.transform=back; fb.appendChild(b);
+  var pa=div('pos'); pa.appendChild(fa);
+  var pb=div('ipos'); pb.appendChild(fb);
   slot.appendChild(pa); slot.appendChild(pb); wheel.appendChild(slot);
   outer.push(a); inner.push(b);
 });
 
-const spin=document.createElement('style');
+var spin=document.createElement('style');
 document.head.appendChild(spin);
 spin.sheet.insertRule('.cr{transform:rotate(0deg)}',0);
-const spinRule=spin.sheet.cssRules[0];
+var spinRule=spin.sheet.cssRules[0];
 
 /* label text depends only on the chosen modes, so it is written on mode
    change - not on every rotation. */
 function label(){
-  const f=FAMILIES[fam];
-  const o1=f.deg[mo], o2=f.deg[mi];
-  const q1=suffix(f,mo,false,false), q2=suffix(f,mi,false,false);
-  POS.forEach((p,j)=>{
-    outer[j].innerHTML=`<div class="n">${fname(p.n+o1)+q1}</div><div class="c">${tag(p.n)}</div>${p.alt!==null ? `<div class="x">${fname(p.alt+o1)+q1} ${tag(p.alt)}</div>` : ''}`;
-    inner[j].textContent=fname(p.n+o2)+q2;
+  var m1=MODES[mo], m2=MODES[mi];
+  POS.forEach(function(p,j){
+    outer[j].innerHTML='<div class="n">'+tonic(p.n,m1)+'</div><div class="c">'+tag(p.n)+'</div>'+
+      (p.alt!==null ? '<div class="x">'+tonic(p.alt,m1)+' '+tag(p.alt)+'</div>' : '');
+    inner[j].textContent=tonic(p.n,m2);
   });
 }
 
 /* rotation touches one custom property plus four class flips. */
 function place(){
-  const idx=((step%12)+12)%12, p=POS[idx], f=FAMILIES[fam];
-  const deg=-step*30;
-  wheel.style.transform=`rotate(${deg}deg)`;
-  spinRule.style.transform=`rotate(${-deg}deg)`;
+  var idx=((step%12)+12)%12, p=POS[idx], m1=MODES[mo], m2=MODES[mi];
+  var deg=-step*30;
+  wheel.style.transform='rotate('+deg+'deg)';
+  spinRule.style.transform='rotate('+(-deg)+'deg)';
   if(prev!==-1){ outer[prev].classList.remove('on'); inner[prev].classList.remove('on'); }
   outer[idx].classList.add('on'); inner[idx].classList.add('on');
   prev=idx;
 
-  /* the hub names the family's own home key, which is the relative minor
-     rather than the signature's major once harmonic minor is selected */
-  $('hk').textContent=fname(p.n+f.deg[0]);
-  $('hm').textContent=`${f.short} · ${tag(p.n)}`;
-  $('posLabel').textContent=`Position ${String(idx).padStart(2,'0')}`;
-  $('n1').textContent=`${fname(p.n+f.deg[mo])} ${f.modes[mo].name}`;
-  $('n2').textContent=`${fname(p.n+f.deg[mi])} ${f.modes[mi].name}`;
+  $('hk').textContent=fname(p.n);
+  $('hm').textContent='major · '+tag(p.n);
+  $('posLabel').textContent='Position '+String(idx).padStart(2,'0');
+  $('n1').textContent=fname(p.n+m1.off)+' '+m1.id;
+  $('n2').textContent=fname(p.n+m2.off)+' '+m2.id;
+  $('s1').replaceChildren(staff(p.n,mo));
+  $('s2').replaceChildren(staff(p.n,mi));
   renderChords();
-  if(window.syncHash) window.syncHash();
-  /* the signature alone undersells an altered family, so name its extra note */
-  const sig=words(p.n)+(f.alt!==null ? ` plus ${fname(p.n+f.alt)}` : '');
   $('enh').textContent = p.alt!==null
-    ? `${sig} — enharmonically ${fname(p.alt+f.deg[0])} ${f.short}, ${words(p.alt)}`
-    : `${sig} — both rings share these seven notes`;
+    ? words(p.n)+' — enharmonically '+fname(p.alt)+' major, '+words(p.alt)
+    : words(p.n)+' — both rings share these seven notes';
 }
-
-/* The register buttons move both figures together, so the scale and the stack
-   of thirds always start from the same sounding pitch. Zero shift is whatever
-   octave the engine judges most readable for the chord in hand; the offsets
-   are what a bass player or a flute player reaches for from there. */
-let octShift=0, sheetKind='scale';
-const SHIFT_MIN=-2, SHIFT_MAX=2;
 
 function renderChords(){
-  const p=POS[((step%12)+12)%12], f=FAMILIES[fam];
-  if(selChord===null||selChord<0||selChord>6) selChord=mo;
-  $('ring').replaceChildren(chordRing(p.n,f,mo,sevenths,selChord));
-  renderDetail();
-  if(!$('panelS').classList.contains('off')) renderSheet();
-}
-
-function renderDetail(){
-  const p=POS[((step%12)+12)%12], f=FAMILIES[fam], i=selChord;
-  const oct=baseOctave(p.n,f,i)+octShift;
-  const sc=figureStaff(p.n,f,i,'scale',oct), ar=figureStaff(p.n,f,i,'arp',oct);
-  $('dName').textContent=chordName(p.n,f,i,sevenths);
-  $('dNum').textContent=numeral(f,i,mo,sevenths);
-  $('dMode').textContent=`${fname(p.n+f.deg[i])} ${f.modes[i].name}`;
-  $('tones').textContent=chordTones(p.n,f,i,sevenths);
-  $('figScale').replaceChildren(sc.svg); $('rngScale').textContent=sc.range;
-  $('figArp').replaceChildren(ar.svg);   $('rngArp').textContent=ar.range;
-  $('octRead').textContent=`Root ${fname(p.n+f.deg[i])}${Math.floor(placeFigure(p.n,f,i,'arp',oct).sounding[0]/7)}`;
-  $('octDn').disabled=octShift<=SHIFT_MIN;
-  $('octUp').disabled=octShift>=SHIFT_MAX;
-}
-
-/* Sheet view: the same seven chords the ring holds, unrolled top to bottom in
-   ring order so the descending-fifths reading survives the change of shape. */
-function renderSheet(){
-  const p=POS[((step%12)+12)%12], f=FAMILIES[fam];
-  /* one register for the whole sheet, taken from the tonic, so the rows can be
-     compared: pitch really does climb and fall from one degree to the next,
-     and per-row octave fitting would hide exactly that. */
-  const sheetOct=baseOctave(p.n,f,mo)+octShift;
-  const rows=document.createDocumentFragment();
-  spanOf(f).forEach(di=>{
-    const r=div('srow'+(di===mo?' tonic':''));
-    const g=div('sgut');
-    const a=div('snum'); a.textContent=numeral(f,di,mo,sevenths);
-    const b=div('ssym'); b.textContent=chordName(p.n,f,di,sevenths);
-    const c=div('smode'); c.textContent=f.modes[di].name;
-    g.append(a,b,c);
-    const s=div('sstaff');
-    s.appendChild(figureStaff(p.n,f,di,sheetKind,sheetOct).svg);
-    r.append(g,s);
-    r.addEventListener('click',()=>{selChord=di;showView('focus')});
-    rows.appendChild(r);
-  });
-  $('sheetRows').replaceChildren(rows);
-}
-
-function showView(which){
-  const focus=which==='focus';
-  $('panelF').classList.toggle('off',!focus);
-  $('panelS').classList.toggle('off',focus);
-  $('tabF').classList.toggle('on',focus);
-  $('tabS').classList.toggle('on',!focus);
-  if(focus) renderDetail(); else renderSheet();
-}
-function reflow(){
-  renderDetail();
-  if(!$('panelS').classList.contains('off')) renderSheet();
+  var p=POS[((step%12)+12)%12], off=MODES[mo].off;
+  if(selChord===null||SPAN.indexOf(selChord)<0) selChord=off;
+  $('ring').replaceChildren(chordRing(p.n,off,sevenths,selChord));
+  $('seam').textContent='clockwise = descending fifths · dashed '+
+    numeral(-1,off,false)+'→'+numeral(5,off,false)+' is a tritone';
+  $('tones').textContent=chordName(p.n,selChord,sevenths)+'   '+
+    numeral(selChord,off,sevenths)+'   ·   '+chordTones(p.n,selChord,sevenths);
 }
 
 function goTo(j){ step += ((j-(((step%12)+12)%12))+18)%12-6; place(); }
 
 $('cw').addEventListener('click',function(){step++;place()});
 $('ccw').addEventListener('click',function(){step--;place()});
-$('mf').addEventListener('change',function(){
-  fam=+this.value;
-  mo=memory[fam][0]; mi=memory[fam][1];
-  selChord=null; fillModes(); label(); place();
-});
-$('mo').addEventListener('change',function(){mo=memory[fam][0]=+this.value;selChord=null;label();place()});
+$('mo').addEventListener('change',function(){mo=+this.value;selChord=null;label();place()});
 $('sev').addEventListener('change',function(){sevenths=this.checked;renderChords()});
-$('court').addEventListener('change',function(){courtesyAcc=this.checked;reflow()});
-$('tabF').addEventListener('click',()=>showView('focus'));
-$('tabS').addEventListener('click',()=>showView('sheet'));
-$('figScl').addEventListener('click',function(){
-  sheetKind='scale'; this.classList.add('on'); $('figArpB').classList.remove('on'); renderSheet();
+$('tabN').addEventListener('click',function(){
+  $('panelN').classList.remove('off'); $('panelC').classList.add('off');
+  this.classList.add('on'); $('tabC').classList.remove('on');
 });
-$('figArpB').addEventListener('click',function(){
-  sheetKind='arp'; this.classList.add('on'); $('figScl').classList.remove('on'); renderSheet();
+$('tabC').addEventListener('click',function(){
+  $('panelC').classList.remove('off'); $('panelN').classList.add('off');
+  this.classList.add('on'); $('tabN').classList.remove('on');
 });
-$('octDn').addEventListener('click',function(){ if(octShift>SHIFT_MIN){ octShift--; reflow() } });
-$('octUp').addEventListener('click',function(){ if(octShift<SHIFT_MAX){ octShift++; reflow() } });
-$('mi').addEventListener('change',function(){mi=memory[fam][1]=+this.value;label();place()});
-
-/* One snapshot of the current view — family, both rings, wheel position — for
-   the shell to park in its hash slot. It is overwritten in place on every
-   change, never appended to, so a long session leaves exactly one entry behind.
-   A reload restores just this view; the other families' remembered pairs are
-   in-session only and start again from their home defaults. */
-window.getCircleView=()=>`${fam}.${mo}.${mi}.${((step%12)+12)%12}`;
-window.setCircleView=(str)=>{
-  const v=String(str||'').split('.').map(Number);
-  if(v.length!==4 || v.some((x)=>!Number.isInteger(x))) return;
-  if(v[0]<0 || v[0]>=FAMILIES.length) return;
-  if(v[1]<0 || v[1]>6 || v[2]<0 || v[2]>6 || v[3]<0 || v[3]>11) return;
-  fam=v[0]; mo=memory[fam][0]=v[1]; mi=memory[fam][1]=v[2]; step=v[3];
-  selChord=null; $('mf').value=fam;
-  fillModes(); label(); place();
-};
+$('mi').addEventListener('change',function(){mi=+this.value;label();place()});
 
 label(); place();
 })();
@@ -2607,7 +1926,7 @@ label(); place();
   // One palette drives both tools. Every value here is a CSS custom property
   // written to :root; the fretboard's canvas colours are keyed to the same
   // theme ids inside its own script.
-  const THEMES = {
+  var THEMES = {
     paper:{label:'Paper', vars:{
       '--paper':"#F5F2EA",
       '--paper-raised':"#EFEBE0",
@@ -2706,45 +2025,27 @@ label(); place();
     }}
   };
 
-  const ORDER = ['fretboard','circle'];
-  const PANEL = {fretboard:'fretApp', circle:'circleApp'};
-  const tabs = {}, panels = {};
-  ORDER.forEach((k)=>{
+  var ORDER = ['fretboard','circle'];
+  var PANEL = {fretboard:'fretApp', circle:'circleApp'};
+  var tabs = {}, panels = {};
+  ORDER.forEach(function(k){
     tabs[k] = document.getElementById('tab-' + k);
     panels[k] = document.getElementById(PANEL[k]);
   });
-  const pick = document.getElementById('themePick');
-  const meta = document.querySelector('meta[name="theme-color"]');
-  let tab = ORDER[0], theme = 'paper';
+  var pick = document.getElementById('themePick');
+  var meta = document.querySelector('meta[name="theme-color"]');
+  var tab = ORDER[0], theme = 'paper';
 
-  Object.keys(THEMES).forEach((k)=>{
-    const o = document.createElement('option');
+  Object.keys(THEMES).forEach(function(k){
+    var o = document.createElement('option');
     o.value = k; o.textContent = THEMES[k].label;
     pick.appendChild(o);
   });
 
-  // Inter, JetBrains Mono, and Zilla Slab only appear in the non-default
-  // themes, so they're fetched on first use rather than on every page load.
-  let extraFontsLoaded = false;
-  function ensureExtraFonts(){
-    if(extraFontsLoaded) return;
-    extraFontsLoaded = true;
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Zilla+Slab:wght@500;600;700&display=swap';
-    // The fretboard's canvas text won't repaint itself once the font arrives,
-    // so force one redraw when it does (harmless no-op if paper is current).
-    link.addEventListener('load', ()=>{
-      if(window.setFretboardTheme) window.setFretboardTheme(theme);
-    });
-    document.head.appendChild(link);
-  }
-
   function applyTheme(key, writeHash){
     theme = THEMES[key] ? key : 'paper';
-    if(theme !== 'paper') ensureExtraFonts();
-    const vars = THEMES[theme].vars, root = document.documentElement.style;
-    Object.keys(vars).forEach((name)=>{ root.setProperty(name, vars[name]); });
+    var vars = THEMES[theme].vars, root = document.documentElement.style;
+    Object.keys(vars).forEach(function(name){ root.setProperty(name, vars[name]); });
     if(meta) meta.setAttribute('content', vars['--paper']);
     if(pick.value !== theme) pick.value = theme;
     if(window.setFretboardTheme) window.setFretboardTheme(theme);
@@ -2753,8 +2054,8 @@ label(); place();
 
   function showTab(key, writeHash){
     tab = PANEL[key] ? key : ORDER[0];
-    ORDER.forEach((k)=>{
-      const on = (k === tab);
+    ORDER.forEach(function(k){
+      var on = (k === tab);
       panels[k].hidden = !on;
       tabs[k].classList.toggle('on', on);
       tabs[k].setAttribute('aria-selected', on ? 'true' : 'false');
@@ -2764,55 +2065,42 @@ label(); place();
     if(writeHash) writeHashSafely();
   }
 
-  // The hash carries tab, theme and the circle's current view, so a link
-  // restores the exact page. replaceState overwrites the one entry rather than
-  // stacking one per click.
+  // The hash carries both choices, so a link restores the exact view.
   // Opened straight off disk the page has a null origin and Chrome refuses
   // replaceState, so fall back to setting the hash outright.
-  function writeHashSafely(fromCircle){
-    const view = window.getCircleView ? window.getCircleView() : '';
-    let want = tab;
-    if(theme !== 'paper' || view) want += '/' + theme;
-    if(view) want += '/' + view;
+  function writeHashSafely(){
+    var want = tab + (theme === 'paper' ? '' : '/' + theme);
     if(location.hash.slice(1) === want) return;
     try{ history.replaceState(null, '', '#' + want); }
-    catch(err){
-      // Assigning the hash pushes a history entry. That is tolerable for a tab
-      // or theme change, but the circle moves on every arrow click and would
-      // otherwise leave a back-button trail one entry long per turn — so when
-      // replaceState is unavailable the circle simply goes unrecorded.
-      if(!fromCircle) location.hash = want;
-    }
+    catch(err){ location.hash = want; }
   }
-  window.syncHash = ()=>{ writeHashSafely(true); };
 
   function readHash(){
-    const parts = location.hash.slice(1).split('/');
+    var parts = location.hash.slice(1).split('/');
     showTab(parts[0], false);
     applyTheme(parts[1] || 'paper', false);
-    if(parts[2] && window.setCircleView) window.setCircleView(parts[2]);
   }
 
-  ORDER.forEach((k, i)=>{
-    tabs[k].addEventListener('click', ()=>{ showTab(k, true); });
-    tabs[k].addEventListener('keydown', (e)=>{
+  ORDER.forEach(function(k, i){
+    tabs[k].addEventListener('click', function(){ showTab(k, true); });
+    tabs[k].addEventListener('keydown', function(e){
       if(e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
       e.preventDefault();
-      const next = ORDER[(i + (e.key === 'ArrowRight' ? 1 : ORDER.length - 1)) % ORDER.length];
+      var next = ORDER[(i + (e.key === 'ArrowRight' ? 1 : ORDER.length - 1)) % ORDER.length];
       showTab(next, true);
       tabs[next].focus();
     });
   });
-  pick.addEventListener('change', ()=>{ applyTheme(pick.value, true); });
+  pick.addEventListener('change', function(){ applyTheme(pick.value, true); });
   window.addEventListener('hashchange', readHash);
 
   // the eyebrow reports how many diagrams are on the sheet
-  const count = document.getElementById('fretCount');
-  const sheet = document.getElementById('diagrams');
+  var count = document.getElementById('fretCount');
+  var sheet = document.getElementById('diagrams');
   if(count && sheet){
-    const tally = ()=>{
-      const n = sheet.querySelectorAll('.diagram-card').length;
-      count.textContent = `Diagrams ${String(n).padStart(2,'0')}`;
+    var tally = function(){
+      var n = sheet.querySelectorAll('.diagram-card').length;
+      count.textContent = 'Diagrams ' + String(n < 10 ? '0' + n : n);
     };
     new MutationObserver(tally).observe(sheet, {childList:true});
     tally();
