@@ -92,32 +92,6 @@ body{
   cursor:pointer;
 }
 .theme-pick select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-.tabs{
-  display:flex;
-  gap:2px;
-  margin-left:auto;
-  border:1px solid var(--line-strong);
-  border-radius:var(--radius);
-  padding:3px;
-}
-.tab{
-  font-family:var(--font-mono);
-  font-size:11px;
-  font-weight:500;
-  letter-spacing:.1em;
-  text-transform:uppercase;
-  border:0;
-  background:transparent;
-  color:var(--ink-soft);
-  padding:8px 16px;
-  border-radius:var(--radius);
-  cursor:pointer;
-  white-space:nowrap;
-  transition:background-color .18s ease, color .18s ease;
-}
-.tab:hover{background:var(--paper-raised);color:var(--ink)}
-.tab.on{background:var(--red);color:var(--on-red)}
-.tab:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .app-panel[hidden]{display:none !important}
 
 /* ---- tool rail (visual experiment) ---------------------------------------
@@ -159,11 +133,9 @@ body{
   .shell-mark{display:none}
   .theme-pick{flex:1}
   .theme-pick select{width:100%}
-  .tabs{margin-left:0;width:100%;order:3}
-  .tab{flex:1;padding:9px 8px;font-size:10px;letter-spacing:.06em}
 }
 @media (prefers-reduced-motion:reduce){
-  body,.shell-bar,.tab{transition:none}
+  body,.shell-bar{transition:none}
 }
 
 
@@ -766,22 +738,18 @@ body{
 }
 </style>
 </head>
-<body data-tab="fretboard">
+<body>
 
 <div class="shell-bar">
   <div class="shell-inner">
     <span class="shell-mark">Lesson tools</span>
     <label class="theme-pick"><span>Theme</span><select id="themePick" aria-label="Theme"></select></label>
-    <div class="tabs" role="tablist" aria-label="Tools">
-      <button class="tab on" id="tab-fretboard" role="tab" aria-controls="fretApp" aria-selected="true">Fretboard</button>
-      <button class="tab" id="tab-circle" role="tab" aria-controls="circleApp" aria-selected="false" tabindex="-1">Circle of fifths</button>
-    </div>
   </div>
 </div>
 
 <div class="tool-rail">
 
-<section class="app-panel tool-card" id="fretApp" role="tabpanel" aria-labelledby="tab-fretboard">
+<section class="app-panel tool-card" id="fretApp">
 <header>
   <div class="eyebrow"><span>Diagram sheet</span><span id="fretCount">Diagrams 01</span></div>
   <h1>Fretboard</h1>
@@ -804,7 +772,7 @@ body{
 <footer class="credits">Built for lesson prep — click the fretboard to toggle notes, use octave mode to fill every matching pitch, and set a root to color by interval.</footer>
 </section>
 
-<div id="circleApp" role="tabpanel" aria-labelledby="tab-circle">
+<div id="circleApp">
 
 <section class="tool-card" id="wheelCard">
 <header>
@@ -2757,18 +2725,9 @@ label(); place();
     }}
   };
 
-  const ORDER = ['fretboard','circle'];
-  const PANEL = {fretboard:'fretApp', circle:'circleApp'};
-  // circleApp is a display:contents wrapper now (three cards, not one box),
-  // so "jump to" scrolls to its first card rather than to circleApp itself.
-  const SCROLL_TARGET = {fretboard:'fretApp', circle:'wheelCard'};
-  const tabs = {};
-  ORDER.forEach((k)=>{
-    tabs[k] = document.getElementById('tab-' + k);
-  });
   const pick = document.getElementById('themePick');
   const meta = document.querySelector('meta[name="theme-color"]');
-  let tab = ORDER[0], theme = 'paper';
+  let theme = 'paper';
 
   Object.keys(THEMES).forEach((k)=>{
     const o = document.createElement('option');
@@ -2804,40 +2763,20 @@ label(); place();
     if(writeHash) writeHashSafely();
   }
 
-  // All four tool-cards stay visible side by side now, so the tabs no longer
-  // hide/show panels — they just scroll the rail to the chosen card. Kept as
-  // ORDER/PANEL-driven "jump to" links, this is the same mechanism a future
-  // carousel's prev/next or dot nav would use, just aimed at one card at a
-  // time instead of the whole rail.
-  function showTab(key, writeHash){
-    tab = PANEL[key] ? key : ORDER[0];
-    ORDER.forEach((k)=>{
-      const on = (k === tab);
-      tabs[k].classList.toggle('on', on);
-      tabs[k].setAttribute('aria-selected', on ? 'true' : 'false');
-      tabs[k].tabIndex = on ? 0 : -1;
-    });
-    document.body.setAttribute('data-tab', tab);
-    const target = document.getElementById(SCROLL_TARGET[tab]);
-    if(target) target.scrollIntoView({behavior:'smooth', inline:'start', block:'nearest'});
-    if(writeHash) writeHashSafely();
-  }
-
-  // The hash carries tab, theme and the circle's current view, so a link
-  // restores the exact page. replaceState overwrites the one entry rather than
+  // The hash carries theme and the circle's current view, so a link restores
+  // the exact page. replaceState overwrites the one entry rather than
   // stacking one per click.
   // Opened straight off disk the page has a null origin and Chrome refuses
   // replaceState, so fall back to setting the hash outright.
   function writeHashSafely(fromCircle){
     const view = window.getCircleView ? window.getCircleView() : '';
-    let want = tab;
-    if(theme !== 'paper' || view) want += '/' + theme;
+    let want = (theme !== 'paper' || view) ? theme : '';
     if(view) want += '/' + view;
     if(location.hash.slice(1) === want) return;
     try{ history.replaceState(null, '', '#' + want); }
     catch(err){
-      // Assigning the hash pushes a history entry. That is tolerable for a tab
-      // or theme change, but the circle moves on every arrow click and would
+      // Assigning the hash pushes a history entry. That is tolerable for a
+      // theme change, but the circle moves on every arrow click and would
       // otherwise leave a back-button trail one entry long per turn — so when
       // replaceState is unavailable the circle simply goes unrecorded.
       if(!fromCircle) location.hash = want;
@@ -2847,21 +2786,10 @@ label(); place();
 
   function readHash(){
     const parts = location.hash.slice(1).split('/');
-    showTab(parts[0], false);
-    applyTheme(parts[1] || 'paper', false);
-    if(parts[2] && window.setCircleView) window.setCircleView(parts[2]);
+    applyTheme(parts[0] || 'paper', false);
+    if(parts[1] && window.setCircleView) window.setCircleView(parts[1]);
   }
 
-  ORDER.forEach((k, i)=>{
-    tabs[k].addEventListener('click', ()=>{ showTab(k, true); });
-    tabs[k].addEventListener('keydown', (e)=>{
-      if(e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-      e.preventDefault();
-      const next = ORDER[(i + (e.key === 'ArrowRight' ? 1 : ORDER.length - 1)) % ORDER.length];
-      showTab(next, true);
-      tabs[next].focus();
-    });
-  });
   pick.addEventListener('change', ()=>{ applyTheme(pick.value, true); });
   window.addEventListener('hashchange', readHash);
 
