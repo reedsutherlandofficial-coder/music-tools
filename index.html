@@ -119,6 +119,39 @@ body{
 .tab.on{background:var(--red);color:var(--on-red)}
 .tab:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .app-panel[hidden]{display:none !important}
+
+/* ---- tool rail (visual experiment) ---------------------------------------
+   All four tools sit as siblings in one horizontally-scrolling flex row.
+   Each .tool-card is an independent scroll-snap child, which is also the
+   layout a carousel needs — turning this into a turnstile later is a matter
+   of narrowing each card to the rail's full width and driving scroll with
+   prev/next controls, not restructuring this markup again. */
+.tool-rail{
+  display:flex;
+  align-items:flex-start;
+  gap:1.5rem;
+  padding:1.75rem clamp(1rem,3vw,2.5rem) 3rem;
+  overflow-x:auto;
+  scroll-snap-type:x proximity;
+}
+.tool-card{
+  flex:0 0 clamp(300px,27vw,380px);
+  scroll-snap-align:start;
+  background:var(--paper-raised);
+  border:1px solid var(--line-strong);
+  border-radius:var(--radius);
+  max-height:calc(100vh - 76px);
+  overflow-y:auto;
+  padding:1.75rem;
+}
+/* fretApp's header/toolbar/diagrams/footer already carry their own 1.75rem
+   side gutters (see the shared rule a few hundred lines down); adding the
+   card's own horizontal padding on top would double it up. */
+#fretApp.tool-card{padding-left:0;padding-right:0}
+@media (max-width:640px){
+  .tool-rail{scroll-snap-type:x mandatory}
+  .tool-card{flex-basis:88vw}
+}
 @media (max-width:720px){
   .shell-inner{padding:8px 1.25rem;gap:10px;flex-wrap:wrap}
   .shell-mark{display:none}
@@ -353,16 +386,16 @@ body{
 /* ============ CIRCLE OF FIFTHS ============ */
 /* rotated .slot squares have bounding boxes wider than the dial they sit in;
    nothing visible lies out there, so clip the axis rather than scroll it */
+/* circleApp itself is no longer a box: display:contents drops it from layout
+   so its three sections (wheel, chords, notation) become direct children of
+   .tool-rail and lay out as independent cards, while every #circleApp .foo
+   rule below keeps matching since the DOM nesting is unchanged. */
 #circleApp{
-  background:var(--paper);
+  display:contents;
   color:var(--ink);
   font-family:var(--font-body);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  padding:env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0);
 }
-#circleApp .wrap{width:100%;max-width:480px;padding:2rem 1.5rem 3rem;--dial:min(100%,340px)}
+#wheelCard{--dial:min(100%,300px)}
 #circleApp header{margin-bottom:1.75rem}
 #circleApp .eyebrow{
   font-family:var(--font-mono);
@@ -633,7 +666,11 @@ body{
   padding:3px 0;
 }
 #circleApp .keyline .enh{border:0;margin:6px 0 0;padding:0;text-align:left;line-height:1.6}
-#circleApp .detail{margin-top:1.25rem}
+#circleApp .detail{margin-top:0}
+#circleApp .chords-hint{
+  font-family:var(--font-mono);font-size:10px;color:var(--ink-mute);
+  line-height:1.5;margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line);
+}
 #circleApp .dhead{
   display:flex;align-items:baseline;gap:12px;
   border-bottom:1px solid var(--line-strong);padding-bottom:6px;
@@ -740,7 +777,9 @@ body{
   </div>
 </div>
 
-<section class="app-panel" id="fretApp" role="tabpanel" aria-labelledby="tab-fretboard">
+<div class="tool-rail">
+
+<section class="app-panel tool-card" id="fretApp" role="tabpanel" aria-labelledby="tab-fretboard">
 <header>
   <div class="eyebrow"><span>Diagram sheet</span><span id="fretCount">Diagrams 01</span></div>
   <h1>Fretboard</h1>
@@ -762,8 +801,10 @@ body{
 
 <footer class="credits">Built for lesson prep — click the fretboard to toggle notes, use octave mode to fill every matching pitch, and set a root to color by interval.</footer>
 </section>
-<section class="app-panel" id="circleApp" role="tabpanel" aria-labelledby="tab-circle" hidden>
-<div class="wrap">
+
+<div id="circleApp" role="tabpanel" aria-labelledby="tab-circle">
+
+<section class="tool-card" id="wheelCard">
 <header>
   <div class="eyebrow"><span>Diagram no. 5ths</span><span id="posLabel">Position 00</span></div>
   <h1>Circle of fifths</h1>
@@ -796,6 +837,18 @@ body{
   <div class="enh" id="enh"></div>
 </div>
 
+<footer><p>Rotate with the arrows or a tap on the dial.</p></footer>
+</section>
+
+<section class="tool-card" id="chordsCard">
+  <div class="chead">
+    <span class="role">Diatonic chords</span>
+  </div>
+  <div id="ring"></div>
+  <p class="chords-hint">Pick a chord here — its mode and stack of thirds read out on the notation card.</p>
+</section>
+
+<section class="tool-card" id="notationCard">
 <div class="seg">
   <button class="seg-b on" id="tabF">Focus</button>
   <button class="seg-b" id="tabS">Sheet</button>
@@ -807,10 +860,6 @@ body{
 </div>
 
 <div class="panel" id="panelF">
-  <div class="chead">
-    <span class="role">Diatonic chords</span>
-  </div>
-  <div id="ring"></div>
   <div class="detail">
     <div class="dhead">
       <div class="dname" id="dName"></div>
@@ -843,10 +892,10 @@ body{
   </div>
   <div id="sheetRows"></div>
 </div>
-
-<footer><p>Rotate with the arrows or a tap on the dial. Pick a chord to read its mode and its stack of thirds.</p></footer>
-</div>
 </section>
+
+</div>
+</div>
 <script>
 (function(){
 
@@ -2708,10 +2757,12 @@ label(); place();
 
   const ORDER = ['fretboard','circle'];
   const PANEL = {fretboard:'fretApp', circle:'circleApp'};
-  const tabs = {}, panels = {};
+  // circleApp is a display:contents wrapper now (three cards, not one box),
+  // so "jump to" scrolls to its first card rather than to circleApp itself.
+  const SCROLL_TARGET = {fretboard:'fretApp', circle:'wheelCard'};
+  const tabs = {};
   ORDER.forEach((k)=>{
     tabs[k] = document.getElementById('tab-' + k);
-    panels[k] = document.getElementById(PANEL[k]);
   });
   const pick = document.getElementById('themePick');
   const meta = document.querySelector('meta[name="theme-color"]');
@@ -2751,16 +2802,22 @@ label(); place();
     if(writeHash) writeHashSafely();
   }
 
+  // All four tool-cards stay visible side by side now, so the tabs no longer
+  // hide/show panels — they just scroll the rail to the chosen card. Kept as
+  // ORDER/PANEL-driven "jump to" links, this is the same mechanism a future
+  // carousel's prev/next or dot nav would use, just aimed at one card at a
+  // time instead of the whole rail.
   function showTab(key, writeHash){
     tab = PANEL[key] ? key : ORDER[0];
     ORDER.forEach((k)=>{
       const on = (k === tab);
-      panels[k].hidden = !on;
       tabs[k].classList.toggle('on', on);
       tabs[k].setAttribute('aria-selected', on ? 'true' : 'false');
       tabs[k].tabIndex = on ? 0 : -1;
     });
     document.body.setAttribute('data-tab', tab);
+    const target = document.getElementById(SCROLL_TARGET[tab]);
+    if(target) target.scrollIntoView({behavior:'smooth', inline:'start', block:'nearest'});
     if(writeHash) writeHashSafely();
   }
 
