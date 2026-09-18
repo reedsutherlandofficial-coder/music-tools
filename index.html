@@ -5,12 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Fretboard &amp; Circle of Fifths</title>
 <meta name="description" content="Two tools for lesson prep: a fretboard diagram builder and an interactive circle of fifths.">
-<meta name="theme-color" content="#F5F2EA">
+<meta name="theme-color" content="#120C07">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link id="baseFontLink" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
-<!-- Inter, JetBrains Mono, and Zilla Slab are only used by non-default themes;
-     the shell script injects them on first use instead of loading them eagerly. -->
+<link id="baseFontLink" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- IBM Plex Sans/Mono, Space Grotesk, Inter, and Zilla Slab are only used by
+     non-default themes; the shell script injects them on first use instead
+     of loading them eagerly. -->
 <style>
 /* ---- shell ---------------------------------------------------------------
    The bar holds the two things that apply to the whole page: which tool is
@@ -20,19 +21,40 @@
 html,body{margin:0;padding:0;overflow-x:hidden}
 html{scrollbar-gutter:stable}
 :root{
-  --paper:#F5F2EA; --paper-raised:#EFEBE0;
-  --ink:#1B1A17; --ink-soft:#5B584E; --ink-mute:#948F80;
-  --line:#D8D2C2; --line-strong:#B9B29C;
-  --red:#C1272D; --red-ink:#7A1519; --on-red:#F5F2EA;
-  --radius:10px;
-  --font-display:'Space Grotesk', sans-serif;
-  --font-body:'IBM Plex Sans', sans-serif;
-  --font-mono:'IBM Plex Mono', monospace;
+  --paper:#120C07; --paper-raised:#1D160C;
+  --ink:#F3EAD9; --ink-soft:#B9AA8C; --ink-mute:#7C6D54;
+  --line:#3A2C1A; --line-strong:#54402A;
+  --red:#E5672B; --red-ink:#FF8A4A; --on-red:#120C07; --teal:#17B8A6;
+  --radius:2px;
+  --font-display:'JetBrains Mono', monospace;
+  --font-body:'JetBrains Mono', monospace;
+  --font-mono:'JetBrains Mono', monospace;
 }
 body{
-  background:var(--paper);
+  background:
+    radial-gradient(ellipse 1200px 700px at 50% -8%, color-mix(in srgb, var(--red) 26%, var(--paper)) 0%, var(--paper) 48%, color-mix(in srgb, var(--teal) 8%, var(--paper)) 100%);
+  background-attachment:fixed;
   color:var(--ink);
   transition:background-color .3s ease;
+  position:relative;
+}
+/* film grain + scanlines — a fixed, pointer-events:none overlay so it never
+   blocks a click, sitting above every theme's surface since the whole
+   remaining palette (night, terminal, prog, jazz, psychedelic) is dark now
+   that paper is retired. */
+body::before{
+  content:'';position:fixed;inset:0;z-index:9990;pointer-events:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  opacity:.1;mix-blend-mode:overlay;
+}
+body::after{
+  content:'';position:fixed;inset:0;z-index:9991;pointer-events:none;
+  background:repeating-linear-gradient(0deg, rgba(0,0,0,.5) 0px, rgba(0,0,0,.5) 1px, transparent 1px, transparent 3px);
+  opacity:.16;mix-blend-mode:multiply;
+}
+.glow{text-shadow:0 0 10px color-mix(in srgb, var(--red) 65%, transparent), 0 0 30px color-mix(in srgb, var(--red) 30%, transparent)}
+@media (prefers-reduced-motion:reduce){
+  body::before,body::after{display:none}
 }
 .shell-bar{
   position:sticky;
@@ -84,14 +106,23 @@ body{
   border-radius:var(--radius);
   appearance:none;
   -webkit-appearance:none;
-  background-image:linear-gradient(45deg,transparent 50%,var(--ink-soft) 50%),
-                   linear-gradient(135deg,var(--ink-soft) 50%,transparent 50%);
+  box-shadow:0 0 8px color-mix(in srgb, var(--red) 14%, transparent);
+  background-image:linear-gradient(45deg,transparent 50%,var(--red) 50%),
+                   linear-gradient(135deg,var(--red) 50%,transparent 50%);
   background-position:calc(100% - 14px) center, calc(100% - 9px) center;
   background-size:5px 5px, 5px 5px;
   background-repeat:no-repeat;
   cursor:pointer;
+  transition:box-shadow .15s ease, border-color .15s ease;
 }
-.theme-pick select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.theme-pick select:hover{
+  border-color:var(--ink-mute);
+  box-shadow:0 0 12px color-mix(in srgb, var(--red) 24%, transparent);
+}
+.theme-pick select:focus-visible{
+  outline:none;border-color:var(--red);
+  box-shadow:0 0 0 1px var(--red), 0 0 16px color-mix(in srgb, var(--red) 50%, transparent);
+}
 .app-panel[hidden]{display:none !important}
 .tabs{
   display:flex;
@@ -212,6 +243,7 @@ body{
   font-size:28px;
   letter-spacing:-.01em;
   margin:0 0 .5rem;
+  text-shadow:0 0 10px color-mix(in srgb, var(--red) 55%, transparent), 0 0 30px color-mix(in srgb, var(--red) 25%, transparent);
 }
 #fretApp header p{
   margin:0;
@@ -255,7 +287,10 @@ body{
 #fretApp select:focus-visible,
 #fretApp input:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 #fretApp button.small{height:30px;padding:0 11px;font-size:10px;letter-spacing:.08em}
-#fretApp button.primary{background:var(--red);border-color:var(--red);color:var(--on-red)}
+#fretApp button.primary{
+  background:var(--red);border-color:var(--red);color:var(--on-red);
+  box-shadow:0 0 16px color-mix(in srgb, var(--red) 45%, transparent);
+}
 #fretApp button.primary:hover{background:var(--red-ink);border-color:var(--red-ink)}
 #fretApp button.ghost{background:transparent;border-color:transparent;color:var(--ink-soft)}
 #fretApp button.ghost:hover{background:transparent;border-color:var(--line-strong);color:var(--ink)}
@@ -282,11 +317,22 @@ body{
   appearance:none;
   -webkit-appearance:none;
   padding-right:26px;
-  background-image:linear-gradient(45deg,transparent 50%,var(--ink-soft) 50%),
-                   linear-gradient(135deg,var(--ink-soft) 50%,transparent 50%);
+  box-shadow:0 0 8px color-mix(in srgb, var(--red) 14%, transparent);
+  background-image:linear-gradient(45deg,transparent 50%,var(--red) 50%),
+                   linear-gradient(135deg,var(--red) 50%,transparent 50%);
   background-position:calc(100% - 14px) center, calc(100% - 9px) center;
   background-size:5px 5px, 5px 5px;
   background-repeat:no-repeat;
+  cursor:pointer;
+  transition:box-shadow .15s ease, border-color .15s ease;
+}
+#fretApp select:hover{
+  border-color:var(--ink-mute);
+  box-shadow:0 0 12px color-mix(in srgb, var(--red) 24%, transparent);
+}
+#fretApp select:focus-visible{
+  outline:none;border-color:var(--red);
+  box-shadow:0 0 0 1px var(--red), 0 0 16px color-mix(in srgb, var(--red) 50%, transparent);
 }
 #fretApp input[type=number]{width:56px}
 
@@ -422,6 +468,7 @@ body{
   font-size:28px;
   letter-spacing:-.01em;
   margin:0;
+  text-shadow:0 0 10px color-mix(in srgb, var(--red) 55%, transparent), 0 0 30px color-mix(in srgb, var(--red) 25%, transparent);
 }
 #circleApp .ctl{display:flex;justify-content:center;align-items:center;gap:14px;margin:1.25rem 0 1.5rem}
 #circleApp .arrow-btn{
@@ -459,12 +506,22 @@ body{
   border-radius:var(--radius);
   appearance:none;
   -webkit-appearance:none;
-  background-image:linear-gradient(45deg,transparent 50%,var(--ink-soft) 50%),linear-gradient(135deg,var(--ink-soft) 50%,transparent 50%);
+  box-shadow:0 0 8px color-mix(in srgb, var(--red) 14%, transparent);
+  background-image:linear-gradient(45deg,transparent 50%,var(--red) 50%),linear-gradient(135deg,var(--red) 50%,transparent 50%);
   background-position:calc(100% - 16px) center, calc(100% - 11px) center;
   background-size:5px 5px, 5px 5px;
   background-repeat:no-repeat;
+  cursor:pointer;
+  transition:box-shadow .15s ease, border-color .15s ease;
 }
-#circleApp select:focus{outline:none;border-color:var(--ink)}
+#circleApp select:hover{
+  border-color:var(--ink-mute);
+  box-shadow:0 0 12px color-mix(in srgb, var(--red) 24%, transparent);
+}
+#circleApp select:focus{
+  outline:none;border-color:var(--red);
+  box-shadow:0 0 0 1px var(--red), 0 0 16px color-mix(in srgb, var(--red) 50%, transparent);
+}
 #circleApp .stage{position:relative;width:var(--dial);aspect-ratio:1;margin:0 auto}
 #circleApp .wheel{
   position:absolute;inset:0;
@@ -682,7 +739,10 @@ body{
   display:flex;align-items:baseline;gap:12px;
   border-bottom:1px solid var(--line-strong);padding-bottom:6px;
 }
-#circleApp .dname{font-family:var(--font-display);font-weight:700;font-size:26px;color:var(--red-ink);line-height:1}
+#circleApp .dname{
+  font-family:var(--font-display);font-weight:700;font-size:26px;color:var(--red-ink);line-height:1;
+  text-shadow:0 0 8px color-mix(in srgb, var(--red) 55%, transparent);
+}
 #circleApp .dnum{font-family:var(--font-mono);font-size:14px;color:var(--ink-soft)}
 #circleApp .dsub{
   display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
@@ -913,17 +973,6 @@ const INTERVAL_LABELS = ['R','♭2','2','♭3','3','4','♭5','5','♭6','6','�
 // shared CSS tokens the shell writes to :root, so a theme change repaints
 // both tools at once. Keys here must match the shell's theme ids.
 const THEMES = {
-  paper: { canvas: {
-    bg:'#F5F2EA', titleInk:'#1B1A17', titleFont:'700 17px "Space Grotesk", sans-serif',
-    neckGradTop:'#3A2A1C', neckGradBottom:'#241A12', inlay:'rgba(245,242,234,0.32)',
-    nutColor:'#EFEBE0', fretWire:'rgba(217,210,194,0.5)', string:'rgba(216,210,194,0.85)',
-    stringLabel:'#1B1A17', stringLabelFont:'500 12px "IBM Plex Mono", monospace',
-    fretNum:'#948F80', fretNumFont:'500 11px "IBM Plex Mono", monospace',
-    markerDefault:'#5B584E', markerStroke:'rgba(27,26,23,0.35)',
-    markerText:'#F5F2EA', markerFont:'500 10.5px "IBM Plex Mono", monospace',
-    intervals:['#C1272D','#8A6F5C','#6E7F63','#3F6B5C','#B5562E','#6E7B8C',
-               '#8A5A80','#3E6E92','#8C6E3E','#4F7A5E','#4A4E8C','#7A1519']
-  }},
   night: { canvas: {
     bg:'#17160F', titleInk:'#F2EEE1', titleFont:'700 17px "Space Grotesk", sans-serif',
     neckGradTop:'#2A2418', neckGradBottom:'#14120C', inlay:'rgba(242,238,225,0.18)',
@@ -936,15 +985,15 @@ const THEMES = {
                '#C77FB5','#5FA8D3','#D0A55E','#7FC49A','#8A8FD8','#F4938C']
   }},
   terminal: { canvas: {
-    bg:'#0A0A08', titleInk:'#FFB000', titleFont:'600 17px "JetBrains Mono", monospace',
-    neckGradTop:'#161610', neckGradBottom:'#0E0E0A', inlay:'rgba(255,176,0,0.15)',
-    nutColor:'#FFB000', fretWire:'rgba(255,176,0,0.3)', string:'rgba(255,176,0,0.5)',
-    stringLabel:'#FFB000', stringLabelFont:'600 12px "JetBrains Mono", monospace',
-    fretNum:'#B87800', fretNumFont:'500 11px "JetBrains Mono", monospace',
-    markerDefault:'#664800', markerStroke:'rgba(255,176,0,0.4)',
-    markerText:'#0A0A08', markerFont:'700 10.5px "JetBrains Mono", monospace',
-    intervals:['#FFB000','#CC8E00','#E6A200','#FF8C00','#FFD060','#B87800',
-               '#FF6600','#FFCC00','#E67300','#D49500','#CC7000','#FF4400']
+    bg:'#120C07', titleInk:'#FF8A4A', titleFont:'700 17px "JetBrains Mono", monospace',
+    neckGradTop:'#3A2A1C', neckGradBottom:'#241A12', inlay:'rgba(243,234,217,0.28)',
+    nutColor:'#F3EAD9', fretWire:'rgba(243,234,217,0.35)', string:'rgba(243,234,217,0.55)',
+    stringLabel:'#F3EAD9', stringLabelFont:'600 12px "JetBrains Mono", monospace',
+    fretNum:'#7C6D54', fretNumFont:'500 11px "JetBrains Mono", monospace',
+    markerDefault:'#54402A', markerStroke:'rgba(243,234,217,0.35)',
+    markerText:'#F3EAD9', markerFont:'700 10.5px "JetBrains Mono", monospace',
+    intervals:['#E5672B','#8A6F5C','#4FAE93','#3F6B5C','#FF8A4A','#17B8A6',
+               '#B5562E','#6E7B8C','#D2B04F','#4F7A8C','#7A6C55','#FF9E6B']
   }},
   prog: { canvas: {
     bg:'#0C0E2A', titleInk:'#D4AF37', titleFont:'700 17px "Zilla Slab", serif',
@@ -981,14 +1030,14 @@ const THEMES = {
   }}
 };
 
-let currentTheme = 'paper';
+let currentTheme = 'terminal';
 
-function getTheme(){ return THEMES[currentTheme] || THEMES.paper; }
+function getTheme(){ return THEMES[currentTheme] || THEMES.terminal; }
 
 // The shell owns theme selection for the whole page; this only repaints the
 // canvases, since every other fretboard colour comes from CSS tokens.
 function applyTheme(themeKey){
-  currentTheme = THEMES[themeKey] ? themeKey : 'paper';
+  currentTheme = THEMES[themeKey] ? themeKey : 'terminal';
   diagrams.forEach(d => render(d));
 }
 window.setFretboardTheme = applyTheme;
@@ -2663,21 +2712,22 @@ label(); place();
   // written to :root; the fretboard's canvas colours are keyed to the same
   // theme ids inside its own script.
   const THEMES = {
-    paper:{label:'Paper', vars:{
-      '--paper':"#F5F2EA",
-      '--paper-raised':"#EFEBE0",
-      '--ink':"#1B1A17",
-      '--ink-soft':"#5B584E",
-      '--ink-mute':"#948F80",
-      '--line':"#D8D2C2",
-      '--line-strong':"#B9B29C",
-      '--red':"#C1272D",
-      '--red-ink':"#7A1519",
-      '--on-red':"#F5F2EA",
-      '--radius':"10px",
-      '--font-display':"'Space Grotesk', sans-serif",
-      '--font-body':"'IBM Plex Sans', sans-serif",
-      '--font-mono':"'IBM Plex Mono', monospace"
+    terminal:{label:'Terminal', vars:{
+      '--paper':"#120C07",
+      '--paper-raised':"#1D160C",
+      '--ink':"#F3EAD9",
+      '--ink-soft':"#B9AA8C",
+      '--ink-mute':"#7C6D54",
+      '--line':"#3A2C1A",
+      '--line-strong':"#54402A",
+      '--red':"#E5672B",
+      '--red-ink':"#FF8A4A",
+      '--on-red':"#120C07",
+      '--teal':"#17B8A6",
+      '--radius':"2px",
+      '--font-display':"'JetBrains Mono', monospace",
+      '--font-body':"'JetBrains Mono', monospace",
+      '--font-mono':"'JetBrains Mono', monospace"
     }},
     night:{label:'Night', vars:{
       '--paper':"#17160F",
@@ -2690,26 +2740,11 @@ label(); place();
       '--red':"#E2453D",
       '--red-ink':"#F4938C",
       '--on-red':"#17160F",
+      '--teal':"#4FD8C4",
       '--radius':"0",
       '--font-display':"'Space Grotesk', sans-serif",
       '--font-body':"'IBM Plex Sans', sans-serif",
       '--font-mono':"'IBM Plex Mono', monospace"
-    }},
-    terminal:{label:'Terminal', vars:{
-      '--paper':"#0A0A08",
-      '--paper-raised':"#141410",
-      '--ink':"#FFB000",
-      '--ink-soft':"#B87800",
-      '--ink-mute':"#8A5C00",
-      '--line':"#2A2A20",
-      '--line-strong':"#3D3D2C",
-      '--red':"#FFB000",
-      '--red-ink':"#FFC94D",
-      '--on-red':"#0A0A08",
-      '--radius':"2px",
-      '--font-display':"'JetBrains Mono', monospace",
-      '--font-body':"'JetBrains Mono', monospace",
-      '--font-mono':"'JetBrains Mono', monospace"
     }},
     prog:{label:'70\'s Prog', vars:{
       '--paper':"#0C0E2A",
@@ -2722,6 +2757,7 @@ label(); place();
       '--red':"#D4AF37",
       '--red-ink':"#E9C765",
       '--on-red':"#0C0E2A",
+      '--teal':"#5FA8D3",
       '--radius':"6px",
       '--font-display':"'Zilla Slab', serif",
       '--font-body':"'Inter', sans-serif",
@@ -2738,6 +2774,7 @@ label(); place();
       '--red':"#CC6633",
       '--red-ink':"#E08A55",
       '--on-red':"#00183A",
+      '--teal':"#4FB8C7",
       '--radius':"4px",
       '--font-display':"'Zilla Slab', serif",
       '--font-body':"'Inter', sans-serif",
@@ -2754,6 +2791,7 @@ label(); place();
       '--red':"#FF00FF",
       '--red-ink':"#FF7BE8",
       '--on-red':"#0D001A",
+      '--teal':"#00FFD0",
       '--radius':"12px",
       '--font-display':"'Space Grotesk', sans-serif",
       '--font-body':"'IBM Plex Sans', sans-serif",
@@ -2770,7 +2808,7 @@ label(); place();
   });
   const pick = document.getElementById('themePick');
   const meta = document.querySelector('meta[name="theme-color"]');
-  let tab = ORDER[0], theme = 'paper';
+  let tab = ORDER[0], theme = 'terminal';
 
   Object.keys(THEMES).forEach((k)=>{
     const o = document.createElement('option');
@@ -2778,17 +2816,18 @@ label(); place();
     pick.appendChild(o);
   });
 
-  // Inter, JetBrains Mono, and Zilla Slab only appear in the non-default
-  // themes, so they're fetched on first use rather than on every page load.
+  // IBM Plex Sans/Mono, Space Grotesk, Inter, and Zilla Slab only appear in
+  // the non-default themes, so they're fetched on first use rather than on
+  // every page load — Terminal's JetBrains Mono is the only eager font.
   let extraFontsLoaded = false;
   function ensureExtraFonts(){
     if(extraFontsLoaded) return;
     extraFontsLoaded = true;
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Zilla+Slab:wght@500;600;700&display=swap';
+    link.href = 'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600;700&family=Zilla+Slab:wght@500;600;700&display=swap';
     // The fretboard's canvas text won't repaint itself once the font arrives,
-    // so force one redraw when it does (harmless no-op if paper is current).
+    // so force one redraw when it does (harmless no-op if terminal is current).
     link.addEventListener('load', ()=>{
       if(window.setFretboardTheme) window.setFretboardTheme(theme);
     });
@@ -2796,8 +2835,8 @@ label(); place();
   }
 
   function applyTheme(key, writeHash){
-    theme = THEMES[key] ? key : 'paper';
-    if(theme !== 'paper') ensureExtraFonts();
+    theme = THEMES[key] ? key : 'terminal';
+    if(theme !== 'terminal') ensureExtraFonts();
     const vars = THEMES[theme].vars, root = document.documentElement.style;
     Object.keys(vars).forEach((name)=>{ root.setProperty(name, vars[name]); });
     if(meta) meta.setAttribute('content', vars['--paper']);
@@ -2827,7 +2866,7 @@ label(); place();
   function writeHashSafely(fromCircle){
     const view = window.getCircleView ? window.getCircleView() : '';
     let want = tab;
-    if(theme !== 'paper' || view) want += '/' + theme;
+    if(theme !== 'terminal' || view) want += '/' + theme;
     if(view) want += '/' + view;
     if(location.hash.slice(1) === want) return;
     try{ history.replaceState(null, '', '#' + want); }
@@ -2844,7 +2883,7 @@ label(); place();
   function readHash(){
     const parts = location.hash.slice(1).split('/');
     showTab(parts[0], false);
-    applyTheme(parts[1] || 'paper', false);
+    applyTheme(parts[1] || 'terminal', false);
     if(parts[2] && window.setCircleView) window.setCircleView(parts[2]);
   }
 
