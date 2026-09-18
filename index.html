@@ -93,95 +93,87 @@ body{
 }
 .theme-pick select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .app-panel[hidden]{display:none !important}
-
-/* ---- carousel nav ---------------------------------------------------------
-   Sits where the tab switch used to: prev/next plus one dot per card. JS
-   keeps it in sync with whichever card the rail has scrolled to, whether
-   that happened by clicking here or by a manual swipe/drag. */
-.carousel-nav{
+.tabs{
   display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:16px;
-  padding:14px clamp(1rem,3vw,2.5rem) 0;
-}
-.carousel-label{
-  font-family:var(--font-mono);
-  font-size:11px;
-  letter-spacing:.1em;
-  text-transform:uppercase;
-  color:var(--ink-mute);
-  white-space:nowrap;
-}
-.carousel-controls{display:flex;align-items:center;gap:16px}
-.carousel-arrow{
-  width:38px;height:38px;
-  display:flex;align-items:center;justify-content:center;
-  background:var(--paper-raised);
+  gap:2px;
+  margin-left:auto;
   border:1px solid var(--line-strong);
   border-radius:var(--radius);
-  color:var(--ink);
+  padding:3px;
+}
+.tab{
+  font-family:var(--font-mono);
+  font-size:11px;
+  font-weight:500;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  border:0;
+  background:transparent;
+  color:var(--ink-soft);
+  padding:8px 16px;
+  border-radius:var(--radius);
   cursor:pointer;
-  transition:background-color .15s ease, opacity .15s ease;
+  white-space:nowrap;
+  transition:background-color .18s ease, color .18s ease;
 }
-.carousel-arrow:hover:not(:disabled){background:var(--line)}
-.carousel-arrow:disabled{opacity:.35;cursor:default}
-.carousel-arrow:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-.carousel-arrow svg{width:16px;height:16px}
-.carousel-dots{display:flex;align-items:center;gap:9px}
-.carousel-dot{
-  width:8px;height:8px;padding:0;border:0;border-radius:50%;
-  background:var(--line-strong);cursor:pointer;
-}
-.carousel-dot:hover{background:var(--ink-mute)}
-.carousel-dot.on{background:var(--red)}
-.carousel-dot:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+.tab:hover{background:var(--paper-raised);color:var(--ink)}
+.tab.on{background:var(--red);color:var(--on-red)}
+.tab:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 
-/* ---- tool rail -------------------------------------------------------
-   The four tools sit as siblings in one horizontally-scrolling flex row,
-   scroll-snapped one card at a time — a carousel driven by .carousel-nav
-   above, or by a direct swipe/drag on the rail itself. */
-.tool-rail{
+/* ---- key explorer ---------------------------------------------------------
+   Circle of fifths sits centered between two fixed companion panels
+   (diatonic chords, notation) that read out whatever the dial is set to.
+   Unlike the coverflow experiment this replaced, nothing here rotates or
+   swaps position — there's only one focal tool, so a plain three-column
+   layout is all that's needed; the companions just needed to stop being
+   cards that could get scrolled out of view. */
+.key-explorer{
   display:flex;
   align-items:flex-start;
-  gap:1.5rem;
-  padding:1.25rem clamp(1rem,3vw,2.5rem) 3rem;
-  overflow-x:auto;
-  scroll-snap-type:x mandatory;
-}
-/* .tool-card is just the scroll-snap slot — full rail width, so each swipe
-   moves exactly one tool. The visible card (background, border, shadow,
-   width cap) lives on .tool-card-inner so a narrower card still centers
-   inside its full-width slot instead of hugging the left edge. */
-.tool-card{
-  flex:0 0 100%;
-  scroll-snap-align:center;
-  display:flex;
   justify-content:center;
+  flex-wrap:wrap;
+  gap:1.75rem;
+  max-width:1400px;
+  margin:0 auto;
+  padding:2.5rem clamp(1rem,3vw,2.5rem) 3rem;
 }
-.tool-card-inner{
-  width:100%;
-  max-width:640px;
+.side-panel{
+  flex:0 0 340px;
   background:var(--paper-raised);
   border:1px solid color-mix(in srgb, var(--ink) 8%, transparent);
   border-radius:var(--radius);
   box-shadow:0 1px 2px color-mix(in srgb, var(--ink) 5%, transparent),
              0 14px 28px -16px color-mix(in srgb, var(--ink) 30%, transparent);
-  max-height:calc(100vh - 136px);
-  overflow-y:auto;
   padding:1.75rem;
+  max-height:calc(100vh - 140px);
+  overflow-y:auto;
 }
-/* the fretboard's own header/toolbar/diagrams already target a 1180px
-   reading width — let it use the room the other three don't need. */
-#fretApp .tool-card-inner{max-width:1180px;padding-left:0;padding-right:0}
+.wheel-stage{
+  flex:1 1 460px;
+  max-width:560px;
+  --dial:min(100%,56vh,420px);
+  background:var(--paper-raised);
+  border:1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  border-radius:var(--radius);
+  box-shadow:0 1px 2px color-mix(in srgb, var(--ink) 5%, transparent),
+             0 14px 28px -16px color-mix(in srgb, var(--ink) 30%, transparent);
+  padding:2rem;
+}
+@media (max-width:900px){
+  .key-explorer{flex-direction:column;align-items:stretch}
+  .side-panel{flex-basis:auto;max-height:none}
+  .wheel-stage{flex-basis:auto;max-width:none;order:-1}
+}
 @media (max-width:720px){
   .shell-inner{padding:8px 1.25rem;gap:10px;flex-wrap:wrap}
   .shell-mark{display:none}
   .theme-pick{flex:1}
   .theme-pick select{width:100%}
+  .tabs{margin-left:0;width:100%;order:3}
+  .tab{flex:1;padding:9px 8px;font-size:10px;letter-spacing:.06em}
 }
 @media (prefers-reduced-motion:reduce){
-  body,.shell-bar{transition:none}
+  body,.shell-bar,.tab{transition:none}
 }
 
 
@@ -406,16 +398,11 @@ body{
 /* ============ CIRCLE OF FIFTHS ============ */
 /* rotated .slot squares have bounding boxes wider than the dial they sit in;
    nothing visible lies out there, so clip the axis rather than scroll it */
-/* circleApp itself is no longer a box: display:contents drops it from layout
-   so its three sections (wheel, chords, notation) become direct children of
-   .tool-rail and lay out as independent cards, while every #circleApp .foo
-   rule below keeps matching since the DOM nesting is unchanged. */
 #circleApp{
-  display:contents;
+  background:var(--paper);
   color:var(--ink);
   font-family:var(--font-body);
 }
-#wheelCard{--dial:min(100%,300px)}
 #circleApp header{margin-bottom:1.75rem}
 #circleApp .eyebrow{
   font-family:var(--font-mono);
@@ -784,32 +771,20 @@ body{
 }
 </style>
 </head>
-<body>
+<body data-tab="fretboard">
 
 <div class="shell-bar">
   <div class="shell-inner">
     <span class="shell-mark">Lesson tools</span>
     <label class="theme-pick"><span>Theme</span><select id="themePick" aria-label="Theme"></select></label>
+    <div class="tabs" role="tablist" aria-label="Tools">
+      <button class="tab on" id="tab-fretboard" role="tab" aria-controls="fretApp" aria-selected="true">Fretboard</button>
+      <button class="tab" id="tab-circle" role="tab" aria-controls="circleApp" aria-selected="false" tabindex="-1">Circle of fifths</button>
+    </div>
   </div>
 </div>
 
-<div class="carousel-nav">
-  <span class="carousel-label" id="carouselLabel"></span>
-  <div class="carousel-controls">
-    <button class="carousel-arrow" id="carouselPrev" aria-label="Previous tool">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m15 6-6 6 6 6"/></svg>
-    </button>
-    <div class="carousel-dots" id="carouselDots" aria-label="Jump to a tool"></div>
-    <button class="carousel-arrow" id="carouselNext" aria-label="Next tool">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m9 6 6 6-6 6"/></svg>
-    </button>
-  </div>
-</div>
-
-<div class="tool-rail">
-
-<section class="app-panel tool-card" id="fretApp">
-<div class="tool-card-inner">
+<section class="app-panel" id="fretApp" role="tabpanel" aria-labelledby="tab-fretboard">
 <header>
   <div class="eyebrow"><span>Diagram sheet</span><span id="fretCount">Diagrams 01</span></div>
   <h1>Fretboard</h1>
@@ -830,13 +805,20 @@ body{
 <div id="diagrams"></div>
 
 <footer class="credits">Built for lesson prep — click the fretboard to toggle notes, use octave mode to fill every matching pitch, and set a root to color by interval.</footer>
-</div>
 </section>
 
-<div id="circleApp">
+<section class="app-panel" id="circleApp" role="tabpanel" aria-labelledby="tab-circle" hidden>
+<div class="key-explorer">
 
-<section class="tool-card" id="wheelCard">
-<div class="tool-card-inner">
+<aside class="side-panel" id="chordsCard">
+  <div class="chead">
+    <span class="role">Diatonic chords</span>
+  </div>
+  <div id="ring"></div>
+  <p class="chords-hint">Pick a chord here — its mode and stack of thirds read out on the notation panel.</p>
+</aside>
+
+<div class="wheel-stage" id="wheelCard">
 <header>
   <div class="eyebrow"><span>Diagram no. 5ths</span><span id="posLabel">Position 00</span></div>
   <h1>Circle of fifths</h1>
@@ -871,20 +853,8 @@ body{
 
 <footer><p>Rotate with the arrows or a tap on the dial.</p></footer>
 </div>
-</section>
 
-<section class="tool-card" id="chordsCard">
-  <div class="tool-card-inner">
-  <div class="chead">
-    <span class="role">Diatonic chords</span>
-  </div>
-  <div id="ring"></div>
-  <p class="chords-hint">Pick a chord here — its mode and stack of thirds read out on the notation card.</p>
-  </div>
-</section>
-
-<section class="tool-card" id="notationCard">
-<div class="tool-card-inner">
+<aside class="side-panel" id="notationCard">
 <div class="seg">
   <button class="seg-b on" id="tabF">Focus</button>
   <button class="seg-b" id="tabS">Sheet</button>
@@ -928,11 +898,10 @@ body{
   </div>
   <div id="sheetRows"></div>
 </div>
-</div>
-</section>
+</aside>
 
 </div>
-</div>
+</section>
 <script>
 (function(){
 
@@ -2792,9 +2761,16 @@ label(); place();
     }}
   };
 
+  const ORDER = ['fretboard','circle'];
+  const PANEL = {fretboard:'fretApp', circle:'circleApp'};
+  const tabs = {}, panels = {};
+  ORDER.forEach((k)=>{
+    tabs[k] = document.getElementById('tab-' + k);
+    panels[k] = document.getElementById(PANEL[k]);
+  });
   const pick = document.getElementById('themePick');
   const meta = document.querySelector('meta[name="theme-color"]');
-  let theme = 'paper';
+  let tab = ORDER[0], theme = 'paper';
 
   Object.keys(THEMES).forEach((k)=>{
     const o = document.createElement('option');
@@ -2830,20 +2806,34 @@ label(); place();
     if(writeHash) writeHashSafely();
   }
 
-  // The hash carries theme and the circle's current view, so a link restores
-  // the exact page. replaceState overwrites the one entry rather than
+  function showTab(key, writeHash){
+    tab = PANEL[key] ? key : ORDER[0];
+    ORDER.forEach((k)=>{
+      const on = (k === tab);
+      panels[k].hidden = !on;
+      tabs[k].classList.toggle('on', on);
+      tabs[k].setAttribute('aria-selected', on ? 'true' : 'false');
+      tabs[k].tabIndex = on ? 0 : -1;
+    });
+    document.body.setAttribute('data-tab', tab);
+    if(writeHash) writeHashSafely();
+  }
+
+  // The hash carries tab, theme and the circle's current view, so a link
+  // restores the exact page. replaceState overwrites the one entry rather than
   // stacking one per click.
   // Opened straight off disk the page has a null origin and Chrome refuses
   // replaceState, so fall back to setting the hash outright.
   function writeHashSafely(fromCircle){
     const view = window.getCircleView ? window.getCircleView() : '';
-    let want = (theme !== 'paper' || view) ? theme : '';
+    let want = tab;
+    if(theme !== 'paper' || view) want += '/' + theme;
     if(view) want += '/' + view;
     if(location.hash.slice(1) === want) return;
     try{ history.replaceState(null, '', '#' + want); }
     catch(err){
-      // Assigning the hash pushes a history entry. That is tolerable for a
-      // theme change, but the circle moves on every arrow click and would
+      // Assigning the hash pushes a history entry. That is tolerable for a tab
+      // or theme change, but the circle moves on every arrow click and would
       // otherwise leave a back-button trail one entry long per turn — so when
       // replaceState is unavailable the circle simply goes unrecorded.
       if(!fromCircle) location.hash = want;
@@ -2853,10 +2843,21 @@ label(); place();
 
   function readHash(){
     const parts = location.hash.slice(1).split('/');
-    applyTheme(parts[0] || 'paper', false);
-    if(parts[1] && window.setCircleView) window.setCircleView(parts[1]);
+    showTab(parts[0], false);
+    applyTheme(parts[1] || 'paper', false);
+    if(parts[2] && window.setCircleView) window.setCircleView(parts[2]);
   }
 
+  ORDER.forEach((k, i)=>{
+    tabs[k].addEventListener('click', ()=>{ showTab(k, true); });
+    tabs[k].addEventListener('keydown', (e)=>{
+      if(e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      e.preventDefault();
+      const next = ORDER[(i + (e.key === 'ArrowRight' ? 1 : ORDER.length - 1)) % ORDER.length];
+      showTab(next, true);
+      tabs[next].focus();
+    });
+  });
   pick.addEventListener('change', ()=>{ applyTheme(pick.value, true); });
   window.addEventListener('hashchange', readHash);
 
@@ -2873,61 +2874,6 @@ label(); place();
   }
 
   readHash();
-
-  // ---- carousel nav -------------------------------------------------------
-  // One card visible at a time in .tool-rail; this just drives which one via
-  // scrollIntoView, and reads the position back with an IntersectionObserver
-  // so it stays correct on a manual swipe/drag too, not only its own clicks.
-  const CARD_IDS = ['fretApp','wheelCard','chordsCard','notationCard'];
-  const CARD_NAMES = {
-    fretApp:'Fretboard', wheelCard:'Circle of fifths',
-    chordsCard:'Diatonic chords', notationCard:'Notation'
-  };
-  const rail = document.querySelector('.tool-rail');
-  const cardEls = CARD_IDS.map((id)=>document.getElementById(id)).filter(Boolean);
-  const prevBtn = document.getElementById('carouselPrev');
-  const nextBtn = document.getElementById('carouselNext');
-  const dotsWrap = document.getElementById('carouselDots');
-  const carouselLabel = document.getElementById('carouselLabel');
-
-  cardEls.forEach((el, i)=>{
-    const dot = document.createElement('button');
-    dot.type = 'button';
-    dot.className = 'carousel-dot';
-    dot.setAttribute('aria-label', 'Go to ' + CARD_NAMES[el.id]);
-    dot.addEventListener('click', ()=>goToCard(i));
-    dotsWrap.appendChild(dot);
-  });
-  const dots = Array.from(dotsWrap.children);
-
-  let current = 0;
-  function updateCarouselNav(){
-    dots.forEach((d, i)=>d.classList.toggle('on', i === current));
-    prevBtn.disabled = current === 0;
-    nextBtn.disabled = current === cardEls.length - 1;
-    carouselLabel.textContent = `${current + 1} / ${cardEls.length} — ${CARD_NAMES[cardEls[current].id]}`;
-  }
-  function goToCard(i){
-    current = Math.max(0, Math.min(cardEls.length - 1, i));
-    cardEls[current].scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
-    updateCarouselNav();
-  }
-  prevBtn.addEventListener('click', ()=>goToCard(current - 1));
-  nextBtn.addEventListener('click', ()=>goToCard(current + 1));
-
-  // A drag/swipe on the rail moves the scroll position without going through
-  // goToCard, so the nav's own idea of "current" would otherwise go stale.
-  const cardObserver = new IntersectionObserver((entries)=>{
-    let best = null;
-    entries.forEach((e)=>{ if(!best || e.intersectionRatio > best.intersectionRatio) best = e; });
-    if(best && best.intersectionRatio > 0.5){
-      const i = cardEls.indexOf(best.target);
-      if(i !== -1 && i !== current){ current = i; updateCarouselNav(); }
-    }
-  }, {root:rail, threshold:[0.5, 0.75, 1]});
-  cardEls.forEach((el)=>cardObserver.observe(el));
-
-  updateCarouselNav();
 })();
 </script>
 </body>
