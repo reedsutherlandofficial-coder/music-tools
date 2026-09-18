@@ -53,7 +53,7 @@ body::after{
   background:repeating-linear-gradient(0deg, rgba(0,0,0,.5) 0px, rgba(0,0,0,.5) 1px, transparent 1px, transparent 3px);
   opacity:.16;mix-blend-mode:multiply;
 }
-.glow{text-shadow:0 0 10px color-mix(in srgb, var(--red) 65%, transparent), 0 0 30px color-mix(in srgb, var(--red) 30%, transparent)}
+.glow{text-shadow:0 0 10px color-mix(in srgb, var(--red) 55%, transparent), 0 0 30px color-mix(in srgb, var(--red) 25%, transparent)}
 @media (prefers-reduced-motion:reduce){
   body::before,body::after{display:none}
 }
@@ -235,7 +235,7 @@ body::after{
   -webkit-font-smoothing:antialiased;
   padding-bottom:4rem;
 }
-#fretApp header,#fretApp .toolbar,#fretApp #diagrams,#fretApp footer.credits{
+#fretApp header,#fretApp .toolbar,#fretApp #diagrams{
   max-width:1180px;
   margin-left:auto;
   margin-right:auto;
@@ -261,14 +261,6 @@ body::after{
   font-size:28px;
   letter-spacing:-.01em;
   margin:0 0 .5rem;
-  text-shadow:0 0 10px color-mix(in srgb, var(--red) 55%, transparent), 0 0 30px color-mix(in srgb, var(--red) 25%, transparent);
-}
-#fretApp header p{
-  margin:0;
-  max-width:60ch;
-  font-size:14px;
-  line-height:1.6;
-  color:var(--ink-soft);
 }
 
 #fretApp .toolbar{
@@ -436,19 +428,9 @@ body::after{
   color:var(--ink-mute);
 }
 #fretApp .card-footer .hint strong{color:var(--red-ink);font-weight:500}
-#fretApp footer.credits{
-  margin-top:2rem;
-  padding-top:1rem;
-  border-top:1px solid var(--line);
-  font-family:var(--font-mono);
-  font-size:10px;
-  line-height:1.7;
-  letter-spacing:.06em;
-  color:var(--ink-mute);
-}
 @media (max-width:640px){
   #fretApp .diagram-card.paired{flex:1 1 100%;min-width:0}
-  #fretApp header,#fretApp .toolbar,#fretApp #diagrams,#fretApp footer.credits{
+  #fretApp header,#fretApp .toolbar,#fretApp #diagrams{
     padding-left:1.25rem;padding-right:1.25rem;
   }
 }
@@ -484,7 +466,6 @@ body::after{
   font-size:28px;
   letter-spacing:-.01em;
   margin:0;
-  text-shadow:0 0 10px color-mix(in srgb, var(--red) 55%, transparent), 0 0 30px color-mix(in srgb, var(--red) 25%, transparent);
 }
 #circleApp .ctl{display:flex;justify-content:center;align-items:center;gap:14px;margin:1.25rem 0 1.5rem}
 #circleApp .arrow-btn{
@@ -629,19 +610,11 @@ body::after{
 #circleApp .cnode.sel rect{fill:var(--paper-raised)}
 #circleApp .tones{font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);text-align:center;
   border-top:1px solid var(--line);padding-top:12px;margin-top:6px;line-height:1.7}
-#circleApp .scores{margin-top:1rem}
-#circleApp .score{margin-bottom:1.25rem}
-#circleApp .scorehead{
-  display:flex;justify-content:space-between;align-items:baseline;
-  border-bottom:1px solid var(--line);
-  padding-bottom:6px;margin-bottom:6px;
-}
 #circleApp .role{
   font-family:var(--font-mono);font-size:10px;
   letter-spacing:.14em;text-transform:uppercase;color:var(--ink-mute);
 }
 #circleApp .sname{font-family:var(--font-display);font-weight:500;font-size:15px;color:var(--ink)}
-#circleApp .staff{display:block;width:100%;max-width:305px;height:auto}
 #circleApp .staffline, #circleApp .barline{stroke:var(--ink-soft);stroke-width:.8}
 #circleApp .barline{stroke:var(--line-strong)}
 #circleApp .acc{stroke:var(--ink);fill:none;stroke-linecap:round}
@@ -655,87 +628,10 @@ body::after{
   font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);
   text-align:center;border-top:1px solid var(--line);padding-top:12px;margin-top:4px;
 }
-#circleApp footer{margin-top:1.5rem;text-align:center}
-#circleApp footer p{font-family:var(--font-mono);font-size:10px;color:var(--ink-mute);letter-spacing:.06em;margin:0}
 @media (prefers-reduced-motion: reduce){
 #circleApp .wheel, #circleApp .lbl{transition:none}
 }
-/* Wide viewports — desktop, and any device turned landscape — put the dial
-   beside the controls and notation instead of above them. The grid areas do
-   the reordering, so the DOM order stays correct for reading and tabbing. */
-@media (min-width:720px) and (min-aspect-ratio:1/1){
-#circleApp .wrap{
-    max-width:1080px;
-    padding:2.5rem 2.5rem 3rem;
-    --dial:min(100%,64vh,440px);
-    display:grid;
-    grid-template-columns:minmax(0,1.05fr) minmax(300px,400px);
-    grid-template-areas:
-      "head head"
-      "dial modes"
-      "dial ctl"
-      "dial keys"
-      "dial seg"
-      "dial opts"
-      "dial focus"
-      "dial sheet"
-      "dial foot";
-    column-gap:3rem;
-    align-content:start;
-  }
-#circleApp header{grid-area:head}
-#circleApp .modes{grid-area:modes;margin:0 0 1rem}
-#circleApp .ctl{grid-area:ctl;margin:0 0 .5rem;justify-content:flex-start}
-#circleApp .stage{grid-area:dial;align-self:start;margin-top:.5rem}
-#circleApp .seg{grid-area:seg;margin:1.25rem 0 1rem}
-#circleApp .scores{grid-area:scores;margin-top:0}
-#circleApp .chords{grid-area:chords}
-#circleApp footer{grid-area:foot;align-self:end;text-align:left;margin-top:1.5rem}
-#circleApp h1{font-size:38px}
-#circleApp .staff{max-width:340px}
-#circleApp .ring{max-width:380px}
-#circleApp .scores{margin-top:0}
-}
-/* Phone or tablet held landscape: same two-column idea, driven by height so
-   the dial always fits between the top and bottom of the screen. */
-@media (orientation:landscape) and (max-height:600px){
-#circleApp .wrap{
-    max-width:none;
-    padding:1.25rem 1.5rem 2rem;
-    --dial:min(100%,58vh,340px);
-    display:grid;
-    grid-template-columns:minmax(0,1fr) minmax(280px,380px);
-    grid-template-areas:
-      "head head"
-      "dial modes"
-      "dial ctl"
-      "dial keys"
-      "dial seg"
-      "dial opts"
-      "dial focus"
-      "dial sheet"
-      "dial foot";
-    column-gap:2rem;
-    align-content:start;
-  }
-#circleApp header{grid-area:head;margin-bottom:1rem}
-#circleApp h1{font-size:22px}
-#circleApp .modes{grid-area:modes;margin:0 0 .75rem}
-#circleApp .ctl{grid-area:ctl;margin:0 0 .5rem;justify-content:flex-start}
-#circleApp .stage{grid-area:dial;align-self:start}
-#circleApp .scores{grid-area:scores;margin-top:0}
-#circleApp .chords{grid-area:chords}
-#circleApp .score{margin-bottom:.75rem}
-#circleApp footer{grid-area:foot;text-align:left;margin-top:1rem}
-#circleApp .seg{grid-area:seg;margin:.75rem 0}
-}
-/* Large desktop: let the dial and notation breathe. */
-@media (min-width:1200px) and (min-height:800px){
-#circleApp .wrap{--dial:min(100%,62vh,500px)}
-#circleApp .staff{max-width:380px}
-}
-
-/* ---- merged chord + notation panel -------------------------------------- */
+/* ---- chord + notation panels -------------------------------------------- */
 #circleApp .keyline{
   margin:1.5rem 0 0;
   border-top:1px solid var(--line);
@@ -825,26 +721,6 @@ body::after{
 #circleApp .ssym{font-family:var(--font-display);font-weight:500;font-size:15px;color:var(--ink);line-height:1.25}
 #circleApp .smode{font-family:var(--font-mono);font-size:9.5px;color:var(--ink-mute);line-height:1.35;margin-top:2px}
 #circleApp .srow .gstaff{max-width:none}
-
-/* the merged panel takes the grid slots the old Notation/Chords tabs held */
-@media (min-width:720px) and (min-aspect-ratio:1/1){
-#circleApp .keyline{grid-area:keys;margin:0 0 .25rem}
-#circleApp .viewopts{grid-area:opts}
-#circleApp #panelF{grid-area:focus}
-#circleApp #panelS{grid-area:sheet}
-#circleApp .gstaff{max-width:none}
-/* the notation column now carries two full systems, so it takes more of the
-   width than the old single-note staves needed */
-#circleApp .wrap{grid-template-columns:minmax(0,.92fr) minmax(360px,540px);--dial:min(100%,56vh,400px)}
-#circleApp .ring{max-width:440px}
-}
-@media (orientation:landscape) and (max-height:600px){
-#circleApp .keyline{grid-area:keys;margin:0}
-#circleApp .viewopts{grid-area:opts}
-#circleApp #panelF{grid-area:focus}
-#circleApp #panelS{grid-area:sheet}
-#circleApp .gstaff{max-width:none}
-}
 </style>
 </head>
 <body data-tab="fretboard">
@@ -863,8 +739,7 @@ body::after{
 <section class="app-panel" id="fretApp" role="tabpanel" aria-labelledby="tab-fretboard">
 <header>
   <div class="eyebrow"><span>Diagram sheet</span><span id="fretCount">Diagrams 01</span></div>
-  <h1>Fretboard</h1>
-  <p>Build scale, chord, and interval diagrams for your lessons. Click the neck to place notes, or generate a shape below. Export the page as a PNG when you're ready to print or share.</p>
+  <h1 class="glow">Fretboard</h1>
 </header>
 
 <div class="toolbar">
@@ -879,8 +754,6 @@ body::after{
 </div>
 
 <div id="diagrams"></div>
-
-<footer class="credits">Built for lesson prep — click the fretboard to toggle notes, use octave mode to fill every matching pitch, and set a root to color by interval.</footer>
 </section>
 
 <section class="app-panel" id="circleApp" role="tabpanel" aria-labelledby="tab-circle" hidden>
@@ -897,7 +770,7 @@ body::after{
 <div class="wheel-stage" id="wheelCard">
 <header>
   <div class="eyebrow"><span>Diagram no. 5ths</span><span id="posLabel">Position 00</span></div>
-  <h1>Circle of fifths</h1>
+  <h1 class="glow">Circle of fifths</h1>
 </header>
 
 <div class="modes">
@@ -926,8 +799,6 @@ body::after{
   <div class="klrow"><span class="role">Inner ring</span><span class="sname" id="n2"></span></div>
   <div class="enh" id="enh"></div>
 </div>
-
-<footer><p>Rotate with the arrows or a tap on the dial.</p></footer>
 </div>
 
 <aside class="side-panel" id="notationCard">
@@ -1247,7 +1118,7 @@ function createDiagram(initial){
       <canvas class="fretCanvas"></canvas>
     </div>
     <div class="card-footer">
-      <span class="hint">Click the neck to toggle a note. Root: <strong class="rootLabel">none</strong></span>
+      <span class="hint">Root · <strong class="rootLabel">none</strong></span>
     </div>
   `;
 
@@ -2052,8 +1923,6 @@ function accSteps(n){
 }
 
 /* ---- staff engraving ---------------------------------------------------- */
-const SP=9, BOT=52, X0=6, X1=203, NX=180;
-function py(step){return BOT-step*(SP/2)}
 function el(t,a){const e=document.createElementNS(NS,t);for(const k in a) e.setAttribute(k,a[k]);return e}
 
 function sharpAt(g,x,y,c){
@@ -2105,41 +1974,6 @@ function needAcc(n,f){
   const nm=fname(f);
   const own=(nm.match(/♯/g)||[]).length - (nm.match(/♭/g)||[]).length;
   return own===sigAcc(n,nm.charAt(0)) ? null : own;
-}
-
-const staffCache={};
-function staff(n,fi,mi){
-  const key=`${n}|${fi}|${mi}`;
-  if(!staffCache[key]) staffCache[key]=engrave(n,FAMILIES[fi],mi);
-  return staffCache[key].cloneNode(true);
-}
-function engrave(n,f,mi){
-  const svg=el('svg',{viewBox:'0 0 210 70','class':'staff',role:'img'});
-  for(let j=0;j<5;j++) svg.appendChild(el('line',{x1:X0,y1:BOT-j*SP,x2:X1,y2:BOT-j*SP,'class':'staffline'}));
-  svg.appendChild(el('path',{d:CLEF,'class':'clef'}));
-  const g=el('g',{}), steps=accSteps(n);
-  let x=46;
-  for(let j=0;j<steps.length;j++){ (n>0?sharpAt:flatAt)(g,x,py(steps[j])); x+=11; }
-  /* The family's one altered note, set after a small gap in signature position
-     — the same way a key change is written. Standing where a signature stands,
-     it reads as applying to the whole scale, which is exactly true. */
-  if(f.alt!==null){
-    const af=n+f.alt, k=needAcc(n,af);
-    if(k!==null){ x+=7; x+=drawAcc(g,x,py(STEP[fname(af).charAt(0)]),k,'acc-alt'); }
-  }
-  svg.appendChild(g);
-  const bx=Math.max(x+4,62);
-  svg.appendChild(el('line',{x1:bx,y1:BOT-4*SP,x2:bx,y2:BOT,'class':'barline'}));
-  const tf=n+f.deg[mi], name=fname(tf), y=py(STEP[name.charAt(0)]);
-  /* the tonic carries its own accidental when it is the altered note itself */
-  const ta=needAcc(n,tf);
-  if(ta!==null) drawAcc(svg,NX-(ta===-2?18:14),y,ta,'');
-  svg.appendChild(el('ellipse',{cx:NX,cy:y,rx:5.4,ry:3.8,'class':'head',transform:`rotate(-20 ${NX} ${y})`}));
-  const t=el('title',{});
-  t.textContent=`${name} ${f.modes[mi].name}, key signature of ${words(n)}`
-    +(f.alt!==null ? `, with ${fname(n+f.alt)}` : '');
-  svg.appendChild(t);
-  return svg;
 }
 
 /* ---- grand staff -------------------------------------------------------
