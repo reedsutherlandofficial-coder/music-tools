@@ -26,6 +26,7 @@ html{scrollbar-gutter:stable}
   --line:#3A2C1A; --line-strong:#54402A;
   --red:#E5672B; --red-ink:#FF8A4A; --on-red:#120C07; --teal:#17B8A6;
   --radius:2px;
+  --radius-lg:10px;
   --font-display:'JetBrains Mono', monospace;
   --font-body:'JetBrains Mono', monospace;
   --font-mono:'JetBrains Mono', monospace;
@@ -168,26 +169,43 @@ body::after{
   margin:0 auto;
   padding:2.5rem clamp(1rem,3vw,2.5rem) 3rem;
 }
+/* ---- glass cards -----------------------------------------------------
+   Frosted panel + a soft glow (drawn from the app's own accent colors)
+   diffusing behind it, per the "ember" direction chosen from a Pinterest
+   material reference. The glow lives on ::before, positioned behind and
+   well outside the card's own bounds, then clipped to the card's rounded
+   corners by its overflow — that's why every glass card needs
+   position:relative (a paint anchor for ::before) and a clipped overflow
+   axis, not just a background color. */
+.side-panel, .wheel-stage, #fretApp .diagram-card{
+  position:relative;
+  background:color-mix(in srgb, var(--paper-raised) 46%, transparent);
+  backdrop-filter:blur(22px) saturate(1.4);
+  -webkit-backdrop-filter:blur(22px) saturate(1.4);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:var(--radius-lg);
+  box-shadow:0 20px 50px -20px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.06);
+}
+.side-panel::before, .wheel-stage::before, #fretApp .diagram-card::before{
+  content:'';position:absolute;inset:-60%;z-index:-1;
+  background:
+    radial-gradient(circle at 26% 20%, color-mix(in srgb, var(--red) 70%, transparent) 0%, transparent 55%),
+    radial-gradient(circle at 78% 78%, color-mix(in srgb, var(--teal) 55%, transparent) 0%, transparent 55%);
+  filter:blur(50px);
+  opacity:.55;
+}
 .side-panel{
   flex:0 0 340px;
-  background:var(--paper-raised);
-  border:1px solid color-mix(in srgb, var(--ink) 8%, transparent);
-  border-radius:var(--radius);
-  box-shadow:0 1px 2px color-mix(in srgb, var(--ink) 5%, transparent),
-             0 14px 28px -16px color-mix(in srgb, var(--ink) 30%, transparent);
   padding:1.75rem;
   max-height:calc(100vh - 140px);
+  overflow-x:hidden;
   overflow-y:auto;
 }
 .wheel-stage{
   flex:1 1 460px;
   max-width:560px;
   --dial:min(100%,56vh,420px);
-  background:var(--paper-raised);
-  border:1px solid color-mix(in srgb, var(--ink) 8%, transparent);
-  border-radius:var(--radius);
-  box-shadow:0 1px 2px color-mix(in srgb, var(--ink) 5%, transparent),
-             0 14px 28px -16px color-mix(in srgb, var(--ink) 30%, transparent);
+  overflow:hidden;
   padding:2rem;
 }
 @media (max-width:900px){
@@ -363,9 +381,7 @@ body::after{
 #fretApp #diagrams{display:flex;flex-wrap:wrap;gap:1.5rem}
 #fretApp .diagram-card{
   flex:1 1 100%;
-  background:var(--paper);
-  border:1px solid var(--line-strong);
-  border-radius:var(--radius);
+  overflow:hidden;
   padding:1rem 1rem .875rem;
 }
 #fretApp .diagram-card.paired{flex:1 1 calc(50% - .75rem);min-width:420px}
