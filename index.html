@@ -53,7 +53,6 @@ body::after{
   background:repeating-linear-gradient(0deg, rgba(0,0,0,.5) 0px, rgba(0,0,0,.5) 1px, transparent 1px, transparent 3px);
   opacity:.16;mix-blend-mode:multiply;
 }
-.glow{text-shadow:0 0 10px color-mix(in srgb, var(--red) 55%, transparent), 0 0 30px color-mix(in srgb, var(--red) 25%, transparent)}
 @media (prefers-reduced-motion:reduce){
   body::before,body::after{display:none}
 }
@@ -107,7 +106,6 @@ body::after{
   border-radius:var(--radius);
   appearance:none;
   -webkit-appearance:none;
-  box-shadow:0 0 8px color-mix(in srgb, var(--red) 14%, transparent);
   background-image:linear-gradient(45deg,transparent 50%,var(--red) 50%),
                    linear-gradient(135deg,var(--red) 50%,transparent 50%);
   background-position:calc(100% - 14px) center, calc(100% - 9px) center;
@@ -118,7 +116,6 @@ body::after{
 }
 .theme-pick select:hover{
   border-color:var(--ink-mute);
-  box-shadow:0 0 12px color-mix(in srgb, var(--red) 24%, transparent);
 }
 .theme-pick select:focus-visible{
   outline:none;border-color:var(--red);
@@ -299,9 +296,12 @@ body::after{
 #fretApp button.small{height:30px;padding:0 11px;font-size:10px;letter-spacing:.08em}
 #fretApp button.primary{
   background:var(--red);border-color:var(--red);color:var(--on-red);
+  transition:box-shadow .15s ease, background-color .15s ease, border-color .15s ease;
+}
+#fretApp button.primary:hover{
+  background:var(--red-ink);border-color:var(--red-ink);
   box-shadow:0 0 16px color-mix(in srgb, var(--red) 45%, transparent);
 }
-#fretApp button.primary:hover{background:var(--red-ink);border-color:var(--red-ink)}
 #fretApp button.ghost{background:transparent;border-color:transparent;color:var(--ink-soft)}
 #fretApp button.ghost:hover{background:transparent;border-color:var(--line-strong);color:var(--ink)}
 #fretApp button.danger-text{background:transparent;border-color:transparent;color:var(--ink-soft)}
@@ -327,7 +327,6 @@ body::after{
   appearance:none;
   -webkit-appearance:none;
   padding-right:26px;
-  box-shadow:0 0 8px color-mix(in srgb, var(--red) 14%, transparent);
   background-image:linear-gradient(45deg,transparent 50%,var(--red) 50%),
                    linear-gradient(135deg,var(--red) 50%,transparent 50%);
   background-position:calc(100% - 14px) center, calc(100% - 9px) center;
@@ -338,7 +337,6 @@ body::after{
 }
 #fretApp select:hover{
   border-color:var(--ink-mute);
-  box-shadow:0 0 12px color-mix(in srgb, var(--red) 24%, transparent);
 }
 #fretApp select:focus-visible{
   outline:none;border-color:var(--red);
@@ -503,7 +501,6 @@ body::after{
   border-radius:var(--radius);
   appearance:none;
   -webkit-appearance:none;
-  box-shadow:0 0 8px color-mix(in srgb, var(--red) 14%, transparent);
   background-image:linear-gradient(45deg,transparent 50%,var(--red) 50%),linear-gradient(135deg,var(--red) 50%,transparent 50%);
   background-position:calc(100% - 16px) center, calc(100% - 11px) center;
   background-size:5px 5px, 5px 5px;
@@ -513,7 +510,6 @@ body::after{
 }
 #circleApp select:hover{
   border-color:var(--ink-mute);
-  box-shadow:0 0 12px color-mix(in srgb, var(--red) 24%, transparent);
 }
 #circleApp select:focus{
   outline:none;border-color:var(--red);
@@ -739,7 +735,7 @@ body::after{
 <section class="app-panel" id="fretApp" role="tabpanel" aria-labelledby="tab-fretboard">
 <header>
   <div class="eyebrow"><span>Diagram sheet</span><span id="fretCount">Diagrams 01</span></div>
-  <h1 class="glow">Fretboard</h1>
+  <h1>Fretboard</h1>
 </header>
 
 <div class="toolbar">
@@ -770,7 +766,7 @@ body::after{
 <div class="wheel-stage" id="wheelCard">
 <header>
   <div class="eyebrow"><span>Diagram no. 5ths</span><span id="posLabel">Position 00</span></div>
-  <h1 class="glow">Circle of fifths</h1>
+  <h1>Circle of fifths</h1>
 </header>
 
 <div class="modes">
