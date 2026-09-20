@@ -243,6 +243,9 @@ body::after{
   padding-bottom:1.5rem;
 }
 #fretApp .toolbar .spacer{flex:1}
+#fretApp .savestate{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);margin-right:2px}
+#fretApp .savestate.bad{color:var(--red-ink)}
+#fretApp .card-actions{display:flex;gap:4px}
 
 /* controls ---------------------------------------------------------------- */
 #fretApp button{
@@ -373,6 +376,38 @@ body::after{
 #fretApp .card-top input.title-input:hover,
 #fretApp .card-top input.title-input:focus{border-bottom-color:var(--line-strong);outline:none}
 #fretApp .card-top input.title-input::placeholder{color:var(--ink-mute)}
+/* versions dialog --------------------------------------------------------- */
+#fretApp dialog.versions{
+  width:min(640px,calc(100vw - 2rem));max-height:min(82vh,760px);
+  padding:0;border:1px solid var(--line-strong);border-radius:var(--radius-lg);
+  background:var(--paper-raised);color:var(--ink);font-family:var(--font-body);
+  box-shadow:0 30px 80px -20px rgba(0,0,0,.8);
+}
+#fretApp dialog.versions[open]{display:flex;flex-direction:column}
+#fretApp dialog.versions::backdrop{background:rgba(0,0,0,.6);backdrop-filter:blur(3px)}
+#fretApp .vhead{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--line);margin:0}
+#fretApp .vhead h2{margin:0;font-family:var(--font-display);font-weight:700;font-size:18px}
+#fretApp .vbody{padding:16px 20px 20px;display:flex;flex-direction:column;gap:16px;overflow:auto}
+#fretApp .vnote{margin:0;font-size:13px;line-height:1.5;color:var(--ink-soft)}
+#fretApp .vsave label,#fretApp .vshare label{
+  display:block;margin-bottom:6px;font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);
+}
+#fretApp .vrow{display:flex;gap:8px}
+#fretApp dialog.versions input[type=text]{
+  flex:1;min-width:0;height:34px;padding:0 10px;font-family:var(--font-body);font-size:14px;color:var(--ink);
+  background:var(--paper);border:1px solid var(--line-strong);border-radius:var(--radius);
+}
+#fretApp dialog.versions input[type=text]:focus-visible{outline:2px solid var(--red);outline-offset:1px}
+#fretApp dialog.versions button{height:34px}
+#fretApp .vlist{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+#fretApp .vlist li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+#fretApp .vlist .vname{font-family:var(--font-display);font-weight:500;font-size:15px;overflow-wrap:anywhere}
+#fretApp .vlist .vmeta{grid-column:1;font-family:var(--font-mono);font-size:12px;color:var(--ink-soft)}
+#fretApp .vlist .vbtns{grid-column:2;grid-row:1 / span 2;display:flex;gap:6px}
+#fretApp .vlist .vempty{display:block;padding:14px 0;color:var(--ink-soft);font-size:13px}
+#fretApp .vfile{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+#fretApp .vmsg{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);flex:1 1 100%}
+#fretApp .vmsg.bad{color:var(--red-ink)}
 #fretApp .controls{
   display:flex;
   flex-wrap:wrap;
@@ -738,15 +773,52 @@ body::after{
 <div class="toolbar">
   <button class="primary" id="addDiagramBtn">+ Add diagram</button>
   <div class="group">
+    <button class="small" id="undoBtn" disabled title="Undo (Ctrl/Cmd + Z)">Undo</button>
+    <button class="small" id="redoBtn" disabled title="Redo (Shift + Ctrl/Cmd + Z)">Redo</button>
+  </div>
+  <div class="group">
     <label>Layout</label>
     <button class="small toggle" id="landscapeBtn">Landscape</button>
     <button class="small toggle" id="portraitBtn">Portrait</button>
   </div>
   <div class="spacer"></div>
+  <span class="savestate" id="saveState" role="status" aria-live="polite"></span>
+  <button id="versionsBtn">Versions</button>
   <button id="exportPngBtn">Export PNG</button>
 </div>
 
 <div id="diagrams"></div>
+
+<dialog class="versions" id="versionsDlg" aria-labelledby="versionsTitle">
+  <form method="dialog" class="vhead">
+    <h2 id="versionsTitle">Versions</h2>
+    <button class="small ghost" value="close">Close</button>
+  </form>
+  <div class="vbody">
+    <p class="vnote">The sheet you're working on saves itself in this browser. Save a version to keep a named copy you can come back to.</p>
+    <div class="vsave">
+      <label for="versionName">Save the current sheet as</label>
+      <div class="vrow">
+        <input type="text" id="versionName" maxlength="80" placeholder="e.g. A minor pentatonic, full neck" autocomplete="off">
+        <button class="small primary" id="saveVersionBtn">Save version</button>
+      </div>
+    </div>
+    <ul class="vlist" id="versionList"></ul>
+    <div class="vshare">
+      <label for="shareLink">Share link</label>
+      <div class="vrow">
+        <input type="text" id="shareLink" readonly>
+        <button class="small" id="copyLinkBtn">Copy link</button>
+      </div>
+    </div>
+    <div class="vfile">
+      <button class="small" id="exportFileBtn">Export file</button>
+      <button class="small" id="importFileBtn">Import file</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+      <span class="vmsg" id="versionMsg" role="status" aria-live="polite"></span>
+    </div>
+  </div>
+</dialog>
 </section>
 
 <section class="app-panel" id="circleApp" role="tabpanel" aria-labelledby="tab-circle" hidden>
@@ -1009,10 +1081,11 @@ function defaultState(){
   };
 }
 
-function createDiagram(initial){
+function createDiagram(initial, after){
   diagramCounter += 1;
   const id = 'dg' + diagramCounter;
-  const state = Object.assign(defaultState(), initial || {});
+  const { ui, ...init } = initial || {};   // ui: which key/scale/chord the pickers show
+  const state = Object.assign(defaultState(), init);
   const card = document.createElement('div');
   card.className = 'diagram-card';
   card.dataset.id = id;
@@ -1020,7 +1093,10 @@ function createDiagram(initial){
   card.innerHTML = `
     <div class="card-top">
       <input class="title-input" type="text" value="${escapeHtml(state.title)}" placeholder="Fretboard label" aria-label="Diagram title">
-      <button class="small ghost removeBtn" title="Remove diagram">Remove</button>
+      <div class="card-actions">
+        <button class="small ghost duplicateBtn" title="Make a copy of this diagram, right after it">Duplicate</button>
+        <button class="small ghost removeBtn" title="Remove diagram">Remove</button>
+      </div>
     </div>
     <div class="controls">
       <div class="group">
@@ -1096,7 +1172,8 @@ function createDiagram(initial){
     </div>
   `;
 
-  document.getElementById('diagrams').appendChild(card);
+  const host = document.getElementById('diagrams');
+  if (after && after.el.card.parentNode === host) after.el.card.after(card); else host.appendChild(card);
 
   const el = {
     card,
@@ -1122,16 +1199,19 @@ function createDiagram(initial){
     genChordBtn: card.querySelector('.genChordBtn'),
     canvas: card.querySelector('.fretCanvas'),
     rootLabel: card.querySelector('.rootLabel'),
-    removeBtn: card.querySelector('.removeBtn')
+    removeBtn: card.querySelector('.removeBtn'),
+    duplicateBtn: card.querySelector('.duplicateBtn')
   };
 
   const diagram = { id, state, el };
-  diagrams.push(diagram);
+  const at = after ? diagrams.indexOf(after) : -1;
+  if (at >= 0) diagrams.splice(at + 1, 0, diagram); else diagrams.push(diagram);
 
   populateInstrumentControls(diagram);
   populateKeySelect(el.keySel);
   populateOptionGroup(el.scaleSel, SCALES);
   populateOptionGroup(el.chordSel, CHORDS);
+  if (ui) { el.keySel.value = ui.key; el.scaleSel.value = ui.scale; el.chordSel.value = ui.chord; }
   el.displaySel.value = state.displayMode;
 
   wireEvents(diagram);
@@ -1264,6 +1344,10 @@ function wireEvents(diagram){
   el.genChordBtn.addEventListener('click', () => {
     generateFromFormula(diagram, CHORDS[el.chordSel.value].intervals, el.keySel.value);
   });
+
+  el.duplicateBtn.addEventListener('click', () => duplicateDiagram(diagram));
+  // a picker change alone doesn't redraw, but it is part of what gets saved
+  [el.keySel, el.scaleSel, el.chordSel].forEach(sel => sel.addEventListener('change', scheduleCheckpoint));
 
   el.removeBtn.addEventListener('click', () => {
     if (diagrams.length <= 1) return;
@@ -1514,6 +1598,7 @@ function handleCanvasClick(diagram, evt){
 }
 
 function render(diagram){
+  scheduleCheckpoint();   // every state change ends in a render; theme repaints dedupe away
   const { state, el } = diagram;
   const vertical = pageOrientation === 'portrait';
   const t = getTheme().canvas;
@@ -1729,6 +1814,13 @@ function layoutCards(){
   // Portrait: diagrams arrange two-up side by side when there's more than one.
   const usePaired = pageOrientation === 'portrait' && diagrams.length > 1;
   diagrams.forEach(d => d.el.card.classList.toggle('paired', usePaired));
+  // the last diagram can't be removed: say so, rather than a button that does nothing
+  const only = diagrams.length <= 1;
+  diagrams.forEach(d => {
+    d.el.removeBtn.disabled = only;
+    d.el.removeBtn.title = only ? 'A sheet needs at least one diagram' : 'Remove diagram';
+  });
+  document.getElementById('addDiagramBtn').disabled = diagrams.length >= MAX_DIAGRAMS;
 }
 
 function setPageOrientation(orientation){
@@ -1773,6 +1865,337 @@ function exportAllAsPng(){
   downloadDataUrl(combo.toDataURL('image/png'), 'fretboard-diagrams.png');
 }
 
+
+// ---- the sheet: autosave, undo, versions, sharing ---------------------------
+// The sheet (every diagram plus the neck orientation) is one plain object. It
+// is what autosave writes, what Undo steps through, what a saved version holds,
+// and what a share link or file carries. Two of those come from outside the
+// app, so everything is sanitised on the way in and nothing is trusted.
+const SHEET_KEY = 'musictools.fretboard.sheet';
+const VERSIONS_KEY = 'musictools.fretboard.versions';
+const SHARED_KEY = 'musictools.fretboard.sharedApplied';
+const MAX_DIAGRAMS = 24, MAX_HISTORY = 100, MAX_VERSIONS = 50, MAX_LINK = 7500;
+const DISPLAY_MODES = ['name', 'interval', 'blank'];
+const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+const clampInt = (v, lo, hi, dflt) => {
+  const n = Number.isInteger(v) ? v : parseInt(v, 10);
+  return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : dflt;
+};
+
+function serializeDiagram(d){
+  const s = d.state;
+  const notes = [...s.notes].sort((a, b) => {
+    const [as, af] = a.split('_').map(Number), [bs, bf] = b.split('_').map(Number);
+    return as - bs || af - bf;
+  });
+  return {
+    title: s.title, instrument: s.instrument, preset: s.preset,
+    firstFret: s.firstFret, lastFret: s.lastFret, notes,
+    rootPC: s.rootPC, displayMode: s.displayMode, shift: s.shiftSemitones,
+    key: d.el.keySel.value, scale: d.el.scaleSel.value, chord: d.el.chordSel.value
+  };
+}
+const serializeSheet = () => ({ v: 1, orientation: pageOrientation, diagrams: diagrams.map(serializeDiagram) });
+
+// Whatever arrives, the result is a plain, in-range, JSON-safe diagram or null.
+function sanitizeDiagram(d){
+  if (!d || typeof d !== 'object') return null;
+  const instrument = typeof d.instrument === 'string' && own(TUNINGS, d.instrument) ? d.instrument : 'guitar';
+  const presets = TUNINGS[instrument].presets;
+  const preset = typeof d.preset === 'string' && own(presets, d.preset) ? d.preset : Object.keys(presets)[0];
+  const stringCount = presets[preset].strings.length;
+  const firstFret = clampInt(d.firstFret, 0, 29, 0);
+  const lastFret = clampInt(d.lastFret, firstFret + 1, 30, Math.max(firstFret + 1, 22));
+  const notes = [];
+  if (Array.isArray(d.notes)) {
+    const seen = new Set();
+    for (const k of d.notes.slice(0, 1200)) {
+      const m = typeof k === 'string' ? /^(\d{1,2})_(\d{1,2})$/.exec(k) : null;
+      if (!m) continue;
+      const si = +m[1], f = +m[2], key = si + '_' + f;
+      if (si < stringCount && f >= firstFret && f <= lastFret && !seen.has(key)) { seen.add(key); notes.push(key); }
+    }
+  }
+  return {
+    title: typeof d.title === 'string' ? d.title.slice(0, 120) : '',
+    instrument, preset, firstFret, lastFret, notes,
+    rootPC: Number.isInteger(d.rootPC) && d.rootPC >= 0 && d.rootPC < 12 ? d.rootPC : null,
+    displayMode: DISPLAY_MODES.includes(d.displayMode) ? d.displayMode : 'name',
+    shift: clampInt(d.shift, -11, 11, 0),
+    key: NOTE_NAMES.includes(d.key) ? d.key : NOTE_NAMES[0],
+    scale: typeof d.scale === 'string' && own(SCALES, d.scale) ? d.scale : Object.keys(SCALES)[0],
+    chord: typeof d.chord === 'string' && own(CHORDS, d.chord) ? d.chord : Object.keys(CHORDS)[0]
+  };
+}
+function sanitizeSheet(raw){
+  if (!raw || typeof raw !== 'object' || !Array.isArray(raw.diagrams)) return null;
+  const list = raw.diagrams.slice(0, MAX_DIAGRAMS).map(sanitizeDiagram).filter(Boolean);
+  if (!list.length) return null;
+  return { v: 1, orientation: raw.orientation === 'portrait' ? 'portrait' : 'landscape', diagrams: list };
+}
+function initialFrom(c){
+  return {
+    title: c.title, instrument: c.instrument, preset: c.preset,
+    strings: TUNINGS[c.instrument].presets[c.preset].strings.slice(),
+    firstFret: c.firstFret, lastFret: c.lastFret, notes: new Set(c.notes),
+    rootPC: c.rootPC, displayMode: c.displayMode, shiftSemitones: c.shift,
+    ui: { key: c.key, scale: c.scale, chord: c.chord }
+  };
+}
+
+let restoring = false;          // true while the page is being rebuilt from a sheet
+function applySheet(clean){
+  restoring = true;
+  try {
+    pendingRenders.forEach(h => cancelAnimationFrame(h));
+    pendingRenders.clear();
+    diagrams.splice(0).forEach(d => d.el.card.remove());
+    setPageOrientation(clean.orientation);
+    clean.diagrams.forEach(c => createDiagram(initialFrom(c)));
+  } finally { restoring = false; }
+}
+
+const readJSON = (key) => { try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : null; } catch (e) { return null; } };
+const writeJSON = (key, val) => { try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch (e) { return false; } };
+
+// Undo history: full snapshots, coalesced so a burst of typing is one step.
+const hist = { stack: [], idx: -1 };
+let checkpointTimer = null;
+const saveStateEl = document.getElementById('saveState');
+function setSaveState(text, bad){
+  saveStateEl.textContent = text;
+  saveStateEl.classList.toggle('bad', !!bad);
+}
+function syncHistoryButtons(){
+  document.getElementById('undoBtn').disabled = hist.idx <= 0;
+  document.getElementById('redoBtn').disabled = hist.idx >= hist.stack.length - 1;
+}
+function scheduleCheckpoint(){
+  if (restoring) return;
+  clearTimeout(checkpointTimer);
+  checkpointTimer = setTimeout(commitCheckpoint, 400);
+}
+function commitCheckpoint(){
+  clearTimeout(checkpointTimer);
+  checkpointTimer = null;
+  const sheet = serializeSheet(), json = JSON.stringify(sheet);
+  if (hist.idx >= 0 && hist.stack[hist.idx] === json) return;
+  hist.stack.splice(hist.idx + 1);
+  hist.stack.push(json);
+  if (hist.stack.length > MAX_HISTORY) hist.stack.shift();
+  hist.idx = hist.stack.length - 1;
+  persist(sheet);
+  syncHistoryButtons();
+}
+function persist(sheet){
+  const ok = writeJSON(SHEET_KEY, sheet);
+  setSaveState(ok ? 'Saved' : 'Not saved: browser storage is unavailable', !ok);
+}
+function stepHistory(dir){
+  if (checkpointTimer) commitCheckpoint();
+  const to = hist.idx + dir;
+  if (to < 0 || to >= hist.stack.length) return;
+  hist.idx = to;
+  const sheet = JSON.parse(hist.stack[to]);
+  applySheet(sanitizeSheet(sheet));
+  persist(sheet);
+  syncHistoryButtons();
+}
+// Loading a whole sheet (version, link, file) is one undoable step.
+function adoptSheet(clean){
+  if (checkpointTimer) commitCheckpoint();
+  applySheet(clean);
+  commitCheckpoint();
+}
+window.addEventListener('pagehide', () => { if (checkpointTimer) commitCheckpoint(); });
+
+document.getElementById('undoBtn').addEventListener('click', () => stepHistory(-1));
+document.getElementById('redoBtn').addEventListener('click', () => stepHistory(1));
+document.addEventListener('keydown', (e) => {
+  if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (k !== 'z' && k !== 'y') return;
+  if (document.getElementById('fretApp').hidden || document.querySelector('dialog[open]')) return;
+  // inside a text field the browser's own undo is the right one
+  if (e.target.closest && e.target.closest('input:not([type=checkbox]):not([type=button]), textarea, select, [contenteditable]')) return;
+  e.preventDefault();
+  stepHistory(k === 'y' || e.shiftKey ? 1 : -1);
+});
+
+function duplicateDiagram(diagram){
+  if (diagrams.length >= MAX_DIAGRAMS) return;
+  const clean = sanitizeDiagram(serializeDiagram(diagram));
+  if (clean.title) clean.title = (clean.title + ' (copy)').slice(0, 120);
+  const copy = createDiagram(initialFrom(clean), diagram);
+  copy.el.card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+// ---- versions ----
+function cleanVersion(v){
+  if (!v || typeof v !== 'object') return null;
+  const sheet = sanitizeSheet(v.sheet);
+  if (!sheet) return null;
+  return {
+    id: typeof v.id === 'string' ? v.id.slice(0, 40) : String(Math.random()).slice(2),
+    name: typeof v.name === 'string' && v.name.trim() ? v.name.trim().slice(0, 80) : 'Untitled version',
+    savedAt: Number.isFinite(v.savedAt) ? v.savedAt : Date.now(), sheet
+  };
+}
+const listVersions = () => { const a = readJSON(VERSIONS_KEY); return Array.isArray(a) ? a.map(cleanVersion).filter(Boolean) : []; };
+function addVersion(name, sheet){
+  const list = listVersions();
+  if (list.length >= MAX_VERSIONS) return false;
+  list.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), name, savedAt: Date.now(), sheet });
+  return writeJSON(VERSIONS_KEY, list);
+}
+function defaultVersionName(){
+  const titled = diagrams.map(d => d.state.title.trim()).find(Boolean);
+  const day = new Date().toLocaleDateString([], { month: 'short', day: 'numeric' });
+  return (titled || 'Fretboard sheet') + ' · ' + day;
+}
+
+// ---- share links and files ----
+function b64uEncode(str){
+  let bin = '';
+  new TextEncoder().encode(str).forEach(b => { bin += String.fromCharCode(b); });
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function b64uDecode(str){
+  const bin = atob(str.replace(/-/g, '+').replace(/_/g, '/'));
+  return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+}
+function decodeSheet(raw){
+  try { return raw.length > 200000 ? null : sanitizeSheet(JSON.parse(b64uDecode(raw))); } catch (e) { return null; }
+}
+function shareLink(){
+  const base = location.href.split('#')[0].split('?')[0];
+  return base + '?sheet=' + b64uEncode(JSON.stringify(serializeSheet())) + (location.hash || '');
+}
+
+// A shared link replaces the sheet, so the sheet you had is filed as a version
+// first. Where the address can't be rewritten (a page opened from disk) the
+// link would re-apply on every reload, so remember it for the session.
+let linkUnreadable = false;
+function takeSharedSheet(){
+  let raw = null;
+  try { raw = new URLSearchParams(location.search).get('sheet'); } catch (e) { return null; }
+  if (!raw) return null;
+  try { if (sessionStorage.getItem(SHARED_KEY) === raw) return null; } catch (e) {}
+  const clean = decodeSheet(raw);
+  try { sessionStorage.setItem(SHARED_KEY, raw); } catch (e) {}
+  try { const u = new URL(location.href); u.searchParams.delete('sheet'); history.replaceState(null, '', u); } catch (e) {}
+  if (!clean) { linkUnreadable = true; return null; }
+  const mine = sanitizeSheet(readJSON(SHEET_KEY));
+  if (mine && JSON.stringify(mine) !== JSON.stringify(clean)) addVersion('Before opening a shared link', mine);
+  return clean;
+}
+
+// ---- the versions dialog ----
+const dlg = document.getElementById('versionsDlg');
+const vMsg = document.getElementById('versionMsg');
+const say = (text, bad) => { vMsg.textContent = text; vMsg.classList.toggle('bad', !!bad); };
+function renderVersions(){
+  const ul = document.getElementById('versionList');
+  ul.replaceChildren();
+  const list = listVersions();
+  if (!list.length) {
+    const li = document.createElement('li');
+    const em = document.createElement('span'); em.className = 'vempty'; em.textContent = 'No saved versions yet.';
+    li.appendChild(em); ul.appendChild(li); return;
+  }
+  list.forEach(v => {
+    const li = document.createElement('li');
+    const name = document.createElement('div'); name.className = 'vname'; name.textContent = v.name;
+    const meta = document.createElement('div'); meta.className = 'vmeta';
+    const n = v.sheet.diagrams.length;
+    meta.textContent = n + (n === 1 ? ' diagram · ' : ' diagrams · ') +
+      new Date(v.savedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    const btns = document.createElement('div'); btns.className = 'vbtns';
+    const load = document.createElement('button'); load.className = 'small'; load.textContent = 'Load';
+    load.addEventListener('click', () => { adoptSheet(v.sheet); dlg.close(); });
+    const del = document.createElement('button'); del.className = 'small ghost'; del.textContent = 'Delete';
+    let armed = null;
+    del.addEventListener('click', () => {
+      if (!armed) {
+        del.textContent = 'Really delete?';
+        armed = setTimeout(() => { armed = null; del.textContent = 'Delete'; }, 3000);
+        return;
+      }
+      clearTimeout(armed);
+      writeJSON(VERSIONS_KEY, listVersions().filter(x => x.id !== v.id));
+      renderVersions(); say('Deleted "' + v.name + '".');
+    });
+    btns.append(load, del);
+    li.append(name, meta, btns);
+    ul.appendChild(li);
+  });
+}
+function openVersions(){
+  if (checkpointTimer) commitCheckpoint();
+  say('');
+  document.getElementById('versionName').value = defaultVersionName();
+  const link = shareLink();
+  const linkEl = document.getElementById('shareLink');
+  linkEl.value = link.length > MAX_LINK ? '' : link;
+  linkEl.placeholder = link.length > MAX_LINK ? 'This sheet is too large for a link. Use Export file.' : '';
+  document.getElementById('copyLinkBtn').disabled = link.length > MAX_LINK;
+  renderVersions();
+  dlg.showModal();
+  document.getElementById('versionName').select();
+}
+document.getElementById('versionsBtn').addEventListener('click', openVersions);
+dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });   // the backdrop
+document.getElementById('saveVersionBtn').addEventListener('click', () => {
+  const name = document.getElementById('versionName').value.trim() || defaultVersionName();
+  if (listVersions().length >= MAX_VERSIONS) { say('That is the limit of ' + MAX_VERSIONS + ' versions. Delete one first.', true); return; }
+  if (!addVersion(name.slice(0, 80), serializeSheet())) { say('Could not save: browser storage is unavailable.', true); return; }
+  renderVersions(); say('Saved "' + name.slice(0, 80) + '".');
+});
+document.getElementById('versionName').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('saveVersionBtn').click(); }
+});
+document.getElementById('shareLink').addEventListener('focus', (e) => e.target.select());
+document.getElementById('copyLinkBtn').addEventListener('click', async () => {
+  const linkEl = document.getElementById('shareLink');
+  try { await navigator.clipboard.writeText(linkEl.value); say('Link copied.'); }
+  catch (e) { linkEl.select(); say('Could not copy automatically. The link is selected, so copy it yourself.', true); }
+});
+document.getElementById('exportFileBtn').addEventListener('click', () => {
+  if (checkpointTimer) commitCheckpoint();
+  const doc = { app: 'music-tools', kind: 'fretboard-sheet', v: 1, savedAt: new Date().toISOString(), sheet: serializeSheet() };
+  const url = URL.createObjectURL(new Blob([JSON.stringify(doc, null, 1)], { type: 'application/json' }));
+  downloadDataUrl(url, 'fretboard-sheet-' + new Date().toISOString().slice(0, 10) + '.json');
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  say('Exported the current sheet.');
+});
+document.getElementById('importFileBtn').addEventListener('click', () => document.getElementById('importFile').click());
+document.getElementById('importFile').addEventListener('change', async (e) => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  if (file.size > 1000000) { say('That file is too large to be a fretboard sheet.', true); return; }
+  let clean = null;
+  try { const doc = JSON.parse(await file.text()); clean = sanitizeSheet(doc && doc.sheet ? doc.sheet : doc); } catch (err) {}
+  if (!clean) { say('That file is not a fretboard sheet.', true); return; }
+  adoptSheet(clean);
+  const n = clean.diagrams.length;
+  say('Imported ' + n + (n === 1 ? ' diagram' : ' diagrams') + '. Undo brings back the sheet you had.');
+  renderVersions();
+});
+
+function bootSheet(){
+  const shared = takeSharedSheet();
+  const clean = shared || sanitizeSheet(readJSON(SHEET_KEY)) || sanitizeSheet({ diagrams: [{}] });
+  applySheet(clean);
+  const sheet = serializeSheet();
+  hist.stack = [JSON.stringify(sheet)];
+  hist.idx = 0;
+  if (shared || !readJSON(SHEET_KEY)) persist(sheet); else setSaveState('Saved');
+  // said last, so the ordinary 'Saved' doesn't wipe it
+  if (linkUnreadable) setSaveState('That share link could not be read, so this is your saved sheet', true);
+  syncHistoryButtons();
+}
+
 document.getElementById('addDiagramBtn').addEventListener('click', () => {
   createDiagram({ title: '' });
 });
@@ -1781,8 +2204,7 @@ document.getElementById('landscapeBtn').addEventListener('click', () => setPageO
 document.getElementById('portraitBtn').addEventListener('click', () => setPageOrientation('portrait'));
 
 // initial state - the shell applies the chosen theme once it loads
-setPageOrientation('landscape');
-createDiagram({ title: '' });
+bootSheet();
 
 })();
 </script>
