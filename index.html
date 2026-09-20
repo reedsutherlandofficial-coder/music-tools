@@ -9,9 +9,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link id="baseFontLink" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<!-- IBM Plex Sans/Mono, Space Grotesk, Inter, and Zilla Slab are only used by
-     non-default themes; the shell script injects them on first use instead
-     of loading them eagerly. -->
+<!-- Every theme other than Terminal brings its own faces; the shell script
+     injects them the first time the theme is picked instead of eagerly. -->
 <style>
 /* ---- shell ---------------------------------------------------------------
    The bar holds the two things that apply to the whole page: which tool is
@@ -19,6 +18,8 @@
    the tools do, so it repaints with them. */
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0;overflow-x:hidden}
+/* a short page would otherwise tile the fixed gradient under its own box */
+body{min-height:100vh}
 html{scrollbar-gutter:stable}
 :root{
   --paper:#120C07; --paper-raised:#1D160C;
@@ -27,31 +28,38 @@ html{scrollbar-gutter:stable}
   --red:#E5672B; --red-ink:#FF8A4A; --on-red:#120C07; --teal:#17B8A6;
   --radius:2px;
   --radius-lg:10px;
+  /* atmosphere: each theme sets its own; these are Terminal's */
+  --atmo-top:color-mix(in srgb, var(--red) 26%, var(--paper));
+  --atmo-bottom:color-mix(in srgb, var(--teal) 8%, var(--paper));
+  --grid-line:transparent; --grid-size:32px;
+  --fx-grain:.1; --fx-scan:.16;
   --font-display:'JetBrains Mono', monospace;
   --font-body:'JetBrains Mono', monospace;
   --font-mono:'JetBrains Mono', monospace;
 }
 body{
   background:
-    radial-gradient(ellipse 1200px 700px at 50% -8%, color-mix(in srgb, var(--red) 26%, var(--paper)) 0%, var(--paper) 48%, color-mix(in srgb, var(--teal) 8%, var(--paper)) 100%);
+    linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0 / var(--grid-size) var(--grid-size),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px) 0 0 / var(--grid-size) var(--grid-size),
+    radial-gradient(ellipse 1200px 700px at 50% -8%, var(--atmo-top) 0%, var(--paper) 48%, var(--atmo-bottom) 100%);
   background-attachment:fixed;
   color:var(--ink);
   transition:background-color .3s ease;
   position:relative;
 }
-/* film grain + scanlines — a fixed, pointer-events:none overlay so it never
-   blocks a click, sitting above every theme's surface since the whole
-   remaining palette (night, terminal, prog, jazz, psychedelic) is dark now
-   that paper is retired. */
+/* film grain + scanlines — fixed, pointer-events:none overlays so they never
+   block a click. Their strength is a per-theme token (Terminal is the CRT;
+   the others turn the scanlines off), and every palette is dark, so they
+   always sit over a dark surface. */
 body::before{
   content:'';position:fixed;inset:0;z-index:9990;pointer-events:none;
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-  opacity:.1;mix-blend-mode:overlay;
+  opacity:var(--fx-grain);mix-blend-mode:overlay;
 }
 body::after{
   content:'';position:fixed;inset:0;z-index:9991;pointer-events:none;
   background:repeating-linear-gradient(0deg, rgba(0,0,0,.5) 0px, rgba(0,0,0,.5) 1px, transparent 1px, transparent 3px);
-  opacity:.16;mix-blend-mode:multiply;
+  opacity:var(--fx-scan);mix-blend-mode:multiply;
 }
 @media (prefers-reduced-motion:reduce){
   body::before,body::after{display:none}
@@ -833,17 +841,6 @@ const INTERVAL_LABELS = ['R','♭2','2','♭3','3','4','♭5','5','♭6','6','�
 // shared CSS tokens the shell writes to :root, so a theme change repaints
 // both tools at once. Keys here must match the shell's theme ids.
 const THEMES = {
-  night: { canvas: {
-    bg:'#17160F', titleInk:'#F2EEE1', titleFont:'700 17px "Space Grotesk", sans-serif',
-    neckGradTop:'#2A2418', neckGradBottom:'#14120C', inlay:'rgba(242,238,225,0.18)',
-    nutColor:'#B6B09B', fretWire:'rgba(242,238,225,0.18)', string:'rgba(182,176,155,0.55)',
-    stringLabel:'#F2EEE1', stringLabelFont:'500 12px "IBM Plex Mono", monospace',
-    fretNum:'#7A7462', fretNumFont:'500 11px "IBM Plex Mono", monospace',
-    markerDefault:'#4A4530', markerStroke:'rgba(242,238,225,0.3)',
-    markerText:'#17160F', markerFont:'500 10.5px "IBM Plex Mono", monospace',
-    intervals:['#E2453D','#C9A227','#8FBF7A','#6FB3A0','#E08A55','#8FA5C4',
-               '#C77FB5','#5FA8D3','#D0A55E','#7FC49A','#8A8FD8','#F4938C']
-  }},
   terminal: { canvas: {
     bg:'#120C07', titleInk:'#FF8A4A', titleFont:'700 17px "JetBrains Mono", monospace',
     neckGradTop:'#3A2A1C', neckGradBottom:'#241A12', inlay:'rgba(243,234,217,0.28)',
@@ -855,38 +852,38 @@ const THEMES = {
     intervals:['#E5672B','#8A6F5C','#4FAE93','#3F6B5C','#FF8A4A','#17B8A6',
                '#B5562E','#6E7B8C','#D2B04F','#4F7A8C','#7A6C55','#FF9E6B']
   }},
-  prog: { canvas: {
-    bg:'#0C0E2A', titleInk:'#D4AF37', titleFont:'700 17px "Zilla Slab", serif',
-    neckGradTop:'#1A1040', neckGradBottom:'#0A0820', inlay:'rgba(212,175,55,0.18)',
-    nutColor:'#D4AF37', fretWire:'rgba(212,175,55,0.25)', string:'rgba(180,160,120,0.5)',
-    stringLabel:'#D4AF37', stringLabelFont:'600 12px "JetBrains Mono", monospace',
-    fretNum:'#8A7A4A', fretNumFont:'500 11px "JetBrains Mono", monospace',
-    markerDefault:'#3A2A6A', markerStroke:'rgba(212,175,55,0.35)',
-    markerText:'#F0E0FF', markerFont:'700 10.5px "JetBrains Mono", monospace',
-    intervals:['#D4AF37','#8B5E3C','#5C8A5E','#7B2D8E','#CC5500','#4A6A8A',
-               '#9A3070','#2E7EB8','#AA7030','#3E8A5A','#5A3E9A','#CC3344']
+  blueprint: { canvas: {
+    bg:'#0A2340', titleInk:'#FFD27D', titleFont:'600 17px "Barlow Semi Condensed", "Noto Music", "JetBrains Mono", sans-serif',
+    neckGradTop:'#14406F', neckGradBottom:'#0D2C52', inlay:'rgba(234,243,255,0.22)',
+    nutColor:'#EAF3FF', fretWire:'rgba(234,243,255,0.38)', string:'rgba(210,228,255,0.62)',
+    stringLabel:'#EAF3FF', stringLabelFont:'500 12px "DM Mono", "Noto Music", "JetBrains Mono", monospace',
+    fretNum:'#86A6CE', fretNumFont:'500 11px "DM Mono", "Noto Music", "JetBrains Mono", monospace',
+    markerDefault:'#BFD3EC', markerStroke:'rgba(234,243,255,0.45)',
+    markerText:'#0A2340', markerFont:'500 10.5px "DM Mono", "Noto Music", "JetBrains Mono", monospace',
+    intervals:['#FFB938','#BAB2FF','#99CF86','#F59FCB','#4DD4D8','#FAA77B',
+               '#8FC0FF','#C5C367','#DDA6EE','#6AD6AF','#FF9FA2','#63CCF8']
   }},
-  jazz: { canvas: {
-    bg:'#00183A', titleInk:'#F5E6C8', titleFont:'600 17px "Zilla Slab", serif',
-    neckGradTop:'#1A0E00', neckGradBottom:'#0D0700', inlay:'rgba(245,230,200,0.15)',
-    nutColor:'#F5E6C8', fretWire:'rgba(245,230,200,0.25)', string:'rgba(200,180,140,0.5)',
-    stringLabel:'#F5E6C8', stringLabelFont:'600 12px "JetBrains Mono", monospace',
-    fretNum:'#A89878', fretNumFont:'500 11px "JetBrains Mono", monospace',
-    markerDefault:'#334466', markerStroke:'rgba(245,230,200,0.3)',
-    markerText:'#F5E6C8', markerFont:'700 10.5px "JetBrains Mono", monospace',
-    intervals:['#CC6633','#8A6A50','#5A8A6A','#3366AA','#CC8844','#607888',
-               '#886A5A','#2E6E88','#AA7744','#4A7A5A','#445588','#AA4444']
+  chalkboard: { canvas: {
+    bg:'#15231D', titleInk:'#F8DE8F', titleFont:'700 17px "Fraunces", "Noto Music", "JetBrains Mono", serif',
+    neckGradTop:'#26402F', neckGradBottom:'#1B3026', inlay:'rgba(243,240,228,0.26)',
+    nutColor:'#F3F0E4', fretWire:'rgba(243,240,228,0.4)', string:'rgba(243,240,228,0.62)',
+    stringLabel:'#F3F0E4', stringLabelFont:'500 12px "DM Mono", "Noto Music", "JetBrains Mono", monospace',
+    fretNum:'#93A99B', fretNumFont:'500 11px "DM Mono", "Noto Music", "JetBrains Mono", monospace',
+    markerDefault:'#CFDACB', markerStroke:'rgba(243,240,228,0.45)',
+    markerText:'#15231D', markerFont:'500 10.5px "DM Mono", "Noto Music", "JetBrains Mono", monospace',
+    intervals:['#F2CB5B','#8DD0FF','#FFB0A3','#7DDCCA','#EBB1E5','#BFD18A',
+               '#AFC5FF','#F5B988','#77D8E9','#FBAEC5','#9BD9A7','#D0BAFC']
   }},
-  psychedelic: { canvas: {
-    bg:'#0D001A', titleInk:'#FF00FF', titleFont:'700 17px "Space Grotesk", sans-serif',
-    neckGradTop:'#1A0033', neckGradBottom:'#0D001A', inlay:'rgba(255,0,255,0.15)',
-    nutColor:'#FF00FF', fretWire:'rgba(0,255,136,0.25)', string:'rgba(255,0,255,0.4)',
-    stringLabel:'#FF00FF', stringLabelFont:'500 12px "IBM Plex Mono", monospace',
-    fretNum:'#CC66FF', fretNumFont:'500 11px "IBM Plex Mono", monospace',
-    markerDefault:'#6600AA', markerStroke:'rgba(255,0,255,0.4)',
-    markerText:'#FFFFFF', markerFont:'500 10.5px "IBM Plex Mono", monospace',
-    intervals:['#FF00FF','#FF6600','#00FFFF','#00FF88','#FF0066','#FFFF00',
-               '#FF3300','#00AAFF','#FF9900','#88FF00','#AA00FF','#FF0040']
+  graphite: { canvas: {
+    bg:'#0F1013', titleInk:'#BDB2FF', titleFont:'600 17px "Geist", "Noto Music", "JetBrains Mono", sans-serif',
+    neckGradTop:'#22242D', neckGradBottom:'#15171C', inlay:'rgba(236,238,243,0.2)',
+    nutColor:'#ECEEF3', fretWire:'rgba(236,238,243,0.3)', string:'rgba(236,238,243,0.5)',
+    stringLabel:'#ECEEF3', stringLabelFont:'500 12px "Geist Mono", "Noto Music", "JetBrains Mono", monospace',
+    fretNum:'#8189A0', fretNumFont:'500 11px "Geist Mono", "Noto Music", "JetBrains Mono", monospace',
+    markerDefault:'#C4C8D4', markerStroke:'rgba(236,238,243,0.35)',
+    markerText:'#0F1013', markerFont:'500 10.5px "Geist Mono", "Noto Music", "JetBrains Mono", monospace',
+    intervals:['#9C8CFF','#82C668','#F389C2','#00CCD2','#FA925A','#74B2FF',
+               '#BBB736','#D792ED','#2CCE9F','#FF888E','#16C2F9','#E3A42E']
   }}
 };
 
@@ -2577,78 +2574,95 @@ setAssign('outer'); syncFam(); label(); place();
       '--on-red':"#120C07",
       '--teal':"#17B8A6",
       '--radius':"2px",
+      '--radius-lg':"10px",
       '--font-display':"'JetBrains Mono', monospace",
       '--font-body':"'JetBrains Mono', monospace",
-      '--font-mono':"'JetBrains Mono', monospace"
+      '--font-mono':"'JetBrains Mono', monospace",
+      '--atmo-top':"color-mix(in srgb, var(--red) 26%, var(--paper))",
+      '--atmo-bottom':"color-mix(in srgb, var(--teal) 8%, var(--paper))",
+      '--grid-line':"transparent",
+      '--grid-size':"32px",
+      '--fx-grain':".1",
+      '--fx-scan':".16"
     }},
-    night:{label:'Night', vars:{
-      '--paper':"#17160F",
-      '--paper-raised':"#1F1D14",
-      '--ink':"#F2EEE1",
-      '--ink-soft':"#B6B09B",
-      '--ink-mute':"#7A7462",
-      '--line':"#332F22",
-      '--line-strong':"#4A4530",
-      '--red':"#E2453D",
-      '--red-ink':"#F4938C",
-      '--on-red':"#17160F",
-      '--teal':"#4FD8C4",
+    blueprint:{label:'Blueprint', vars:{
+      '--paper':"#0A2340",
+      '--paper-raised':"#103058",
+      '--ink':"#EAF3FF",
+      '--ink-soft':"#A9C4E6",
+      '--ink-mute':"#86A6CE",
+      '--line':"#1D4370",
+      '--line-strong':"#35628F",
+      '--red':"#FFB938",
+      '--red-ink':"#FFD27D",
+      '--on-red':"#0A2340",
+      '--teal':"#5CD3F0",
       '--radius':"0",
-      '--font-display':"'Space Grotesk', sans-serif",
-      '--font-body':"'IBM Plex Sans', sans-serif",
-      '--font-mono':"'IBM Plex Mono', monospace"
-    }},
-    prog:{label:'70\'s Prog', vars:{
-      '--paper':"#0C0E2A",
-      '--paper-raised':"#141840",
-      '--ink':"#E8DCB5",
-      '--ink-soft':"#B9A46A",
-      '--ink-mute':"#8A7A4A",
-      '--line':"#2A305A",
-      '--line-strong':"#3D4470",
-      '--red':"#D4AF37",
-      '--red-ink':"#E9C765",
-      '--on-red':"#0C0E2A",
-      '--teal':"#5FA8D3",
+      '--radius-lg':"2px",
+      '--font-display':"'Barlow Semi Condensed', 'Noto Music', 'JetBrains Mono', sans-serif",
+      '--font-body':"'Barlow', 'Noto Music', 'JetBrains Mono', sans-serif",
+      '--font-mono':"'DM Mono', 'Noto Music', 'JetBrains Mono', monospace",
+      '--atmo-top':"#15437A",
+      '--atmo-bottom':"#081B33",
+      '--grid-line':"rgba(140,190,255,.075)",
+      '--grid-size':"28px",
+      '--fx-grain':".04",
+      '--fx-scan':"0"
+    },
+    fonts:{css:'family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=DM+Mono:wght@400;500',
+            load:['600 1em "Barlow Semi Condensed"','400 1em "Barlow"','500 1em "DM Mono"']}},
+    chalkboard:{label:'Chalkboard', vars:{
+      '--paper':"#15231D",
+      '--paper-raised':"#1D3027",
+      '--ink':"#F3F0E4",
+      '--ink-soft':"#C2CCBF",
+      '--ink-mute':"#93A99B",
+      '--line':"#2C4236",
+      '--line-strong':"#476452",
+      '--red':"#F2CB5B",
+      '--red-ink':"#F8DE8F",
+      '--on-red':"#15231D",
+      '--teal':"#F4A0B7",
       '--radius':"6px",
-      '--font-display':"'Zilla Slab', serif",
-      '--font-body':"'Inter', sans-serif",
-      '--font-mono':"'JetBrains Mono', monospace"
-    }},
-    jazz:{label:'60\'s Jazz', vars:{
-      '--paper':"#00183A",
-      '--paper-raised':"#002050",
-      '--ink':"#F5E6C8",
-      '--ink-soft':"#A89878",
-      '--ink-mute':"#7E7057",
-      '--line':"#003366",
-      '--line-strong':"#14497E",
-      '--red':"#CC6633",
-      '--red-ink':"#E08A55",
-      '--on-red':"#00183A",
-      '--teal':"#4FB8C7",
-      '--radius':"4px",
-      '--font-display':"'Zilla Slab', serif",
-      '--font-body':"'Inter', sans-serif",
-      '--font-mono':"'JetBrains Mono', monospace"
-    }},
-    psychedelic:{label:'Psychedelic', vars:{
-      '--paper':"#0D001A",
-      '--paper-raised':"#1A0033",
-      '--ink':"#F0D6FF",
-      '--ink-soft':"#CC66FF",
-      '--ink-mute':"#8A5AA8",
-      '--line':"#3D0066",
-      '--line-strong':"#5A1090",
-      '--red':"#FF00FF",
-      '--red-ink':"#FF7BE8",
-      '--on-red':"#0D001A",
-      '--teal':"#00FFD0",
-      '--radius':"12px",
-      '--font-display':"'Space Grotesk', sans-serif",
-      '--font-body':"'IBM Plex Sans', sans-serif",
-      '--font-mono':"'IBM Plex Mono', monospace"
-    }}
+      '--radius-lg':"14px",
+      '--font-display':"'Fraunces', 'Noto Music', 'JetBrains Mono', serif",
+      '--font-body':"'Figtree', 'Noto Music', 'JetBrains Mono', sans-serif",
+      '--font-mono':"'DM Mono', 'Noto Music', 'JetBrains Mono', monospace",
+      '--atmo-top':"#24422F",
+      '--atmo-bottom':"#101C17",
+      '--grid-line':"transparent",
+      '--grid-size':"32px",
+      '--fx-grain':".08",
+      '--fx-scan':"0"
+    },
+    fonts:{css:'family=Fraunces:wght@500;700&family=Figtree:wght@400;500;600;700&family=DM+Mono:wght@400;500',
+            load:['700 1em "Fraunces"','400 1em "Figtree"','500 1em "DM Mono"']}},
+    graphite:{label:'Graphite', vars:{
+      '--paper':"#0F1013",
+      '--paper-raised':"#181A20",
+      '--ink':"#ECEEF3",
+      '--ink-soft':"#A9AFBC",
+      '--ink-mute':"#8189A0",
+      '--line':"#262933",
+      '--line-strong':"#3C4050",
+      '--red':"#9C8CFF",
+      '--red-ink':"#BDB2FF",
+      '--on-red':"#0F1013",
+      '--teal':"#B4F26B",
+      '--radius':"8px",
+      '--radius-lg':"16px",
+      '--font-display':"'Geist', 'Noto Music', 'JetBrains Mono', sans-serif",
+      '--font-body':"'Geist', 'Noto Music', 'JetBrains Mono', sans-serif",
+      '--font-mono':"'Geist Mono', 'Noto Music', 'JetBrains Mono', monospace",
+      '--atmo-top':"#1E1A3E",
+      '--atmo-bottom':"#12170C",
+      '--grid-line':"transparent",
+      '--grid-size':"32px",
+      '--fx-grain':"0",
+      '--fx-scan':"0"
+    },
+    fonts:{css:'family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600',
+            load:['600 1em "Geist"','500 1em "Geist Mono"']}}
   };
 
   const ORDER = ['fretboard','circle'];
@@ -2668,27 +2682,46 @@ setAssign('outer'); syncFam(); label(); place();
     pick.appendChild(o);
   });
 
-  // IBM Plex Sans/Mono, Space Grotesk, Inter, and Zilla Slab only appear in
-  // the non-default themes, so they're fetched on first use rather than on
-  // every page load — Terminal's JetBrains Mono is the only eager font.
-  let extraFontsLoaded = false;
-  function ensureExtraFonts(){
-    if(extraFontsLoaded) return;
-    extraFontsLoaded = true;
+  // Terminal's JetBrains Mono is the only eager font. Every other theme names
+  // its own faces (`fonts`) and they are fetched the first time it is picked.
+  const fontsRequested = new Set();
+  // The flat, natural and sharp signs. The proportional faces lack them and
+  // JetBrains Mono's are fixed-width, which leaves gaps ("B ♭"), so a
+  // three-glyph subset of Noto Music covers them for every non-default theme.
+  function ensureAccidentals(){
+    if(fontsRequested.has('accidentals')) return;
+    fontsRequested.add('accidentals');
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600;700&family=Zilla+Slab:wght@500;600;700&display=swap';
-    // The fretboard's canvas text won't repaint itself once the font arrives,
-    // so force one redraw when it does (harmless no-op if terminal is current).
+    link.href = 'https://fonts.googleapis.com/css2?family=Noto+Music&text=%E2%99%AD%E2%99%AE%E2%99%AF&display=swap';
     link.addEventListener('load', ()=>{
-      if(window.setFretboardTheme) window.setFretboardTheme(theme);
+      document.fonts.load('1em "Noto Music"', '\u266D\u266E\u266F').then(()=>{
+        if(window.setFretboardTheme) window.setFretboardTheme(theme);
+      }).catch(()=>{});
+    });
+    document.head.appendChild(link);
+  }
+  function ensureFonts(key){
+    const spec = THEMES[key].fonts;
+    if(!spec || fontsRequested.has(key)) return;
+    fontsRequested.add(key);
+    ensureAccidentals();
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://fonts.googleapis.com/css2?' + spec.css + '&display=swap';
+    // The fretboard's canvas text won't repaint itself once a face arrives, so
+    // wait for the faces this theme uses and redraw once.
+    link.addEventListener('load', ()=>{
+      Promise.all(spec.load.map((f)=>document.fonts.load(f))).then(()=>{
+        if(window.setFretboardTheme) window.setFretboardTheme(theme);
+      }).catch(()=>{});
     });
     document.head.appendChild(link);
   }
 
   function applyTheme(key, writeHash){
     theme = THEMES[key] ? key : 'terminal';
-    if(theme !== 'terminal') ensureExtraFonts();
+    ensureFonts(theme);
     const vars = THEMES[theme].vars, root = document.documentElement.style;
     Object.keys(vars).forEach((name)=>{ root.setProperty(name, vars[name]); });
     if(meta) meta.setAttribute('content', vars['--paper']);
