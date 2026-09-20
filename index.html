@@ -494,21 +494,22 @@ body::after{
 }
 #circleApp .assign{display:flex;gap:6px;margin:0 0 12px}
 #circleApp .assign .chip{flex:1}
-/* TEMP: the controls experiment shows one variant at a time */
-body[data-controls="chips"] .only-chord, body[data-controls="chord"] .only-chips{display:none!important}
-.mock-switch{
-  position:fixed;left:16px;bottom:14px;z-index:9999;
-  display:flex;align-items:center;gap:6px;padding:6px 8px;
-  background:var(--paper-raised);border:1px solid var(--line-strong);border-radius:var(--radius-lg);
-  box-shadow:0 10px 30px rgba(0,0,0,.6);
-  font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);
+/* the two modes on show, centred over the wheel. Each tile wears its ring's
+   tint; the name is the largest text on the card after the title. */
+#circleApp .rings{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:0 0 1.25rem}
+#circleApp .rtile{
+  display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;
+  padding-top:9px;border-top:2px solid var(--red);
 }
-.mock-switch span{letter-spacing:.1em;text-transform:uppercase;padding:0 6px}
-.mock-switch button{
-  font:inherit;color:var(--ink-soft);background:transparent;cursor:pointer;
-  border:1px solid var(--line-strong);border-radius:var(--radius);padding:7px 10px;
+#circleApp .rtile.i{border-top-color:var(--teal)}
+#circleApp .rtile .role{font-size:11px;color:var(--ink-soft)}
+#circleApp .rname{
+  font-family:var(--font-display);font-weight:700;font-size:20px;line-height:1.2;
+  min-height:2.4em;display:flex;align-items:center;justify-content:center;
+  color:var(--red-ink);text-wrap:balance;
 }
-.mock-switch button[aria-pressed="true"]{color:var(--on-red);background:var(--red);border-color:var(--red)}
+#circleApp .rtile.i .rname{color:var(--teal)}
+#circleApp .ralias{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);min-height:1.3em}
 #circleApp .stage{position:relative;width:var(--dial);aspect-ratio:1;margin:0 auto}
 #circleApp .stage:focus-visible{outline:2px solid var(--red);outline-offset:8px;border-radius:50%}
 #circleApp .wheel{
@@ -568,10 +569,19 @@ body[data-controls="chips"] .only-chord, body[data-controls="chord"] .only-chips
   margin-left:-17%;margin-top:-17%;
   border-radius:50%;
   border:1px solid var(--ink);
-  background:var(--paper);
+  /* the one deliberate glow on the wheel: the key letter sits in it */
+  background:radial-gradient(circle at 50% 46%,
+    color-mix(in srgb, var(--red) 38%, var(--paper)) 0%,
+    color-mix(in srgb, var(--red) 10%, var(--paper)) 52%,
+    var(--paper) 100%);
   display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
 }
-#circleApp .hub .hk{font-family:var(--font-display);font-weight:700;font-size:max(18px,calc(var(--dial)*.065));line-height:1}
+#circleApp .hub .hk{
+  font-family:var(--font-display);font-weight:700;font-size:max(26px,calc(var(--dial)*.11));line-height:1;
+  color:var(--ink);
+  text-shadow:0 0 12px color-mix(in srgb, var(--red-ink) 85%, transparent),
+              0 0 32px color-mix(in srgb, var(--red) 65%, transparent);
+}
 #circleApp .hub .hm{font-family:var(--font-mono);font-size:max(9px,calc(var(--dial)*.029));color:var(--ink-soft);margin-top:5px;letter-spacing:.04em}
 #circleApp .ptr{
   position:absolute;left:50%;top:-8px;margin-left:-7px;
@@ -609,7 +619,6 @@ body[data-controls="chips"] .only-chord, body[data-controls="chord"] .only-chips
   font-family:var(--font-mono);font-size:10px;
   letter-spacing:.14em;text-transform:uppercase;color:var(--ink-mute);
 }
-#circleApp .sname{font-family:var(--font-display);font-weight:500;font-size:15px;color:var(--ink)}
 #circleApp .staffline, #circleApp .barline{stroke:var(--ink-soft);stroke-width:.8}
 #circleApp .barline{stroke:var(--line-strong)}
 #circleApp .acc{stroke:var(--ink);fill:none;stroke-linecap:round}
@@ -617,7 +626,9 @@ body[data-controls="chips"] .only-chord, body[data-controls="chord"] .only-chips
 #circleApp .acc-stem{stroke:var(--ink);stroke-width:1.1}
 /* the single accidental a non-major family adds on top of the key signature */
 #circleApp .acc-alt{stroke:var(--red-ink)}
-#circleApp .head{stroke:var(--red);fill:none;stroke-width:1.8}
+#circleApp .head{stroke:var(--ink);fill:none;stroke-width:1.8}
+#circleApp .head.ro{stroke:var(--red)}
+#circleApp .head.ri{stroke:var(--teal)}
 #circleApp .clef{fill:var(--ink)}
 #circleApp .enh{
   font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);
@@ -632,11 +643,7 @@ body[data-controls="chips"] .only-chord, body[data-controls="chord"] .only-chips
   border-top:1px solid var(--line);
   padding-top:10px;
 }
-#circleApp .klrow{
-  display:flex;justify-content:space-between;align-items:baseline;
-  padding:3px 0;
-}
-#circleApp .keyline .enh{border:0;margin:6px 0 0;padding:0;text-align:left;line-height:1.6}
+#circleApp .keyline .enh{border:0;margin:0;padding:0;line-height:1.6}
 #circleApp .detail{margin-top:0}
 #circleApp .chords-hint{
   font-family:var(--font-mono);font-size:10px;color:var(--ink-mute);
@@ -647,9 +654,10 @@ body[data-controls="chips"] .only-chord, body[data-controls="chord"] .only-chips
   border-bottom:1px solid var(--line-strong);padding-bottom:6px;
 }
 #circleApp .dname{
-  font-family:var(--font-display);font-weight:700;font-size:26px;color:var(--red-ink);line-height:1;
-  text-shadow:0 0 8px color-mix(in srgb, var(--red) 55%, transparent);
+  font-family:var(--font-display);font-weight:700;font-size:26px;color:var(--ink);line-height:1;
 }
+#circleApp .dname.ro{color:var(--red-ink);text-shadow:0 0 8px color-mix(in srgb, var(--red) 55%, transparent)}
+#circleApp .dname.ri{color:var(--teal);text-shadow:0 0 8px color-mix(in srgb, var(--teal) 55%, transparent)}
 #circleApp .dnum{font-family:var(--font-mono);font-size:14px;color:var(--ink-soft)}
 #circleApp .dsub{
   display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
@@ -668,9 +676,11 @@ body[data-controls="chips"] .only-chord, body[data-controls="chord"] .only-chips
 #circleApp .bracket{stroke:var(--ink);stroke-width:1.4;fill:none;stroke-linejoin:miter}
 #circleApp .clef-hook{stroke:var(--ink);stroke-width:2;fill:none;stroke-linecap:round}
 #circleApp .clef-dot{fill:var(--ink)}
-#circleApp .head.root{stroke:var(--red-ink);stroke-width:2.4}
+#circleApp .head.root{stroke-width:2.6}
 #circleApp .deg{font-family:var(--font-mono);font-size:9.5px;fill:var(--ink-mute)}
-#circleApp .deg.rootdeg{fill:var(--red-ink)}
+#circleApp .deg.rootdeg{fill:var(--ink)}
+#circleApp .deg.ro{fill:var(--red-ink)}
+#circleApp .deg.ri{fill:var(--teal)}
 /* reminders sit back from the notes they annotate */
 #circleApp .acc-court{stroke:var(--ink-mute)}
 #circleApp .paren{stroke:var(--ink-mute);stroke-width:.9;fill:none;stroke-linecap:round}
@@ -710,6 +720,8 @@ body[data-controls="chips"] .only-chord, body[data-controls="chord"] .only-chips
 }
 #circleApp .srow:last-child{border-bottom:0}
 #circleApp .srow.tonic .snum{color:var(--red-ink)}
+#circleApp .srow.tonic2:not(.tonic) .snum{color:var(--teal)}
+#circleApp .srow.tonic2:not(.tonic){background:var(--paper-raised)}
 #circleApp .srow.tonic{background:var(--paper-raised)}
 #circleApp .sgut{padding-left:2px}
 #circleApp .snum{font-family:var(--font-mono);font-size:12px;color:var(--ink)}
@@ -759,7 +771,7 @@ body[data-controls="chips"] .only-chord, body[data-controls="chord"] .only-chips
     <span class="role">Diatonic chords</span>
     <label class="sw"><input type="checkbox" id="sev"> Sevenths</label>
   </div>
-  <div class="assign only-chord" role="group" aria-label="Which ring a tapped chord sets">
+  <div class="assign" role="group" aria-label="Which ring a tapped chord sets">
     <button type="button" class="chip o" id="asgO" aria-pressed="true">Outer ring</button>
     <button type="button" class="chip i" id="asgI" aria-pressed="false">Inner ring</button>
   </div>
@@ -774,8 +786,11 @@ body[data-controls="chips"] .only-chord, body[data-controls="chord"] .only-chips
 
 <div class="modes">
   <div class="mrow"><span class="mlabel">Scale</span><div class="chips" id="famBtns" role="group" aria-label="Scale family"></div></div>
-  <div class="mrow only-chips"><span class="mlabel">Outer</span><div class="chips" id="chipsO" role="group" aria-label="Outer ring mode"></div></div>
-  <div class="mrow only-chips"><span class="mlabel">Inner</span><div class="chips" id="chipsI" role="group" aria-label="Inner ring mode"></div></div>
+</div>
+
+<div class="rings" aria-live="polite">
+  <div class="rtile o"><span class="role">Outer ring</span><span class="rname" id="n1"></span><span class="ralias" id="n1n"></span></div>
+  <div class="rtile i"><span class="role">Inner ring</span><span class="rname" id="n2"></span><span class="ralias" id="n2n"></span></div>
 </div>
 
 <div class="stage" tabindex="0" role="group" aria-label="Circle of fifths. Click a key, or use the left and right arrow keys to turn the wheel.">
@@ -785,8 +800,6 @@ body[data-controls="chips"] .only-chord, body[data-controls="chord"] .only-chips
 </div>
 
 <div class="keyline">
-  <div class="klrow"><span class="role">Outer ring</span><span class="sname" id="n1"></span></div>
-  <div class="klrow"><span class="role">Inner ring</span><span class="sname" id="n2"></span></div>
   <div class="enh" id="enh"></div>
 </div>
 </div>
@@ -836,11 +849,6 @@ body[data-controls="chips"] .only-chord, body[data-controls="chord"] .only-chips
 </div>
 </aside>
 
-</div>
-<div class="mock-switch" role="group" aria-label="Mock: mode controls">
-  <span>Mock · mode controls</span>
-  <button type="button" data-controls="chips" aria-pressed="true">A · Chips</button>
-  <button type="button" data-controls="chord" aria-pressed="false">B · Chord pick</button>
 </div>
 </section>
 <script>
@@ -2111,7 +2119,7 @@ function rangeText(P){
 
 /* n is the key signature; altF is the family's one altered note, so the
    accidental that defines the scale can be picked out from the rest. */
-function grandStaff(n,P,altF){
+function grandStaff(n,P,altF,M){
   const svg=el('svg',{viewBox:`0 0 ${GW} ${GH}`,'class':'gstaff',role:'img'});
   const R=GW-10;
   TREBLE.forEach(d=>svg.appendChild(
@@ -2135,6 +2143,9 @@ function grandStaff(n,P,altF){
   const bx=Math.max(x+8,SIGX+8);
   svg.appendChild(el('line',{x1:bx,y1:yT,x2:bx,y2:yB,'class':'barline'}));
 
+  /* colour rule from ringMarks: a home note wears its ring's tint, anything
+     else the figure's own */
+  const ring=(v)=>{ const c=!M ? '' : v===M.to ? 'ro' : v===M.ti ? 'ri' : M.base; return c ? ' '+c : '' };
   const first=bx+30, gap=(R-16-first)/Math.max(P.ds.length-1,1);
   const xs=[];
   P.ds.forEach((d,i)=>{
@@ -2154,8 +2165,8 @@ function grandStaff(n,P,altF){
       }
     }
     svg.appendChild(el('ellipse',{cx,cy:y,rx:5.2,ry:3.7,
-      'class':'head'+(i===0?' root':''),transform:`rotate(-20 ${cx} ${y})`}));
-    const t=el('text',{x:cx,y:LABY,'text-anchor':'middle','class':'deg'+(i===0?' rootdeg':'')});
+      'class':'head'+(i===0?' root':'')+ring(P.list[i]),transform:`rotate(-20 ${cx} ${y})`}));
+    const t=el('text',{x:cx,y:LABY,'text-anchor':'middle','class':'deg'+(i===0?' rootdeg':'')+ring(P.list[i])});
     t.textContent=P.labs[i];
     svg.appendChild(t);
   });
@@ -2177,9 +2188,9 @@ function grandStaff(n,P,altF){
   svg.insertBefore(ttl,svg.firstChild);
   return svg;
 }
-function figureStaff(n,f,i,kind,oct){
+function figureStaff(n,f,i,kind,oct,M){
   const P=placeFigure(n,f,i,kind,oct);
-  return {svg:grandStaff(n,P,f.alt===null?null:n+f.alt), range:rangeText(P)};
+  return {svg:grandStaff(n,P,f.alt===null?null:n+f.alt,M), range:rangeText(P)};
 }
 
 
@@ -2325,9 +2336,9 @@ const memory=FAMILIES.map(f=>f.home.slice());
 let mo=memory[fam][0], mi=memory[fam][1];
 let selChord=null, sevenths=false;
 
-/* Mode controls. The scale family is a row of chips; each ring's mode is
-   either a row of chips (variant A) or set by tapping a chord on the ring
-   (variant B) — see pickChord. Every path lands in the three setters. */
+/* Mode controls. The scale family is a row of chips. Each ring's mode is set
+   by tapping a chord on the chord ring; the Outer / Inner toggle above it says
+   which ring the tap lands on. */
 const famBtns=$('famBtns');
 FAMILIES.forEach((f,j)=>{
   const b=document.createElement('button');
@@ -2335,65 +2346,26 @@ FAMILIES.forEach((f,j)=>{
   b.addEventListener('click',()=>setFam(j));
   famBtns.appendChild(b);
 });
-
-function fillModes(){
-  const f=FAMILIES[fam];
-  [['chipsO','o',setOuter],['chipsI','i',setInner]].forEach(([id,cls,set])=>{
-    const host=$(id);
-    host.replaceChildren();
-    f.modes.forEach((m,j)=>{
-      const b=document.createElement('button');
-      b.type='button'; b.className='chip '+cls; b.textContent=m.name;
-      if(m.note) b.title=m.note;
-      b.addEventListener('click',()=>set(j));
-      host.appendChild(b);
-    });
-  });
-  syncChips();
-}
-function syncChips(){
+function syncFam(){
   [...famBtns.children].forEach((b,j)=>b.setAttribute('aria-pressed',String(j===fam)));
-  [['chipsO',mo],['chipsI',mi]].forEach(([id,cur])=>{
-    [...$(id).children].forEach((b,j)=>b.setAttribute('aria-pressed',String(j===cur)));
-  });
 }
 function setFam(j){
   if(j===fam) return;
   fam=j; mo=memory[fam][0]; mi=memory[fam][1];
-  selChord=null; fillModes(); label(); place();
+  selChord=null; syncFam(); label(); place();
 }
-function setOuter(j){ mo=memory[fam][0]=j; selChord=null; syncChips(); label(); place() }
-function setInner(j){ mi=memory[fam][1]=j; syncChips(); label(); place() }
-
-/* TEMP — which control variant is showing, and which ring a chord tap sets
-   in variant B. Both go once the experiment picks a winner. */
-let controls='chips', assign='outer';
-function renderHint(){
-  $('chordsHint').textContent = controls==='chord'
-    ? `Tap a chord to set the ${assign} ring's mode. Its scale and stack of thirds read out on the notation panel.`
-    : 'Pick a chord here — its mode and stack of thirds read out on the notation panel.';
-}
+let assign='outer';
 function setAssign(a){
   assign=a;
   $('asgO').setAttribute('aria-pressed',String(a==='outer'));
   $('asgI').setAttribute('aria-pressed',String(a==='inner'));
-  renderHint();
-}
-function setControls(c,write){
-  controls=c; document.body.dataset.controls=c;
-  document.querySelectorAll('.mock-switch button').forEach((b)=>b.setAttribute('aria-pressed',String(b.dataset.controls===c)));
-  renderHint();
-  if(write){
-    try{ const u=new URL(location.href); u.searchParams.set('controls',c); history.replaceState(null,'',u) }
-    catch(err){ /* a null-origin file:// page refuses; the switch still works */ }
-  }
+  $('chordsHint').textContent=`Tap a chord to set the ${a} ring's mode. Its scale and stack of thirds read out on the notation panel.`;
 }
 function pickChord(di){
-  if(controls==='chord'){
-    if(assign==='outer') mo=memory[fam][0]=di; else mi=memory[fam][1]=di;
-    selChord=di; syncChips(); label(); place();
-  } else { selChord=di; renderChords() }
+  if(assign==='outer') mo=memory[fam][0]=di; else mi=memory[fam][1]=di;
+  selChord=di; label(); place();
 }
+
 /* Each label needs a world rotation of zero, i.e. -(slotAngle + wheelAngle).
    The slot part is constant, so it is baked into a static wrapper at build
    time; that leaves -wheelAngle, which is identical for all 24 labels and so
@@ -2477,6 +2449,8 @@ function place(){
   $('hm').textContent=`${f.short} · ${tag(p.n)}`;
   $('n1').textContent=`${fname(p.n+f.deg[mo])} ${f.modes[mo].name}`;
   $('n2').textContent=`${fname(p.n+f.deg[mi])} ${f.modes[mi].name}`;
+  $('n1n').textContent=f.modes[mo].note||'';
+  $('n2n').textContent=f.modes[mi].note||'';
   renderChords();
   if(window.syncHash) window.syncHash();
   /* the signature alone undersells an altered family, so name its extra note */
@@ -2501,10 +2475,20 @@ function renderChords(){
   if(!$('panelS').classList.contains('off')) renderSheet();
 }
 
+/* Orange is the outer ring, teal the inner. A figure takes the colour of the
+   ring whose mode it shows (neither: plain ink), and each ring's home note
+   keeps its own colour wherever it turns up — so C Ionian reads orange with
+   its A picked out in teal, and A Aeolian the other way round. */
+function ringMarks(n,f,i){
+  return {base: i===mo ? 'ro' : i===mi ? 'ri' : '', to:n+f.deg[mo], ti:n+f.deg[mi]};
+}
+
 function renderDetail(){
   const p=POS[((step%12)+12)%12], f=FAMILIES[fam], i=selChord;
   const oct=baseOctave(p.n,f,i)+octShift;
-  const sc=figureStaff(p.n,f,i,'scale',oct), ar=figureStaff(p.n,f,i,'arp',oct);
+  const M=ringMarks(p.n,f,i);
+  const sc=figureStaff(p.n,f,i,'scale',oct,M), ar=figureStaff(p.n,f,i,'arp',oct,M);
+  $('dName').className='dname'+(M.base ? ' '+M.base : '');
   $('dName').textContent=chordName(p.n,f,i,sevenths);
   $('dNum').textContent=numeral(f,i,mo,sevenths);
   $('dMode').textContent=`${fname(p.n+f.deg[i])} ${f.modes[i].name}`;
@@ -2526,14 +2510,14 @@ function renderSheet(){
   const sheetOct=baseOctave(p.n,f,mo)+octShift;
   const rows=document.createDocumentFragment();
   spanOf(f).forEach(di=>{
-    const r=div('srow'+(di===mo?' tonic':''));
+    const r=div('srow'+(di===mo?' tonic':'')+(di===mi?' tonic2':''));
     const g=div('sgut');
     const a=div('snum'); a.textContent=numeral(f,di,mo,sevenths);
     const b=div('ssym'); b.textContent=chordName(p.n,f,di,sevenths);
     const c=div('smode'); c.textContent=f.modes[di].name;
     g.append(a,b,c);
     const s=div('sstaff');
-    s.appendChild(figureStaff(p.n,f,di,sheetKind,sheetOct).svg);
+    s.appendChild(figureStaff(p.n,f,di,sheetKind,sheetOct,ringMarks(p.n,f,di)).svg);
     r.append(g,s);
     r.addEventListener('click',()=>{selChord=di;showView('focus')});
     rows.appendChild(r);
@@ -2582,7 +2566,7 @@ window.setCircleView=(str)=>{
   if(v[1]<0 || v[1]>6 || v[2]<0 || v[2]>6 || v[3]<0 || v[3]>11) return;
   fam=v[0]; mo=memory[fam][0]=v[1]; mi=memory[fam][1]=v[2]; step=v[3];
   selChord=null;
-  fillModes(); label(); place();
+  syncFam(); label(); place();
 };
 
 /* the arrow buttons are gone: click a key, or turn the wheel from the keyboard.
@@ -2595,12 +2579,7 @@ document.addEventListener('keydown',(e)=>{
 });
 $('asgO').addEventListener('click',()=>setAssign('outer'));
 $('asgI').addEventListener('click',()=>setAssign('inner'));
-document.querySelectorAll('.mock-switch button').forEach((b)=>{
-  b.addEventListener('click',()=>setControls(b.dataset.controls,true));
-});
-setControls(new URLSearchParams(location.search).get('controls')==='chord' ? 'chord' : 'chips',false);
-
-fillModes(); label(); place();
+setAssign('outer'); syncFam(); label(); place();
 })();
 </script>
 <script>
