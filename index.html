@@ -8,7 +8,9 @@
 <meta name="theme-color" content="#120C07">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link id="baseFontLink" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link id="baseFontLink" href="https://fonts.googleapis.com/css2?family=Chivo+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- flat, natural and sharp: none of the text faces serve them, and the OS fallback varies by platform -->
+<link id="accFontLink" href="https://fonts.googleapis.com/css2?family=Noto+Music&text=%E2%99%AD%E2%99%AE%E2%99%AF&display=swap" rel="stylesheet">
 <!-- Every theme other than Terminal brings its own faces; the shell script
      injects them the first time the theme is picked instead of eagerly. -->
 <style>
@@ -18,7 +20,8 @@
    the tools do, so it repaints with them. */
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0;overflow-x:hidden}
-/* a short page would otherwise tile the fixed gradient under its own box */
+/* the body carries the page's only surface (each tool's panel is transparent),
+   so it has to reach the bottom of the viewport on a short page */
 body{min-height:100vh}
 html{scrollbar-gutter:stable}
 :root{
@@ -33,9 +36,9 @@ html{scrollbar-gutter:stable}
   --atmo-bottom:color-mix(in srgb, var(--teal) 8%, var(--paper));
   --grid-line:transparent; --grid-size:32px;
   --fx-grain:.1; --fx-scan:.16;
-  --font-display:'JetBrains Mono', monospace;
-  --font-body:'JetBrains Mono', monospace;
-  --font-mono:'JetBrains Mono', monospace;
+  --font-display:'Chivo Mono', 'Noto Music', monospace;
+  --font-body:'Chivo Mono', 'Noto Music', monospace;
+  --font-mono:'Chivo Mono', 'Noto Music', monospace;
 }
 body{
   background:
@@ -198,7 +201,6 @@ body::after{
 /* ================= FRETBOARD ================= */
 
 #fretApp{
-  background:var(--paper);
   color:var(--ink);
   font-family:var(--font-body);
   -webkit-font-smoothing:antialiased;
@@ -266,6 +268,8 @@ body::after{
 #fretApp select:focus-visible,
 #fretApp input:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 #fretApp button.small{height:30px;padding:0 11px;font-size:10px;letter-spacing:.08em}
+/* drawn, not typed: the arrow glyphs come from a different font on every platform */
+#fretApp button.small .arr{display:block;width:11px;height:11px;margin:0 auto;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 #fretApp button.primary{
   background:var(--red);border-color:var(--red);color:var(--on-red);
   transition:box-shadow .15s ease, background-color .15s ease, border-color .15s ease;
@@ -842,46 +846,46 @@ const INTERVAL_LABELS = ['R','♭2','2','♭3','3','4','♭5','5','♭6','6','�
 // both tools at once. Keys here must match the shell's theme ids.
 const THEMES = {
   terminal: { canvas: {
-    bg:'#120C07', titleInk:'#FF8A4A', titleFont:'700 17px "JetBrains Mono", monospace',
+    bg:'#120C07', titleInk:'#FF8A4A', titleFont:'700 17px "Chivo Mono", "Noto Music", monospace',
     neckGradTop:'#3A2A1C', neckGradBottom:'#241A12', inlay:'rgba(243,234,217,0.28)',
     nutColor:'#F3EAD9', fretWire:'rgba(243,234,217,0.35)', string:'rgba(243,234,217,0.55)',
-    stringLabel:'#F3EAD9', stringLabelFont:'600 12px "JetBrains Mono", monospace',
-    fretNum:'#7C6D54', fretNumFont:'500 11px "JetBrains Mono", monospace',
+    stringLabel:'#F3EAD9', stringLabelFont:'600 12px "Chivo Mono", "Noto Music", monospace',
+    fretNum:'#7C6D54', fretNumFont:'500 11px "Chivo Mono", "Noto Music", monospace',
     markerDefault:'#54402A', markerStroke:'rgba(243,234,217,0.35)',
-    markerText:'#F3EAD9', markerFont:'700 10.5px "JetBrains Mono", monospace',
+    markerText:'#F3EAD9', markerFont:'700 10.5px "Chivo Mono", "Noto Music", monospace',
     intervals:['#E5672B','#8A6F5C','#4FAE93','#3F6B5C','#FF8A4A','#17B8A6',
                '#B5562E','#6E7B8C','#D2B04F','#4F7A8C','#7A6C55','#FF9E6B']
   }},
   blueprint: { canvas: {
-    bg:'#0A2340', titleInk:'#FFD27D', titleFont:'600 17px "Barlow Semi Condensed", "Noto Music", "JetBrains Mono", sans-serif',
+    bg:'#0A2340', titleInk:'#FFD27D', titleFont:'600 17px "Barlow Semi Condensed", "Noto Music", sans-serif',
     neckGradTop:'#14406F', neckGradBottom:'#0D2C52', inlay:'rgba(234,243,255,0.22)',
     nutColor:'#EAF3FF', fretWire:'rgba(234,243,255,0.38)', string:'rgba(210,228,255,0.62)',
-    stringLabel:'#EAF3FF', stringLabelFont:'500 12px "DM Mono", "Noto Music", "JetBrains Mono", monospace',
-    fretNum:'#86A6CE', fretNumFont:'500 11px "DM Mono", "Noto Music", "JetBrains Mono", monospace',
+    stringLabel:'#EAF3FF', stringLabelFont:'500 12px "DM Mono", "Noto Music", monospace',
+    fretNum:'#86A6CE', fretNumFont:'500 11px "DM Mono", "Noto Music", monospace',
     markerDefault:'#BFD3EC', markerStroke:'rgba(234,243,255,0.45)',
-    markerText:'#0A2340', markerFont:'500 10.5px "DM Mono", "Noto Music", "JetBrains Mono", monospace',
+    markerText:'#0A2340', markerFont:'500 10.5px "DM Mono", "Noto Music", monospace',
     intervals:['#FFB938','#BAB2FF','#99CF86','#F59FCB','#4DD4D8','#FAA77B',
                '#8FC0FF','#C5C367','#DDA6EE','#6AD6AF','#FF9FA2','#63CCF8']
   }},
   chalkboard: { canvas: {
-    bg:'#15231D', titleInk:'#F8DE8F', titleFont:'700 17px "Fraunces", "Noto Music", "JetBrains Mono", serif',
+    bg:'#15231D', titleInk:'#F8DE8F', titleFont:'700 17px "Fraunces", "Noto Music", serif',
     neckGradTop:'#26402F', neckGradBottom:'#1B3026', inlay:'rgba(243,240,228,0.26)',
     nutColor:'#F3F0E4', fretWire:'rgba(243,240,228,0.4)', string:'rgba(243,240,228,0.62)',
-    stringLabel:'#F3F0E4', stringLabelFont:'500 12px "DM Mono", "Noto Music", "JetBrains Mono", monospace',
-    fretNum:'#93A99B', fretNumFont:'500 11px "DM Mono", "Noto Music", "JetBrains Mono", monospace',
+    stringLabel:'#F3F0E4', stringLabelFont:'500 12px "DM Mono", "Noto Music", monospace',
+    fretNum:'#93A99B', fretNumFont:'500 11px "DM Mono", "Noto Music", monospace',
     markerDefault:'#CFDACB', markerStroke:'rgba(243,240,228,0.45)',
-    markerText:'#15231D', markerFont:'500 10.5px "DM Mono", "Noto Music", "JetBrains Mono", monospace',
+    markerText:'#15231D', markerFont:'500 10.5px "DM Mono", "Noto Music", monospace',
     intervals:['#F2CB5B','#8DD0FF','#FFB0A3','#7DDCCA','#EBB1E5','#BFD18A',
                '#AFC5FF','#F5B988','#77D8E9','#FBAEC5','#9BD9A7','#D0BAFC']
   }},
   graphite: { canvas: {
-    bg:'#0F1013', titleInk:'#BDB2FF', titleFont:'600 17px "Geist", "Noto Music", "JetBrains Mono", sans-serif',
+    bg:'#0F1013', titleInk:'#BDB2FF', titleFont:'600 17px "Geist", "Noto Music", sans-serif',
     neckGradTop:'#22242D', neckGradBottom:'#15171C', inlay:'rgba(236,238,243,0.2)',
     nutColor:'#ECEEF3', fretWire:'rgba(236,238,243,0.3)', string:'rgba(236,238,243,0.5)',
-    stringLabel:'#ECEEF3', stringLabelFont:'500 12px "Geist Mono", "Noto Music", "JetBrains Mono", monospace',
-    fretNum:'#8189A0', fretNumFont:'500 11px "Geist Mono", "Noto Music", "JetBrains Mono", monospace',
+    stringLabel:'#ECEEF3', stringLabelFont:'500 12px "Geist Mono", "Noto Music", monospace',
+    fretNum:'#8189A0', fretNumFont:'500 11px "Geist Mono", "Noto Music", monospace',
     markerDefault:'#C4C8D4', markerStroke:'rgba(236,238,243,0.35)',
-    markerText:'#0F1013', markerFont:'500 10.5px "Geist Mono", "Noto Music", "JetBrains Mono", monospace',
+    markerText:'#0F1013', markerFont:'500 10.5px "Geist Mono", "Noto Music", monospace',
     intervals:['#9C8CFF','#82C668','#F389C2','#00CCD2','#FA925A','#74B2FF',
                '#BBB736','#D792ED','#2CCE9F','#FF888E','#16C2F9','#E3A42E']
   }}
@@ -1061,8 +1065,8 @@ function createDiagram(initial){
       </div>
       <div class="group">
         <label>Invert</label>
-        <button class="small invertDownBtn" title="Drop the highest-pitched note down one octave">&darr;</button>
-        <button class="small invertUpBtn" title="Move the lowest-pitched note up one octave">&uarr;</button>
+        <button class="small invertDownBtn" title="Drop the highest-pitched note down one octave" aria-label="Drop the highest note down one octave"><svg class="arr" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2v8M2.5 6.5 6 10l3.5-3.5"/></svg></button>
+        <button class="small invertUpBtn" title="Move the lowest-pitched note up one octave" aria-label="Move the lowest note up one octave"><svg class="arr" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 10V2M2.5 5.5 6 2l3.5 3.5"/></svg></button>
       </div>
       <div class="group">
         <button class="small danger-text clearNotesBtn">Clear notes</button>
@@ -2575,9 +2579,9 @@ setAssign('outer'); syncFam(); label(); place();
       '--teal':"#17B8A6",
       '--radius':"2px",
       '--radius-lg':"10px",
-      '--font-display':"'JetBrains Mono', monospace",
-      '--font-body':"'JetBrains Mono', monospace",
-      '--font-mono':"'JetBrains Mono', monospace",
+      '--font-display':"'Chivo Mono', 'Noto Music', monospace",
+      '--font-body':"'Chivo Mono', 'Noto Music', monospace",
+      '--font-mono':"'Chivo Mono', 'Noto Music', monospace",
       '--atmo-top':"color-mix(in srgb, var(--red) 26%, var(--paper))",
       '--atmo-bottom':"color-mix(in srgb, var(--teal) 8%, var(--paper))",
       '--grid-line':"transparent",
@@ -2599,9 +2603,9 @@ setAssign('outer'); syncFam(); label(); place();
       '--teal':"#5CD3F0",
       '--radius':"0",
       '--radius-lg':"2px",
-      '--font-display':"'Barlow Semi Condensed', 'Noto Music', 'JetBrains Mono', sans-serif",
-      '--font-body':"'Barlow', 'Noto Music', 'JetBrains Mono', sans-serif",
-      '--font-mono':"'DM Mono', 'Noto Music', 'JetBrains Mono', monospace",
+      '--font-display':"'Barlow Semi Condensed', 'Noto Music', sans-serif",
+      '--font-body':"'Barlow', 'Noto Music', sans-serif",
+      '--font-mono':"'DM Mono', 'Noto Music', monospace",
       '--atmo-top':"#15437A",
       '--atmo-bottom':"#081B33",
       '--grid-line':"rgba(140,190,255,.075)",
@@ -2625,9 +2629,9 @@ setAssign('outer'); syncFam(); label(); place();
       '--teal':"#F4A0B7",
       '--radius':"6px",
       '--radius-lg':"14px",
-      '--font-display':"'Fraunces', 'Noto Music', 'JetBrains Mono', serif",
-      '--font-body':"'Figtree', 'Noto Music', 'JetBrains Mono', sans-serif",
-      '--font-mono':"'DM Mono', 'Noto Music', 'JetBrains Mono', monospace",
+      '--font-display':"'Fraunces', 'Noto Music', serif",
+      '--font-body':"'Figtree', 'Noto Music', sans-serif",
+      '--font-mono':"'DM Mono', 'Noto Music', monospace",
       '--atmo-top':"#24422F",
       '--atmo-bottom':"#101C17",
       '--grid-line':"transparent",
@@ -2651,9 +2655,9 @@ setAssign('outer'); syncFam(); label(); place();
       '--teal':"#B4F26B",
       '--radius':"8px",
       '--radius-lg':"16px",
-      '--font-display':"'Geist', 'Noto Music', 'JetBrains Mono', sans-serif",
-      '--font-body':"'Geist', 'Noto Music', 'JetBrains Mono', sans-serif",
-      '--font-mono':"'Geist Mono', 'Noto Music', 'JetBrains Mono', monospace",
+      '--font-display':"'Geist', 'Noto Music', sans-serif",
+      '--font-body':"'Geist', 'Noto Music', sans-serif",
+      '--font-mono':"'Geist Mono', 'Noto Music', monospace",
       '--atmo-top':"#1E1A3E",
       '--atmo-bottom':"#12170C",
       '--grid-line':"transparent",
@@ -2682,30 +2686,14 @@ setAssign('outer'); syncFam(); label(); place();
     pick.appendChild(o);
   });
 
-  // Terminal's JetBrains Mono is the only eager font. Every other theme names
-  // its own faces (`fonts`) and they are fetched the first time it is picked.
+  // Terminal's Chivo Mono (and the accidentals subset) are the only eager
+  // fonts. Every other theme names its own faces (`fonts`) and they are fetched
+  // the first time it is picked.
   const fontsRequested = new Set();
-  // The flat, natural and sharp signs. The proportional faces lack them and
-  // JetBrains Mono's are fixed-width, which leaves gaps ("B ♭"), so a
-  // three-glyph subset of Noto Music covers them for every non-default theme.
-  function ensureAccidentals(){
-    if(fontsRequested.has('accidentals')) return;
-    fontsRequested.add('accidentals');
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/css2?family=Noto+Music&text=%E2%99%AD%E2%99%AE%E2%99%AF&display=swap';
-    link.addEventListener('load', ()=>{
-      document.fonts.load('1em "Noto Music"', '\u266D\u266E\u266F').then(()=>{
-        if(window.setFretboardTheme) window.setFretboardTheme(theme);
-      }).catch(()=>{});
-    });
-    document.head.appendChild(link);
-  }
   function ensureFonts(key){
     const spec = THEMES[key].fonts;
     if(!spec || fontsRequested.has(key)) return;
     fontsRequested.add(key);
-    ensureAccidentals();
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = 'https://fonts.googleapis.com/css2?' + spec.css + '&display=swap';
@@ -2718,6 +2706,17 @@ setAssign('outer'); syncFam(); label(); place();
     });
     document.head.appendChild(link);
   }
+
+  // The eager faces too: the neck is drawn before they arrive, and canvas text
+  // does not repaint itself, so redraw once they have.
+  const baseLink = document.getElementById('baseFontLink');
+  function baseFontsReady(){
+    Promise.all([
+      document.fonts.load('400 1em "Chivo Mono"'), document.fonts.load('700 1em "Chivo Mono"'),
+      document.fonts.load('1em "Noto Music"', '\u266D\u266E\u266F')
+    ]).then(()=>{ if(window.setFretboardTheme) window.setFretboardTheme(theme); }).catch(()=>{});
+  }
+  if(baseLink.sheet) baseFontsReady(); else baseLink.addEventListener('load', baseFontsReady);
 
   function applyTheme(key, writeHash){
     theme = THEMES[key] ? key : 'terminal';
