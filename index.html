@@ -160,31 +160,6 @@ body::after{
 .tab.on{background:var(--red);color:var(--on-red)}
 .tab:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 
-/* ---- glass cards -----------------------------------------------------
-   Frosted panel + a soft glow (drawn from the app's own accent colors)
-   diffusing behind it, per the "ember" direction chosen from a Pinterest
-   material reference. The glow lives on ::before, positioned behind and
-   well outside the card's own bounds, then clipped to the card's rounded
-   corners by its overflow — that's why every glass card needs
-   position:relative (a paint anchor for ::before) and a clipped overflow
-   axis, not just a background color. */
-#fretApp .diagram-card{
-  position:relative;
-  background:color-mix(in srgb, var(--paper-raised) 46%, transparent);
-  backdrop-filter:blur(22px) saturate(1.4);
-  -webkit-backdrop-filter:blur(22px) saturate(1.4);
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:var(--radius-lg);
-  box-shadow:0 20px 50px -20px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.06);
-}
-#fretApp .diagram-card::before{
-  content:'';position:absolute;inset:-60%;z-index:-1;
-  background:
-    radial-gradient(circle at 26% 20%, color-mix(in srgb, var(--red) 70%, transparent) 0%, transparent 55%),
-    radial-gradient(circle at 78% 78%, color-mix(in srgb, var(--teal) 55%, transparent) 0%, transparent 55%);
-  filter:blur(50px);
-  opacity:.55;
-}
 @media (max-width:720px){
   .shell-inner{padding:8px 1.25rem;gap:10px;flex-wrap:wrap}
   .shell-mark{display:none}
@@ -246,6 +221,18 @@ body::after{
 #fretApp .savestate{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);margin-right:2px}
 #fretApp .savestate.bad{color:var(--red-ink)}
 #fretApp .card-actions{display:flex;gap:4px}
+#fretApp .card-top .summary{display:none;flex:1;min-width:0;font-family:var(--font-mono);font-size:13px;color:var(--ink-soft);overflow-wrap:anywhere}
+#fretApp .diagram-card.collapsed .card-top .summary{display:block}
+#fretApp .diagram-card.collapsed .card-top .title-input{display:none}
+#fretApp .diagram-card.collapsed .controls{display:none}
+#fretApp .diagram-card.collapsed .card-top{border-bottom:0;margin-bottom:4px;padding-bottom:0}
+/* segmented controls: every option visible, the active one lit */
+#fretApp .seg2{display:inline-flex;border:1px solid var(--line-strong);border-radius:var(--radius);overflow:hidden}
+#fretApp .seg2 button{height:28px;padding:0 10px;border:0;border-radius:0;background:transparent;color:var(--ink-soft);font-size:11px;letter-spacing:.06em}
+#fretApp .seg2 button + button{border-left:1px solid var(--line-strong)}
+#fretApp .seg2 button:hover{background:var(--line);color:var(--ink)}
+#fretApp .seg2 button[aria-pressed="true"]{background:var(--paper-raised);color:var(--red-ink);box-shadow:inset 0 -2px 0 var(--red)}
+#fretApp .patstate{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;color:var(--ink-soft);min-width:5ch}
 #fretApp .controls label.chk{display:flex;align-items:center;gap:5px;cursor:pointer}
 #fretApp .controls label.chk input{width:14px;height:14px;margin:0;accent-color:var(--red);cursor:pointer}
 #fretApp .card-footer{display:flex;align-items:center;gap:12px}
@@ -276,7 +263,7 @@ body::after{
 #fretApp button:focus-visible,
 #fretApp select:focus-visible,
 #fretApp input:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-#fretApp button.small{height:30px;padding:0 11px;font-size:10px;letter-spacing:.08em}
+#fretApp button.small{height:30px;padding:0 11px;font-size:11px;letter-spacing:.08em}
 /* drawn, not typed: the arrow glyphs come from a different font on every platform */
 #fretApp button.small .arr{display:block;width:11px;height:11px;margin:0 auto;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 #fretApp button.primary{
@@ -339,7 +326,7 @@ body::after{
 }
 #fretApp .controls label,#fretApp .toolbar label{
   font-family:var(--font-mono);
-  font-size:10px;
+  font-size:11px;
   letter-spacing:.1em;
   text-transform:uppercase;
   color:var(--ink-soft);
@@ -348,16 +335,19 @@ body::after{
   font-family:var(--font-mono);
   font-size:12px;
   min-width:24px;
+  white-space:nowrap;
   text-align:center;
   color:var(--ink);
 }
 
 /* diagram cards ----------------------------------------------------------- */
 #fretApp #diagrams{display:flex;flex-wrap:wrap;gap:1.5rem}
+/* no cards: the page is one sheet, its diagrams set apart by a rule */
 #fretApp .diagram-card{
   flex:1 1 100%;
-  overflow:hidden;
-  padding:1rem 1rem .875rem;
+  min-width:0;   /* a wide neck scrolls inside its own wrapper instead of widening the page */
+  padding:1.25rem 0 1rem;
+  border-top:1px solid var(--line-strong);
 }
 #fretApp .diagram-card.paired{flex:1 1 calc(50% - .75rem);min-width:420px}
 #fretApp .card-top{
@@ -456,10 +446,11 @@ body::after{
 }
 #fretApp .canvas-wrap{
   overflow-x:auto;
-  border:1px solid var(--line);
-  border-radius:var(--radius);
 }
 #fretApp canvas{display:block;cursor:pointer;touch-action:none}
+/* the cursor says what a click will do */
+#fretApp canvas[data-tool="octave"]{cursor:copy}
+#fretApp canvas[data-tool="root"]{cursor:crosshair}
 #fretApp .card-footer{
   display:flex;
   justify-content:space-between;
@@ -814,10 +805,11 @@ body::after{
     <button class="small" id="redoBtn" disabled title="Redo (Shift + Ctrl/Cmd + Z)">Redo</button>
   </div>
   <div class="group">
-    <label>Layout</label>
-    <button class="small toggle" id="landscapeBtn">Landscape</button>
-    <button class="small toggle" id="portraitBtn">Portrait</button>
+    <label>Neck</label>
+    <button class="small toggle" id="landscapeBtn" title="Frets run left to right">Horizontal</button>
+    <button class="small toggle" id="portraitBtn" title="Frets run top to bottom, like a chord chart">Vertical</button>
   </div>
+  <button id="collapseAllBtn" title="Fold every diagram's controls away, or bring them all back">Hide all controls</button>
   <div class="spacer"></div>
   <span class="savestate" id="saveState" role="status" aria-live="polite"></span>
   <button id="versionsBtn">Versions</button>
@@ -1147,9 +1139,12 @@ function defaultState(){
     notes: new Set(),       // "stringIdx_fret"
     rootPC: null,
     displayMode: 'name',    // name | interval | blank
-    octaveMode: false,
-    rootPickActive: false,
     shiftSemitones: 0,      // cumulative half-step shift applied to placed markers via Shift control
+    tool: 'place',          // what a click on the neck does: place | octave | root
+    key: 'C',               // the key the next pattern is built in
+    pattern: '',            // 'scale:id' / 'chord:id' while the notes still follow it; '' once edited by hand
+    combine: 'replace',     // choosing a pattern: replace the notes, or add to them
+    collapsed: false,       // controls folded away
     title: '',
     titleAuto: true,        // the title follows the generated pattern until someone edits it
     showLegend: true,       // which colour is which interval
@@ -1160,53 +1155,50 @@ function defaultState(){
 function createDiagram(initial, after){
   diagramCounter += 1;
   const id = 'dg' + diagramCounter;
-  const { ui, ...init } = initial || {};   // ui: which key/scale/chord the pickers show
-  const state = Object.assign(defaultState(), init);
+  const state = Object.assign(defaultState(), initial || {});
   const card = document.createElement('div');
   card.className = 'diagram-card';
   card.dataset.id = id;
 
   card.innerHTML = `
     <div class="card-top">
-      <input class="title-input" type="text" value="${escapeHtml(state.title)}" placeholder="Fretboard label" aria-label="Diagram title">
+      <input class="title-input" type="text" value="${escapeHtml(state.title)}" placeholder="Title (optional)" aria-label="Diagram title">
+      <span class="summary"></span>
       <div class="card-actions">
+        <button class="small ghost collapseBtn" aria-expanded="true" title="Fold this diagram's controls away, or bring them back">Hide controls</button>
         <button class="small ghost duplicateBtn" title="Make a copy of this diagram, right after it">Duplicate</button>
         <button class="small ghost removeBtn" title="Remove diagram">Remove</button>
       </div>
     </div>
     <div class="controls">
       <div class="group">
-        <label>Instrument</label>
-        <select class="instrumentSel">
-          <option value="guitar">Guitar</option>
-          <option value="bass">Bass</option>
-        </select>
+        <label>Tuning</label>
+        <select class="tuningSel" aria-label="Tuning"></select>
       </div>
       <div class="group">
-        <label>Tuning</label>
-        <select class="presetSel"></select>
+        <label>Key</label>
+        <select class="keySel" aria-label="Key"></select>
+        <label>Pattern</label>
+        <select class="patternSel" aria-label="Pattern"></select>
+        <div class="seg2 combineSeg" role="group" aria-label="What choosing a pattern does">
+          <button type="button" data-combine="replace" title="Choosing a pattern replaces the notes">Replace</button>
+          <button type="button" data-combine="add" title="Choosing a pattern adds to the notes already there">Add</button>
+        </div>
+        <span class="patstate"></span>
       </div>
       <div class="group">
         <label>From fret</label>
         <input type="number" class="firstFretInput" min="0" max="24" value="${state.firstFret}">
-      </div>
-      <div class="group">
         <label>To fret</label>
         <input type="number" class="lastFretInput" min="1" max="30" value="${state.lastFret}">
       </div>
       <div class="group">
-        <label>Shift</label>
-        <button class="small shiftDownBtn" title="Move every placed marker down a half step — shape and intervals stay the same, note names update">&minus;</button>
-        <span class="shiftLabel">0</span>
-        <button class="small shiftUpBtn" title="Move every placed marker up a half step — shape and intervals stay the same, note names update">+</button>
-      </div>
-      <div class="group">
         <label>Show</label>
-        <select class="displaySel">
-          <option value="name">Note names</option>
-          <option value="interval">Intervals</option>
-          <option value="blank">Blank dots</option>
-        </select>
+        <div class="seg2 showSeg" role="group" aria-label="What the markers show">
+          <button type="button" data-show="name">Notes</button>
+          <button type="button" data-show="interval">Intervals</button>
+          <button type="button" data-show="blank">Blank</button>
+        </div>
       </div>
       <div class="group">
         <label>Caption</label>
@@ -1214,35 +1206,27 @@ function createDiagram(initial, after){
         <label class="chk"><input type="checkbox" class="tuningChk" ${state.showTuning ? 'checked' : ''}> Tuning</label>
       </div>
       <div class="group">
-        <button class="small toggle octaveBtn" title="When on, clicking a note also fills every octave/unison of it">Octave mode</button>
-      </div>
-      <div class="group">
-        <button class="small toggle rootBtn" title="Click a note on the neck to set it as root">Set root</button>
+        <label>Click does</label>
+        <div class="seg2 toolSeg" role="group" aria-label="What clicking the neck does">
+          <button type="button" data-tool="place" title="Click a spot to put a note there, or take it away">Place / remove</button>
+          <button type="button" data-tool="octave" title="Click a note to fill or clear it in every octave">Fill octaves</button>
+          <button type="button" data-tool="root" title="Click a note on the neck to make it the root">Set root</button>
+        </div>
         <button class="small ghost clearRootBtn" title="Clear root">&times;</button>
       </div>
       <div class="group">
+        <label>Move pattern</label>
+        <button class="small shiftDownBtn" title="Move every placed marker down a half step — shape and intervals stay the same, note names update">&minus;</button>
+        <span class="shiftLabel">0</span>
+        <button class="small shiftUpBtn" title="Move every placed marker up a half step — shape and intervals stay the same, note names update">+</button>
+      </div>
+      <div class="group">
         <label>Invert</label>
-        <button class="small invertDownBtn" title="Drop the highest-pitched note down one octave" aria-label="Drop the highest note down one octave"><svg class="arr" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2v8M2.5 6.5 6 10l3.5-3.5"/></svg></button>
-        <button class="small invertUpBtn" title="Move the lowest-pitched note up one octave" aria-label="Move the lowest note up one octave"><svg class="arr" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 10V2M2.5 5.5 6 2l3.5 3.5"/></svg></button>
+        <button class="small invertDownBtn" aria-label="Drop the highest note down one octave"><svg class="arr" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2v8M2.5 6.5 6 10l3.5-3.5"/></svg></button>
+        <button class="small invertUpBtn" aria-label="Move the lowest note up one octave"><svg class="arr" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 10V2M2.5 5.5 6 2l3.5 3.5"/></svg></button>
       </div>
       <div class="group">
         <button class="small danger-text clearNotesBtn">Clear notes</button>
-      </div>
-    </div>
-    <div class="controls">
-      <div class="group">
-        <label>Key</label>
-        <select class="keySel"></select>
-      </div>
-      <div class="group">
-        <label>Scale</label>
-        <select class="scaleSel"></select>
-        <button class="small primary genScaleBtn">Generate</button>
-      </div>
-      <div class="group">
-        <label>Chord</label>
-        <select class="chordSel"></select>
-        <button class="small primary genChordBtn">Generate</button>
       </div>
     </div>
     <div class="canvas-wrap">
@@ -1265,13 +1249,16 @@ function createDiagram(initial, after){
   const el = {
     card,
     titleInput: card.querySelector('.title-input'),
-    instrumentSel: card.querySelector('.instrumentSel'),
-    presetSel: card.querySelector('.presetSel'),
+    summary: card.querySelector('.summary'),
+    tuningSel: card.querySelector('.tuningSel'),
+    keySel: card.querySelector('.keySel'),
+    patternSel: card.querySelector('.patternSel'),
+    patState: card.querySelector('.patstate'),
+    combineBtns: [...card.querySelectorAll('.combineSeg button')],
+    showBtns: [...card.querySelectorAll('.showSeg button')],
+    toolBtns: [...card.querySelectorAll('.toolSeg button')],
     firstFretInput: card.querySelector('.firstFretInput'),
     lastFretInput: card.querySelector('.lastFretInput'),
-    displaySel: card.querySelector('.displaySel'),
-    octaveBtn: card.querySelector('.octaveBtn'),
-    rootBtn: card.querySelector('.rootBtn'),
     clearRootBtn: card.querySelector('.clearRootBtn'),
     clearNotesBtn: card.querySelector('.clearNotesBtn'),
     invertUpBtn: card.querySelector('.invertUpBtn'),
@@ -1279,13 +1266,9 @@ function createDiagram(initial, after){
     shiftDownBtn: card.querySelector('.shiftDownBtn'),
     shiftUpBtn: card.querySelector('.shiftUpBtn'),
     shiftLabel: card.querySelector('.shiftLabel'),
-    keySel: card.querySelector('.keySel'),
-    scaleSel: card.querySelector('.scaleSel'),
-    chordSel: card.querySelector('.chordSel'),
-    genScaleBtn: card.querySelector('.genScaleBtn'),
-    genChordBtn: card.querySelector('.genChordBtn'),
     canvas: card.querySelector('.fretCanvas'),
     rootLabel: card.querySelector('.rootLabel'),
+    collapseBtn: card.querySelector('.collapseBtn'),
     removeBtn: card.querySelector('.removeBtn'),
     duplicateBtn: card.querySelector('.duplicateBtn'),
     legendChk: card.querySelector('.legendChk'),
@@ -1300,12 +1283,9 @@ function createDiagram(initial, after){
   const at = after ? diagrams.indexOf(after) : -1;
   if (at >= 0) diagrams.splice(at + 1, 0, diagram); else diagrams.push(diagram);
 
-  populateInstrumentControls(diagram);
+  populateTuningSelect(el.tuningSel);
   populateKeySelect(el.keySel);
-  populateOptionGroup(el.scaleSel, SCALES);
-  populateOptionGroup(el.chordSel, CHORDS);
-  if (ui) { el.keySel.value = ui.key; el.scaleSel.value = ui.scale; el.chordSel.value = ui.chord; }
-  el.displaySel.value = state.displayMode;
+  populatePatternSelect(el.patternSel);
 
   wireEvents(diagram);
   render(diagram);
@@ -1317,20 +1297,123 @@ function escapeHtml(s){
   return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-function populateOptionGroup(selectEl, dict){
-  selectEl.innerHTML = Object.keys(dict).map(k => `<option value="${k}">${dict[k].label}</option>`).join('');
-}
-
 function populateKeySelect(selectEl){
   selectEl.innerHTML = NOTE_NAMES.map(n => `<option value="${n}">${n}</option>`).join('');
 }
+// one list, grouped by instrument: the instrument is implied by the tuning
+function populateTuningSelect(selectEl){
+  selectEl.innerHTML = Object.keys(TUNINGS).map(inst =>
+    `<optgroup label="${TUNINGS[inst].label}">` +
+    Object.keys(TUNINGS[inst].presets).map(k => `<option value="${inst}:${k}">${TUNINGS[inst].presets[k].label}</option>`).join('') +
+    '</optgroup>').join('');
+}
+function populatePatternSelect(selectEl){
+  selectEl.innerHTML = '<option value="">Pick a pattern…</option>' +
+    '<optgroup label="Scales">' + Object.keys(SCALES).map(k => `<option value="scale:${k}">${SCALES[k].label}</option>`).join('') + '</optgroup>' +
+    '<optgroup label="Chords">' + Object.keys(CHORDS).map(k => `<option value="chord:${k}">${CHORDS[k].label}</option>`).join('') + '</optgroup>';
+}
 
-function populateInstrumentControls(diagram){
-  const { el, state } = diagram;
-  el.instrumentSel.value = state.instrument;
-  const presets = TUNINGS[state.instrument].presets;
-  el.presetSel.innerHTML = Object.keys(presets).map(k => `<option value="${k}">${presets[k].label}</option>`).join('');
-  el.presetSel.value = state.preset;
+// ---- patterns ------------------------------------------------------------------
+// A pattern is "live" while the notes still follow it: the key, the tuning and
+// the fret range all re-apply it. Placing, removing or inverting a note by hand
+// makes the notes yours, and nothing re-applies over them. Add mode layers a
+// pattern onto what is there, which is a composite, so it is never live.
+const patternDef = (id) => {
+  const [kind, k] = String(id).split(':');
+  return kind === 'scale' && own(SCALES, k) ? SCALES[k] : kind === 'chord' && own(CHORDS, k) ? CHORDS[k] : null;
+};
+const patternTitle = (id, keyName) => {
+  const d = patternDef(id);
+  return d ? keyName + ' ' + d.label + (String(id).startsWith('chord:') ? ' chord' : '') : '';
+};
+function applyPattern(diagram, id, keyName, add){
+  const { state } = diagram;
+  const def = patternDef(id);
+  if (!def) return;
+  const rootPC = pc(keyName);
+  const allowed = new Set(def.intervals.map(iv => (rootPC + iv) % 12));
+  if (!add){ state.notes.clear(); state.shiftSemitones = 0; }
+  const pcs = stringPitchClasses(state);
+  for (let s = 0; s < pcs.length; s++){
+    for (let f = state.firstFret; f <= state.lastFret; f++){
+      if (allowed.has(((pcs[s] + f) % 12 + 12) % 12)) state.notes.add(s + '_' + f);
+    }
+  }
+  if (!add || state.rootPC === null) state.rootPC = rootPC;
+  state.key = keyName;
+  state.pattern = add ? '' : id;
+  // name the diagram after the pattern, until the title has been edited by hand
+  if (state.titleAuto){
+    const t = patternTitle(id, keyName);
+    state.title = add && state.title ? (state.title + ' + ' + t).slice(0, 120) : t;
+  }
+}
+// Changing the tuning keeps every marked note sounding the same pitch: each
+// string's notes slide along by however far that string's open note moved.
+function setTuning(diagram, value){
+  const { state } = diagram;
+  const [inst, preset] = String(value).split(':');
+  if (!own(TUNINGS, inst) || !own(TUNINGS[inst].presets, preset)) return;
+  const oldStrings = state.strings.slice(), oldNotes = [...state.notes];
+  state.instrument = inst; state.preset = preset;
+  state.strings = TUNINGS[inst].presets[preset].strings.slice();
+  if (state.pattern){
+    applyPattern(diagram, state.pattern, state.key, false);
+  } else {
+    const next = new Set();
+    oldNotes.forEach(k => {
+      const [s, f] = k.split('_').map(Number);
+      if (s >= state.strings.length) return;
+      const d = (((pc(state.strings[s]) - pc(oldStrings[s]) + 6) % 12) + 12) % 12 - 6;   // -6..5, the shortest way round
+      const nf = f - d;
+      if (nf >= state.firstFret && nf <= state.lastFret) next.add(s + '_' + nf);
+    });
+    state.notes = next;
+  }
+  render(diagram);
+}
+// every control shows what the state says, so undo, restore and edits all agree
+function syncControls(diagram){
+  const { state, el } = diagram;
+  const press = (btns, attr, val) => btns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset[attr] === val)));
+  el.tuningSel.value = state.instrument + ':' + state.preset;
+  el.keySel.value = state.key;
+  el.patternSel.options[0].textContent = state.notes.size ? 'Custom notes' : 'Pick a pattern…';
+  el.patternSel.value = state.pattern;
+  press(el.combineBtns, 'combine', state.combine);
+  press(el.showBtns, 'show', state.displayMode);
+  press(el.toolBtns, 'tool', state.tool);
+  el.canvas.dataset.tool = state.tool;
+  el.patState.textContent = state.pattern ? 'live' : (state.notes.size ? 'edited' : '');
+  el.patState.title = state.pattern ? 'These notes follow the key, tuning and frets. Editing a note by hand makes them yours.'
+    : (state.notes.size ? 'Edited by hand, so these notes no longer follow the key or frets.' : '');
+  const focus = document.activeElement;
+  if (focus !== el.firstFretInput) el.firstFretInput.value = state.firstFret;
+  if (focus !== el.lastFretInput) el.lastFretInput.value = state.lastFret;
+  if (focus !== el.titleInput) el.titleInput.value = state.title;
+  el.legendChk.checked = state.showLegend;
+  el.tuningChk.checked = state.showTuning;
+  el.clearRootBtn.disabled = state.rootPC === null;
+  el.clearRootBtn.title = state.rootPC === null ? 'There is no root to clear' : 'Clear root';
+  const canInvert = state.notes.size >= 2;
+  [[el.invertDownBtn, 'Drop the highest-pitched note down one octave'], [el.invertUpBtn, 'Move the lowest-pitched note up one octave']].forEach(([b, why]) => {
+    b.disabled = !canInvert;
+    b.title = canInvert ? why : 'Needs at least two notes on the neck';
+  });
+  const sh = state.shiftSemitones;
+  el.shiftLabel.textContent = (sh > 0 ? '+' + sh : String(sh)) +
+    (sh !== 0 && state.rootPC !== null ? ' · ' + NOTE_NAMES[((state.rootPC - sh) % 12 + 12) % 12] + ' to ' + NOTE_NAMES[state.rootPC] : '');
+  el.card.classList.toggle('collapsed', state.collapsed);
+  el.collapseBtn.setAttribute('aria-expanded', String(!state.collapsed));
+  el.collapseBtn.textContent = state.collapsed ? 'Show controls' : 'Hide controls';
+  el.summary.textContent = [tuningLabel(state),
+    state.pattern ? patternTitle(state.pattern, state.key) : (state.notes.size ? 'custom notes' : 'no notes yet'),
+    'frets ' + state.firstFret + '–' + state.lastFret].join(' · ');
+}
+function syncCollapseAll(){
+  const open = diagrams.some(d => !d.state.collapsed);
+  const b = document.getElementById('collapseAllBtn');
+  b.textContent = open ? 'Hide all controls' : 'Show all controls';
 }
 
 // Typing in the title field fires an 'input' event per keystroke, each of
@@ -1351,104 +1434,74 @@ function wireEvents(diagram){
 
   el.titleInput.addEventListener('input', () => {
     state.title = el.titleInput.value;
-    state.titleAuto = false;   // once it's yours, generating a pattern leaves it alone
+    state.titleAuto = false;   // once it's yours, choosing a pattern leaves it alone
     scheduleRender(diagram);
   });
 
-  el.instrumentSel.addEventListener('change', () => {
-    state.instrument = el.instrumentSel.value;
-    const presets = TUNINGS[state.instrument].presets;
-    const firstKey = Object.keys(presets)[0];
-    state.preset = firstKey;
-    state.strings = presets[firstKey].strings.slice();
-    state.notes.clear();
-    state.rootPC = null;
-    state.shiftSemitones = 0;
-    populateInstrumentControls(diagram);
+  el.tuningSel.addEventListener('change', () => setTuning(diagram, el.tuningSel.value));
+  el.keySel.addEventListener('change', () => {
+    state.key = el.keySel.value;
+    if (state.pattern) applyPattern(diagram, state.pattern, state.key, false);
     render(diagram);
   });
-
-  el.presetSel.addEventListener('change', () => {
-    state.preset = el.presetSel.value;
-    state.strings = TUNINGS[state.instrument].presets[state.preset].strings.slice();
-    state.notes.clear();
-    state.rootPC = null;
-    state.shiftSemitones = 0;
+  el.patternSel.addEventListener('change', () => {
+    const v = el.patternSel.value;
+    if (v) applyPattern(diagram, v, state.key, state.combine === 'add');
     render(diagram);
   });
+  el.combineBtns.forEach(b => b.addEventListener('click', () => {
+    state.combine = b.dataset.combine;
+    if (state.combine === 'add') state.pattern = '';   // layering makes a composite, which isn't live
+    render(diagram);
+  }));
+  el.showBtns.forEach(b => b.addEventListener('click', () => { state.displayMode = b.dataset.show; render(diagram); }));
+  el.toolBtns.forEach(b => b.addEventListener('click', () => { state.tool = b.dataset.tool; render(diagram); }));
 
+  // a live pattern re-applies across a new range; otherwise notes outside it are dropped
+  const rangeChanged = () => {
+    if (state.pattern) applyPattern(diagram, state.pattern, state.key, false);
+    else pruneOutOfRangeNotes(state);
+    render(diagram);
+  };
   el.firstFretInput.addEventListener('change', () => {
     let v = parseInt(el.firstFretInput.value, 10);
     if (isNaN(v) || v < 0) v = 0;
     if (v >= state.lastFret) v = state.lastFret - 1 >= 0 ? state.lastFret - 1 : 0;
     state.firstFret = v;
-    el.firstFretInput.value = v;
-    pruneOutOfRangeNotes(state);
-    render(diagram);
+    rangeChanged();
   });
-
   el.lastFretInput.addEventListener('change', () => {
     let v = parseInt(el.lastFretInput.value, 10);
     if (isNaN(v) || v <= state.firstFret) v = state.firstFret + 1;
     if (v > 30) v = 30;
     state.lastFret = v;
-    el.lastFretInput.value = v;
-    pruneOutOfRangeNotes(state);
-    render(diagram);
-  });
-
-  el.displaySel.addEventListener('change', () => {
-    state.displayMode = el.displaySel.value;
-    render(diagram);
-  });
-
-  el.octaveBtn.addEventListener('click', () => {
-    state.octaveMode = !state.octaveMode;
-    el.octaveBtn.classList.toggle('active', state.octaveMode);
-  });
-
-  el.rootBtn.addEventListener('click', () => {
-    state.rootPickActive = !state.rootPickActive;
-    el.rootBtn.classList.toggle('active', state.rootPickActive);
+    rangeChanged();
   });
 
   el.clearRootBtn.addEventListener('click', () => {
     state.rootPC = null;
-    state.rootPickActive = false;
-    el.rootBtn.classList.remove('active');
+    if (state.tool === 'root') state.tool = 'place';
+    state.pattern = '';
     render(diagram);
   });
-
   el.clearNotesBtn.addEventListener('click', () => {
     state.notes.clear();
     state.shiftSemitones = 0;
+    state.pattern = '';
     render(diagram);
   });
-
   el.invertUpBtn.addEventListener('click', () => invertVoicing(diagram, 1));
   el.invertDownBtn.addEventListener('click', () => invertVoicing(diagram, -1));
-
   el.shiftDownBtn.addEventListener('click', () => shiftMarkers(diagram, -1));
   el.shiftUpBtn.addEventListener('click', () => shiftMarkers(diagram, 1));
 
-  el.genScaleBtn.addEventListener('click', () => {
-    const sc = SCALES[el.scaleSel.value];
-    generateFromFormula(diagram, sc.intervals, el.keySel.value, el.keySel.value + ' ' + sc.label);
-  });
-
-  el.genChordBtn.addEventListener('click', () => {
-    const ch = CHORDS[el.chordSel.value];
-    generateFromFormula(diagram, ch.intervals, el.keySel.value, el.keySel.value + ' ' + ch.label + ' chord');
-  });
-
+  el.collapseBtn.addEventListener('click', () => { state.collapsed = !state.collapsed; render(diagram); });
   el.duplicateBtn.addEventListener('click', () => duplicateDiagram(diagram));
   el.legendChk.addEventListener('change', () => { state.showLegend = el.legendChk.checked; render(diagram); });
   el.tuningChk.addEventListener('change', () => { state.showTuning = el.tuningChk.checked; render(diagram); });
   el.pngBtn.addEventListener('click', () => exportDiagramPNG(diagram));
   el.svgBtn.addEventListener('click', () => exportDiagramSVG(diagram));
   el.copyImgBtn.addEventListener('click', () => copyDiagramImage(diagram));
-  // a picker change alone doesn't redraw, but it is part of what gets saved
-  [el.keySel, el.scaleSel, el.chordSel].forEach(sel => sel.addEventListener('change', scheduleCheckpoint));
 
   el.removeBtn.addEventListener('click', () => {
     if (diagrams.length <= 1) return;
@@ -1456,6 +1509,7 @@ function wireEvents(diagram){
     if (idx >= 0) diagrams.splice(idx, 1);
     el.card.remove();
     layoutCards();
+    syncCollapseAll();
   });
 
   el.canvas.addEventListener('click', (evt) => handleCanvasClick(diagram, evt));
@@ -1480,24 +1534,6 @@ function allPositionsForPC(state, targetPC){
     }
   }
   return result;
-}
-
-function generateFromFormula(diagram, intervals, keyName, label){
-  const { state } = diagram;
-  // name the diagram after the pattern, until the title has been edited by hand
-  if (label && state.titleAuto){ state.title = label; diagram.el.titleInput.value = label; }
-  const rootPC = pc(keyName);
-  state.rootPC = rootPC;
-  state.notes.clear();
-  const allowed = new Set(intervals.map(iv => (rootPC + iv) % 12));
-  const pcs = stringPitchClasses(state);
-  for (let s = 0; s < pcs.length; s++){
-    for (let f = state.firstFret; f <= state.lastFret; f++){
-      const p = ((pcs[s] + f) % 12 + 12) % 12;
-      if (allowed.has(p)) state.notes.add(s + '_' + f);
-    }
-  }
-  render(diagram);
 }
 
 // Compute base pitches for each string so we can compare absolute pitch
@@ -1596,6 +1632,7 @@ function invertVoicing(diagram, direction){
   if (candidates.length > 0){
     candidates.sort((a, b) => a.dist - b.dist);
     state.notes.add(candidates[0].s + '_' + candidates[0].f);
+    state.pattern = '';   // a hand-voiced chord no longer follows a pattern
   } else {
     // No valid position found — put the note back
     state.notes.add(target.key);
@@ -1641,6 +1678,9 @@ function shiftMarkers(diagram, delta){
   // starting pattern — so cycle the counter back to 0 rather than letting
   // it climb indefinitely or stopping the user at the edge.
   if (state.shiftSemitones === 12 || state.shiftSemitones === -12) state.shiftSemitones = 0;
+  // moving a pattern is still that pattern, in a new key
+  if (state.rootPC !== null) state.key = NOTE_NAMES[state.rootPC];
+  if (state.pattern && state.titleAuto) state.title = patternTitle(state.pattern, state.key);
 
   render(diagram);
 }
@@ -1680,17 +1720,19 @@ function handleCanvasClick(diagram, evt){
   const key = stringIdx + '_' + fret;
   const targetPC = fretPC(state, stringIdx, fret);
 
-  if (state.rootPickActive){
+  // any hand edit makes the notes yours: a pattern stops following them
+  state.pattern = '';
+  if (state.tool === 'root'){
     state.rootPC = targetPC;
+    state.key = NOTE_NAMES[targetPC];
     state.notes.add(key);
-    state.rootPickActive = false;
-    diagram.el.rootBtn.classList.remove('active');
+    state.tool = 'place';      // choosing a root is one click, then back to placing
     render(diagram);
     return;
   }
 
   const has = state.notes.has(key);
-  if (state.octaveMode){
+  if (state.tool === 'octave'){
     const positions = allPositionsForPC(state, targetPC);
     if (has) positions.forEach(k => state.notes.delete(k));
     else positions.forEach(k => state.notes.add(k));
@@ -2121,13 +2163,12 @@ function render(diagram){
   const ctx = canvas.getContext('2d');
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   ctx.clearRect(0, 0, geo.width, geo.height);
-  drawDiagram(ctx, state, { t, geo });
+  // the page is the ground: only the neck is opaque, so the diagram sits on the sheet
+  drawDiagram(ctx, state, { t, geo, transparent: true });
 
-  // footer state sync
   el.rootLabel.textContent = state.rootPC !== null ? NOTE_NAMES[state.rootPC] : 'none';
-  el.octaveBtn.classList.toggle('active', state.octaveMode);
-  el.rootBtn.classList.toggle('active', state.rootPickActive);
-  el.shiftLabel.textContent = (state.shiftSemitones > 0 ? '+' : '') + state.shiftSemitones;
+  syncControls(diagram);
+  syncCollapseAll();
 }
 
 function roundRect(ctx, x, y, w, h, r){
@@ -2139,6 +2180,12 @@ function roundRect(ctx, x, y, w, h, r){
   ctx.arcTo(x, y, x + w, y, r);
   ctx.closePath();
 }
+
+document.getElementById('collapseAllBtn').addEventListener('click', () => {
+  const collapse = diagrams.some(d => !d.state.collapsed);
+  diagrams.forEach(d => { d.state.collapsed = collapse; });
+  diagrams.forEach(d => render(d));
+});
 
 function layoutCards(){
   // Landscape: diagrams stack full-width, one per row (bigger, print-friendly landscape).
@@ -2200,7 +2247,7 @@ function serializeDiagram(d){
     instrument: s.instrument, preset: s.preset,
     firstFret: s.firstFret, lastFret: s.lastFret, notes,
     rootPC: s.rootPC, displayMode: s.displayMode, shift: s.shiftSemitones,
-    key: d.el.keySel.value, scale: d.el.scaleSel.value, chord: d.el.chordSel.value
+    key: s.key, pattern: s.pattern, combine: s.combine, collapsed: s.collapsed
   };
 }
 const serializeSheet = () => ({ v: 1, orientation: pageOrientation, diagrams: diagrams.map(serializeDiagram) });
@@ -2236,8 +2283,11 @@ function sanitizeDiagram(d){
     displayMode: DISPLAY_MODES.includes(d.displayMode) ? d.displayMode : 'name',
     shift: clampInt(d.shift, -11, 11, 0),
     key: NOTE_NAMES.includes(d.key) ? d.key : NOTE_NAMES[0],
-    scale: typeof d.scale === 'string' && own(SCALES, d.scale) ? d.scale : Object.keys(SCALES)[0],
-    chord: typeof d.chord === 'string' && own(CHORDS, d.chord) ? d.chord : Object.keys(CHORDS)[0]
+    // sheets from before patterns were live carry `scale` and `chord` pickers; those were
+    // never a promise that the notes follow anything, so they start out as custom notes
+    pattern: typeof d.pattern === 'string' && patternDef(d.pattern) ? d.pattern : '',
+    combine: d.combine === 'add' ? 'add' : 'replace',
+    collapsed: d.collapsed === true
   };
 }
 function sanitizeSheet(raw){
@@ -2253,7 +2303,7 @@ function initialFrom(c){
     strings: TUNINGS[c.instrument].presets[c.preset].strings.slice(),
     firstFret: c.firstFret, lastFret: c.lastFret, notes: new Set(c.notes),
     rootPC: c.rootPC, displayMode: c.displayMode, shiftSemitones: c.shift,
-    ui: { key: c.key, scale: c.scale, chord: c.chord }
+    key: c.key, pattern: c.pattern, combine: c.combine, collapsed: c.collapsed
   };
 }
 
