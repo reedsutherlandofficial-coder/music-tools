@@ -465,57 +465,52 @@ body::after{
   letter-spacing:-.01em;
   margin:0;
 }
-#circleApp .ctl{display:flex;justify-content:center;align-items:center;gap:14px;margin:1.25rem 0 1.5rem}
-#circleApp .arrow-btn{
-  width:56px;height:48px;
-  border-radius:var(--radius);
-  border:1px solid var(--line-strong);
-  background:var(--paper-raised);
-  color:var(--ink);
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;
-  transition:background 120ms, transform 80ms;
+#circleApp .modes{display:flex;flex-direction:column;gap:10px;margin-bottom:1.25rem}
+#circleApp .mrow{display:grid;grid-template-columns:52px 1fr;align-items:start;gap:10px}
+#circleApp .mlabel{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink-soft);text-align:right;padding-top:9px;
 }
-#circleApp .arrow-btn:active{transform:scale(.96);background:var(--line)}
-#circleApp .arrow-btn:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-#circleApp .arrow-btn svg{width:20px;height:20px}
-#circleApp .modes{display:flex;flex-direction:column;gap:8px;margin-bottom:6px}
-#circleApp .mrow{display:grid;grid-template-columns:52px 1fr;align-items:center;gap:10px}
-#circleApp .mrow label{
-  font-family:var(--font-mono);
-  font-size:11px;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-  color:var(--ink-soft);
-  text-align:right;
+#circleApp .chips{display:flex;flex-wrap:wrap;gap:6px}
+#circleApp .chip{
+  font-family:var(--font-mono);font-size:12px;line-height:1;
+  min-height:32px;padding:0 8px;
+  color:var(--ink-soft);background:transparent;
+  border:1px solid var(--line-strong);border-radius:var(--radius);
+  cursor:pointer;transition:background 120ms, border-color 120ms, color 120ms;
 }
-#circleApp select{
-  width:100%;
-  height:38px;
-  padding:0 10px;
-  font-family:var(--font-body);
-  font-size:14px;
-  color:var(--ink);
-  background:var(--paper-raised);
-  border:1px solid var(--line-strong);
-  border-radius:var(--radius);
-  appearance:none;
-  -webkit-appearance:none;
-  background-image:linear-gradient(45deg,transparent 50%,var(--red) 50%),linear-gradient(135deg,var(--red) 50%,transparent 50%);
-  background-position:calc(100% - 16px) center, calc(100% - 11px) center;
-  background-size:5px 5px, 5px 5px;
-  background-repeat:no-repeat;
-  cursor:pointer;
-  transition:box-shadow .15s ease, border-color .15s ease;
+#circleApp .chip:hover{border-color:var(--ink-mute);color:var(--ink)}
+#circleApp .chip:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+#circleApp .chip[aria-pressed="true"]{color:var(--ink);background:var(--paper-raised);border-color:var(--ink-soft)}
+/* the two rings keep their own tints everywhere they appear: wheel labels,
+   these chips, and the tonic markers on the chord ring */
+#circleApp .chip.o[aria-pressed="true"]{
+  color:var(--red-ink);border-color:var(--red);
+  background:color-mix(in srgb, var(--red) 16%, transparent);
 }
-#circleApp select:hover{
-  border-color:var(--ink-mute);
+#circleApp .chip.i[aria-pressed="true"]{
+  color:var(--teal);border-color:var(--teal);
+  background:color-mix(in srgb, var(--teal) 14%, transparent);
 }
-#circleApp select:focus{
-  outline:none;border-color:var(--red);
-  box-shadow:0 0 0 1px var(--red), 0 0 16px color-mix(in srgb, var(--red) 50%, transparent);
+#circleApp .assign{display:flex;gap:6px;margin:0 0 12px}
+#circleApp .assign .chip{flex:1}
+/* TEMP: the controls experiment shows one variant at a time */
+body[data-controls="chips"] .only-chord, body[data-controls="chord"] .only-chips{display:none!important}
+.mock-switch{
+  position:fixed;left:16px;bottom:14px;z-index:9999;
+  display:flex;align-items:center;gap:6px;padding:6px 8px;
+  background:var(--paper-raised);border:1px solid var(--line-strong);border-radius:var(--radius-lg);
+  box-shadow:0 10px 30px rgba(0,0,0,.6);
+  font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);
 }
+.mock-switch span{letter-spacing:.1em;text-transform:uppercase;padding:0 6px}
+.mock-switch button{
+  font:inherit;color:var(--ink-soft);background:transparent;cursor:pointer;
+  border:1px solid var(--line-strong);border-radius:var(--radius);padding:7px 10px;
+}
+.mock-switch button[aria-pressed="true"]{color:var(--on-red);background:var(--red);border-color:var(--red)}
 #circleApp .stage{position:relative;width:var(--dial);aspect-ratio:1;margin:0 auto}
+#circleApp .stage:focus-visible{outline:2px solid var(--red);outline-offset:8px;border-radius:50%}
 #circleApp .wheel{
   position:absolute;inset:0;
   border-radius:50%;
@@ -565,6 +560,7 @@ body::after{
    and only gains vertical tap area */
 #circleApp .ilbl{font-family:var(--font-display);font-size:max(11px,calc(var(--dial)*.038));line-height:1.2;color:var(--ink-soft);padding:6px 0;margin:-6px 0}
 #circleApp .lbl.on{color:var(--red-ink)}
+#circleApp .ilbl.on{color:var(--teal)}
 #circleApp .lbl.on .n, #circleApp .lbl.on .c{color:var(--red-ink)}
 #circleApp .hub{
   position:absolute;left:50%;top:50%;
@@ -604,6 +600,9 @@ body::after{
 #circleApp .cnode.tonic rect{stroke:var(--red);stroke-width:1.4}
 #circleApp .cnode.tonic .cn{fill:var(--red-ink)}
 #circleApp .cnode.sel rect{fill:var(--paper-raised)}
+#circleApp .cnode.tonic2:not(.tonic) rect{stroke:var(--teal);stroke-width:1.4;stroke-dasharray:4 2.5}
+#circleApp .cnode.tonic2:not(.tonic) .cn{fill:var(--teal)}
+#circleApp .cnode .halo{fill:none;stroke:var(--teal);stroke-width:1.2;stroke-dasharray:4 2.5;pointer-events:none}
 #circleApp .tones{font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);text-align:center;
   border-top:1px solid var(--line);padding-top:12px;margin-top:6px;line-height:1.7}
 #circleApp .role{
@@ -758,33 +757,28 @@ body::after{
 <aside class="side-panel" id="chordsCard">
   <div class="chead">
     <span class="role">Diatonic chords</span>
+    <label class="sw"><input type="checkbox" id="sev"> Sevenths</label>
+  </div>
+  <div class="assign only-chord" role="group" aria-label="Which ring a tapped chord sets">
+    <button type="button" class="chip o" id="asgO" aria-pressed="true">Outer ring</button>
+    <button type="button" class="chip i" id="asgI" aria-pressed="false">Inner ring</button>
   </div>
   <div id="ring"></div>
-  <p class="chords-hint">Pick a chord here — its mode and stack of thirds read out on the notation panel.</p>
+  <p class="chords-hint" id="chordsHint"></p>
 </aside>
 
 <div class="wheel-stage" id="wheelCard">
 <header>
-  <div class="eyebrow"><span>Diagram no. 5ths</span><span id="posLabel">Position 00</span></div>
   <h1>Circle of fifths</h1>
 </header>
 
 <div class="modes">
-  <div class="mrow"><label for="mf">Scale</label><select id="mf"></select></div>
-  <div class="mrow"><label for="mo">Outer</label><select id="mo"></select></div>
-  <div class="mrow"><label for="mi">Inner</label><select id="mi"></select></div>
+  <div class="mrow"><span class="mlabel">Scale</span><div class="chips" id="famBtns" role="group" aria-label="Scale family"></div></div>
+  <div class="mrow only-chips"><span class="mlabel">Outer</span><div class="chips" id="chipsO" role="group" aria-label="Outer ring mode"></div></div>
+  <div class="mrow only-chips"><span class="mlabel">Inner</span><div class="chips" id="chipsI" role="group" aria-label="Inner ring mode"></div></div>
 </div>
 
-<div class="ctl">
-  <button class="arrow-btn" id="ccw" aria-label="Move counter-clockwise around the circle">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M19 12H5"/><path d="m11 6-6 6 6 6"/></svg>
-  </button>
-  <button class="arrow-btn" id="cw" aria-label="Move clockwise around the circle">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
-  </button>
-</div>
-
-<div class="stage">
+<div class="stage" tabindex="0" role="group" aria-label="Circle of fifths. Click a key, or use the left and right arrow keys to turn the wheel.">
   <div class="wheel" id="wheel"><div class="ring2"></div></div>
   <div class="hub"><div class="hk" id="hk">C</div><div class="hm" id="hm">major · —</div></div>
   <div class="ptr"></div>
@@ -804,7 +798,6 @@ body::after{
 </div>
 
 <div class="viewopts">
-  <label class="sw"><input type="checkbox" id="sev"> Sevenths</label>
   <label class="sw"><input type="checkbox" id="court" checked> Courtesy accidentals</label>
 </div>
 
@@ -843,6 +836,11 @@ body::after{
 </div>
 </aside>
 
+</div>
+<div class="mock-switch" role="group" aria-label="Mock: mode controls">
+  <span>Mock · mode controls</span>
+  <button type="button" data-controls="chips" aria-pressed="true">A · Chips</button>
+  <button type="button" data-controls="chord" aria-pressed="false">B · Chord pick</button>
 </div>
 </section>
 <script>
@@ -2252,7 +2250,8 @@ function spanOf(f){
 }
 
 const RC=150, RR=106, NW=68, NH=36, STEPA=360/7;
-function chordRing(n,f,mi,sev,sel){
+/* mi anchors the ring (outer mode); mi2 is the inner ring's mode, marked too */
+function chordRing(n,f,mi,sev,sel,mi2){
   const svg=el('svg',{viewBox:'0 0 300 300','class':'ring',role:'img'});
   const SPAN=spanOf(f);
   const tonicK=SPAN.indexOf(mi);
@@ -2293,8 +2292,10 @@ function chordRing(n,f,mi,sev,sel){
 
   SPAN.forEach((di,k)=>{
     const p=pt(ang(k),RR);
-    const g=el('g',{'class':`cnode${di===mi?' tonic':''}${di===sel?' sel':''}`});
+    const g=el('g',{'class':`cnode${di===mi?' tonic':''}${di===mi2?' tonic2':''}${di===sel?' sel':''}`});
     g.appendChild(el('rect',{x:p[0]-NW/2,y:p[1]-NH/2,width:NW,height:NH,rx:6}));
+    /* both modes share this chord: the outer keeps the box, the inner rings it */
+    if(di===mi && di===mi2) g.appendChild(el('rect',{'class':'halo',x:p[0]-NW/2-3.5,y:p[1]-NH/2-3.5,width:NW+7,height:NH+7,rx:9}));
     const t1=el('text',{x:p[0],y:p[1]-3,'text-anchor':'middle','class':'cn'});
     t1.textContent=chordName(n,f,di,sev);
     const t2=el('text',{x:p[0],y:p[1]+11,'text-anchor':'middle','class':'cnum'});
@@ -2303,7 +2304,7 @@ function chordRing(n,f,mi,sev,sel){
     if(t1.textContent.length>6) t1.setAttribute('font-size',t1.textContent.length>8?'9.5':'11');
     if(t2.textContent.length>6) t2.setAttribute('font-size','8.5');
     g.appendChild(t1); g.appendChild(t2);
-    g.addEventListener('click',()=>{selChord=di;renderChords()});
+    g.addEventListener('click',()=>pickChord(di));
     svg.appendChild(g);
   });
   const ttl=el('title',{});
@@ -2324,28 +2325,75 @@ const memory=FAMILIES.map(f=>f.home.slice());
 let mo=memory[fam][0], mi=memory[fam][1];
 let selChord=null, sevenths=false;
 
+/* Mode controls. The scale family is a row of chips; each ring's mode is
+   either a row of chips (variant A) or set by tapping a chord on the ring
+   (variant B) — see pickChord. Every path lands in the three setters. */
+const famBtns=$('famBtns');
 FAMILIES.forEach((f,j)=>{
-  const o=document.createElement('option');
-  o.value=j; o.textContent=f.label;
-  $('mf').appendChild(o);
+  const b=document.createElement('button');
+  b.type='button'; b.className='chip'; b.textContent=f.label.replace(' scale','');
+  b.addEventListener('click',()=>setFam(j));
+  famBtns.appendChild(b);
 });
-$('mf').value=fam;
 
 function fillModes(){
   const f=FAMILIES[fam];
-  ['mo','mi'].forEach((id)=>{
-    const sel=$(id);
-    sel.replaceChildren();
+  [['chipsO','o',setOuter],['chipsI','i',setInner]].forEach(([id,cls,set])=>{
+    const host=$(id);
+    host.replaceChildren();
     f.modes.forEach((m,j)=>{
-      const o=document.createElement('option');
-      o.value=j; o.textContent=m.note ? `${m.name} — ${m.note}` : m.name;
-      sel.appendChild(o);
+      const b=document.createElement('button');
+      b.type='button'; b.className='chip '+cls; b.textContent=m.name;
+      if(m.note) b.title=m.note;
+      b.addEventListener('click',()=>set(j));
+      host.appendChild(b);
     });
   });
-  $('mo').value=mo; $('mi').value=mi;
+  syncChips();
 }
-fillModes();
+function syncChips(){
+  [...famBtns.children].forEach((b,j)=>b.setAttribute('aria-pressed',String(j===fam)));
+  [['chipsO',mo],['chipsI',mi]].forEach(([id,cur])=>{
+    [...$(id).children].forEach((b,j)=>b.setAttribute('aria-pressed',String(j===cur)));
+  });
+}
+function setFam(j){
+  if(j===fam) return;
+  fam=j; mo=memory[fam][0]; mi=memory[fam][1];
+  selChord=null; fillModes(); label(); place();
+}
+function setOuter(j){ mo=memory[fam][0]=j; selChord=null; syncChips(); label(); place() }
+function setInner(j){ mi=memory[fam][1]=j; syncChips(); label(); place() }
 
+/* TEMP — which control variant is showing, and which ring a chord tap sets
+   in variant B. Both go once the experiment picks a winner. */
+let controls='chips', assign='outer';
+function renderHint(){
+  $('chordsHint').textContent = controls==='chord'
+    ? `Tap a chord to set the ${assign} ring's mode. Its scale and stack of thirds read out on the notation panel.`
+    : 'Pick a chord here — its mode and stack of thirds read out on the notation panel.';
+}
+function setAssign(a){
+  assign=a;
+  $('asgO').setAttribute('aria-pressed',String(a==='outer'));
+  $('asgI').setAttribute('aria-pressed',String(a==='inner'));
+  renderHint();
+}
+function setControls(c,write){
+  controls=c; document.body.dataset.controls=c;
+  document.querySelectorAll('.mock-switch button').forEach((b)=>b.setAttribute('aria-pressed',String(b.dataset.controls===c)));
+  renderHint();
+  if(write){
+    try{ const u=new URL(location.href); u.searchParams.set('controls',c); history.replaceState(null,'',u) }
+    catch(err){ /* a null-origin file:// page refuses; the switch still works */ }
+  }
+}
+function pickChord(di){
+  if(controls==='chord'){
+    if(assign==='outer') mo=memory[fam][0]=di; else mi=memory[fam][1]=di;
+    selChord=di; syncChips(); label(); place();
+  } else { selChord=di; renderChords() }
+}
 /* Each label needs a world rotation of zero, i.e. -(slotAngle + wheelAngle).
    The slot part is constant, so it is baked into a static wrapper at build
    time; that leaves -wheelAngle, which is identical for all 24 labels and so
@@ -2427,7 +2475,6 @@ function place(){
      rather than the signature's major once harmonic minor is selected */
   $('hk').textContent=fname(p.n+f.deg[0]);
   $('hm').textContent=`${f.short} · ${tag(p.n)}`;
-  $('posLabel').textContent=`Position ${String(idx).padStart(2,'0')}`;
   $('n1').textContent=`${fname(p.n+f.deg[mo])} ${f.modes[mo].name}`;
   $('n2').textContent=`${fname(p.n+f.deg[mi])} ${f.modes[mi].name}`;
   renderChords();
@@ -2449,7 +2496,7 @@ const SHIFT_MIN=-2, SHIFT_MAX=2;
 function renderChords(){
   const p=POS[((step%12)+12)%12], f=FAMILIES[fam];
   if(selChord===null||selChord<0||selChord>6) selChord=mo;
-  $('ring').replaceChildren(chordRing(p.n,f,mo,sevenths,selChord));
+  $('ring').replaceChildren(chordRing(p.n,f,mo,sevenths,selChord,mi));
   renderDetail();
   if(!$('panelS').classList.contains('off')) renderSheet();
 }
@@ -2509,14 +2556,6 @@ function reflow(){
 
 function goTo(j){ step += ((j-(((step%12)+12)%12))+18)%12-6; place(); }
 
-$('cw').addEventListener('click',function(){step++;place()});
-$('ccw').addEventListener('click',function(){step--;place()});
-$('mf').addEventListener('change',function(){
-  fam=+this.value;
-  mo=memory[fam][0]; mi=memory[fam][1];
-  selChord=null; fillModes(); label(); place();
-});
-$('mo').addEventListener('change',function(){mo=memory[fam][0]=+this.value;selChord=null;label();place()});
 $('sev').addEventListener('change',function(){sevenths=this.checked;renderChords()});
 $('court').addEventListener('change',function(){courtesyAcc=this.checked;reflow()});
 $('tabF').addEventListener('click',()=>showView('focus'));
@@ -2529,7 +2568,6 @@ $('figArpB').addEventListener('click',function(){
 });
 $('octDn').addEventListener('click',function(){ if(octShift>SHIFT_MIN){ octShift--; reflow() } });
 $('octUp').addEventListener('click',function(){ if(octShift<SHIFT_MAX){ octShift++; reflow() } });
-$('mi').addEventListener('change',function(){mi=memory[fam][1]=+this.value;label();place()});
 
 /* One snapshot of the current view — family, both rings, wheel position — for
    the shell to park in its hash slot. It is overwritten in place on every
@@ -2543,11 +2581,26 @@ window.setCircleView=(str)=>{
   if(v[0]<0 || v[0]>=FAMILIES.length) return;
   if(v[1]<0 || v[1]>6 || v[2]<0 || v[2]>6 || v[3]<0 || v[3]>11) return;
   fam=v[0]; mo=memory[fam][0]=v[1]; mi=memory[fam][1]=v[2]; step=v[3];
-  selChord=null; $('mf').value=fam;
+  selChord=null;
   fillModes(); label(); place();
 };
 
-label(); place();
+/* the arrow buttons are gone: click a key, or turn the wheel from the keyboard.
+   Only when nothing else holds focus, so tab bars and chips keep their arrows. */
+const stageEl=document.querySelector('#circleApp .stage');
+document.addEventListener('keydown',(e)=>{
+  if(e.key!=='ArrowLeft' && e.key!=='ArrowRight') return;
+  if($('circleApp').hidden || (e.target!==document.body && e.target!==stageEl)) return;
+  e.preventDefault(); step += e.key==='ArrowRight' ? 1 : -1; place();
+});
+$('asgO').addEventListener('click',()=>setAssign('outer'));
+$('asgI').addEventListener('click',()=>setAssign('inner'));
+document.querySelectorAll('.mock-switch button').forEach((b)=>{
+  b.addEventListener('click',()=>setControls(b.dataset.controls,true));
+});
+setControls(new URLSearchParams(location.search).get('controls')==='chord' ? 'chord' : 'chips',false);
+
+fillModes(); label(); place();
 })();
 </script>
 <script>
