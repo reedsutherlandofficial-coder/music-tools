@@ -870,6 +870,8 @@ body::after{
         <select id="pPage"><option value="auto">Match the neck</option><option value="landscape">Landscape</option><option value="portrait">Portrait</option></select></div>
       <div class="pfield"><label for="pColors">Colours</label>
         <select id="pColors"><option value="light">Light, for paper</option><option value="theme">Match the app theme</option></select></div>
+      <div class="pfield"><label for="pPng">PNG</label>
+        <select id="pPng"><option value="clear">Clear background</option><option value="solid">Solid background</option></select></div>
       <div class="pfield"><label for="pCols">Per row</label>
         <select id="pCols"><option value="auto">Automatic</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
       <div class="pfield"><label for="pMargin">Margins</label>
@@ -882,7 +884,7 @@ body::after{
           <button class="small" id="sheetSvgBtn">Sheet as SVG</button>
         </div>
         <p class="vmsg" id="printMsg" role="status" aria-live="polite"></p>
-        <p class="pnote">To save a PDF, choose "Save as PDF" as the destination in your browser's print window. Each diagram also has its own PNG, SVG and Copy image buttons underneath it. The colour choice above applies to all of them.</p>
+        <p class="pnote">To save a PDF, choose "Save as PDF" as the destination in your browser's print window. Each diagram also has its own PNG, SVG and Copy image buttons underneath it. The colour and PNG background choices above apply to all of them.</p>
       </div>
     </div>
     <div class="ppreview" id="printPreview" aria-label="Page preview"></div>
@@ -1808,7 +1810,7 @@ function diagramGeometry(state, vertical, t){
   };
 }
 
-function drawDiagram(ctx, state, { t, geo }){
+function drawDiagram(ctx, state, { t, geo, transparent }){
   const { vertical, numStrings, primaryExtent, secondaryExtent, primaryOrigin, secondaryOrigin, width, height, oy } = geo;
 
   // Maps a (primary, secondary) offset pair — primary = along the neck's
@@ -1828,9 +1830,11 @@ function drawDiagram(ctx, state, { t, geo }){
     return idx * STRING_H;
   }
 
-  // background
-  ctx.fillStyle = t.bg;
-  ctx.fillRect(0, 0, width, height);
+  // background: skipped for a clear PNG, so only the neck itself is opaque
+  if (!transparent){
+    ctx.fillStyle = t.bg;
+    ctx.fillRect(0, 0, width, height);
+  }
 
   // title (top-left, unrotated, regardless of neck orientation)
   ctx.fillStyle = t.titleInk;
@@ -2508,6 +2512,7 @@ function sanitizePrefs(raw){
     paper: typeof r.paper === 'string' && own(PAPER, r.paper) ? r.paper : 'letter',
     page: ['auto', 'landscape', 'portrait'].includes(r.page) ? r.page : 'auto',
     colors: r.colors === 'theme' ? 'theme' : 'light',
+    png: r.png === 'solid' ? 'solid' : 'clear',   // a PNG's ground: clear leaves only the neck opaque
     cols: [1, 2, 3, 4].includes(r.cols) ? r.cols : 'auto',
     margin: [0.25, 0.5, 0.75].includes(r.margin) ? r.margin : 0.5
   };
@@ -2599,6 +2604,7 @@ function openPrint(){
   document.getElementById('pPaper').value = prefs.paper;
   document.getElementById('pPage').value = prefs.page;
   document.getElementById('pColors').value = prefs.colors;
+  document.getElementById('pPng').value = prefs.png;
   document.getElementById('pCols').value = String(prefs.cols);
   document.getElementById('pMargin').value = String(prefs.margin);
   sayPrint('');
@@ -2607,7 +2613,7 @@ function openPrint(){
 }
 document.getElementById('printOpenBtn').addEventListener('click', openPrint);
 printDlg.addEventListener('click', (e) => { if (e.target === printDlg) printDlg.close(); });
-[['pPaper', 'paper', String], ['pPage', 'page', String], ['pColors', 'colors', String],
+[['pPaper', 'paper', String], ['pPage', 'page', String], ['pColors', 'colors', String], ['pPng', 'png', String],
  ['pCols', 'cols', v => v === 'auto' ? 'auto' : +v], ['pMargin', 'margin', Number]].forEach(([id, key, cast]) => {
   document.getElementById(id).addEventListener('change', (e) => {
     prefs = sanitizePrefs({ ...prefs, [key]: cast(e.target.value) });
@@ -2638,7 +2644,7 @@ function canvasOfDrawing(d, k){
   c.width = Math.ceil(d.geo.width * k); c.height = Math.ceil(d.geo.height * k);
   const ctx = c.getContext('2d');
   ctx.setTransform(k, 0, 0, k, 0, 0);
-  drawDiagram(ctx, d.state, d);
+  drawDiagram(ctx, d.state, { ...d, transparent: prefs.png === 'clear' });
   return c;
 }
 function flash(diagram, text, bad){
@@ -2681,11 +2687,12 @@ async function exportSheetPNG(){
   c.width = Math.ceil(L.W * k); c.height = Math.ceil(L.H * k);
   const ctx = c.getContext('2d');
   ctx.setTransform(k, 0, 0, k, 0, 0);
-  ctx.fillStyle = L.palette.bg; ctx.fillRect(0, 0, L.W, L.H);
+  const clear = prefs.png === 'clear';
+  if (!clear){ ctx.fillStyle = L.palette.bg; ctx.fillRect(0, 0, L.W, L.H); }
   L.items.forEach(it => {
     const d = L.drawings[it.idx];
     ctx.save(); ctx.translate(it.x, it.y); ctx.scale(it.w / d.geo.width, it.w / d.geo.width);
-    drawDiagram(ctx, d.state, d);
+    drawDiagram(ctx, d.state, { ...d, transparent: clear });
     ctx.restore();
   });
   download(await blobOf(c), 'fretboard-sheet.png');
