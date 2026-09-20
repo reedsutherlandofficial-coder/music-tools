@@ -149,23 +149,6 @@ body::after{
 .tab.on{background:var(--red);color:var(--on-red)}
 .tab:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 
-/* ---- key explorer ---------------------------------------------------------
-   Circle of fifths sits centered between two fixed companion panels
-   (diatonic chords, notation) that read out whatever the dial is set to.
-   Unlike the coverflow experiment this replaced, nothing here rotates or
-   swaps position — there's only one focal tool, so a plain three-column
-   layout is all that's needed; the companions just needed to stop being
-   cards that could get scrolled out of view. */
-.key-explorer{
-  display:flex;
-  align-items:flex-start;
-  justify-content:center;
-  flex-wrap:wrap;
-  gap:1.75rem;
-  max-width:1400px;
-  margin:0 auto;
-  padding:2.5rem clamp(1rem,3vw,2.5rem) 3rem;
-}
 /* ---- glass cards -----------------------------------------------------
    Frosted panel + a soft glow (drawn from the app's own accent colors)
    diffusing behind it, per the "ember" direction chosen from a Pinterest
@@ -174,7 +157,7 @@ body::after{
    corners by its overflow — that's why every glass card needs
    position:relative (a paint anchor for ::before) and a clipped overflow
    axis, not just a background color. */
-.side-panel, .wheel-stage, #fretApp .diagram-card{
+#fretApp .diagram-card{
   position:relative;
   background:color-mix(in srgb, var(--paper-raised) 46%, transparent);
   backdrop-filter:blur(22px) saturate(1.4);
@@ -183,32 +166,13 @@ body::after{
   border-radius:var(--radius-lg);
   box-shadow:0 20px 50px -20px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.06);
 }
-.side-panel::before, .wheel-stage::before, #fretApp .diagram-card::before{
+#fretApp .diagram-card::before{
   content:'';position:absolute;inset:-60%;z-index:-1;
   background:
     radial-gradient(circle at 26% 20%, color-mix(in srgb, var(--red) 70%, transparent) 0%, transparent 55%),
     radial-gradient(circle at 78% 78%, color-mix(in srgb, var(--teal) 55%, transparent) 0%, transparent 55%);
   filter:blur(50px);
   opacity:.55;
-}
-.side-panel{
-  flex:0 0 340px;
-  padding:1.75rem;
-  max-height:calc(100vh - 140px);
-  overflow-x:hidden;
-  overflow-y:auto;
-}
-.wheel-stage{
-  flex:1 1 460px;
-  max-width:560px;
-  --dial:min(100%,56vh,420px);
-  overflow:hidden;
-  padding:2rem;
-}
-@media (max-width:900px){
-  .key-explorer{flex-direction:column;align-items:stretch}
-  .side-panel{flex-basis:auto;max-height:none}
-  .wheel-stage{flex-basis:auto;max-width:none;order:-1}
 }
 @media (max-width:720px){
   .shell-inner{padding:8px 1.25rem;gap:10px;flex-wrap:wrap}
@@ -438,26 +402,29 @@ body::after{
 
 
 /* ============ CIRCLE OF FIFTHS ============ */
-/* rotated .slot squares have bounding boxes wider than the dial they sit in;
-   nothing visible lies out there, so clip the axis rather than scroll it */
 #circleApp{
-  background:var(--paper);
   color:var(--ink);
   font-family:var(--font-body);
 }
-#circleApp header{margin-bottom:1.75rem}
-#circleApp .eyebrow{
-  font-family:var(--font-mono);
-  font-size:11px;
-  letter-spacing:.12em;
-  text-transform:uppercase;
-  color:var(--ink-mute);
-  display:flex;
-  justify-content:space-between;
-  border-bottom:1px solid var(--line);
-  padding-bottom:10px;
-  margin-bottom:10px;
+/* One continuous page, no cards: a header band, the two wheels side by side,
+   then the notation across the full width. The body's own gradient is the
+   only surface; the one deliberate glow lives in the wheel's hub. */
+#circleApp .explorer{max-width:1180px;margin:0 auto;padding:2.25rem 1.75rem 4rem}
+#circleApp .ex-head{display:flex;align-items:center;justify-content:space-between;gap:1rem 2rem;flex-wrap:wrap}
+#circleApp .ex-wheels{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,400px);
+  gap:2rem 3rem;align-items:center;margin-top:2rem;
 }
+/* the dial is measured against the stage's own width (cqw) so every label
+   size below can be a plain fraction of it; a bare percentage in a font-size
+   calc would resolve against the parent's font size instead */
+#circleApp .wheel-stage{container-type:inline-size;--dial:min(100cqw,560px,66vh);width:100%;min-width:0;padding-top:14px;
+  /* rotated .slot squares have bounding boxes wider than the dial they sit in;
+     nothing visible lies out there, so clip the axis rather than scroll it */
+  overflow-x:clip}
+#circleApp .chord-zone{width:100%;max-width:400px;justify-self:end}
+#circleApp .notation-zone{margin-top:3.5rem;padding-top:1.75rem;border-top:1px solid var(--line-strong)}
+#circleApp .nhead{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem}
 #circleApp h1{
   font-family:var(--font-display);
   font-weight:700;
@@ -465,11 +432,10 @@ body::after{
   letter-spacing:-.01em;
   margin:0;
 }
-#circleApp .modes{display:flex;flex-direction:column;gap:10px;margin-bottom:1.25rem}
-#circleApp .mrow{display:grid;grid-template-columns:52px 1fr;align-items:start;gap:10px}
+#circleApp .mrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 #circleApp .mlabel{
   font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
-  color:var(--ink-soft);text-align:right;padding-top:9px;
+  color:var(--ink-soft);
 }
 #circleApp .chips{display:flex;flex-wrap:wrap;gap:6px}
 #circleApp .chip{
@@ -496,7 +462,7 @@ body::after{
 #circleApp .assign .chip{flex:1}
 /* the two modes on show, centred over the wheel. Each tile wears its ring's
    tint; the name is the largest text on the card after the title. */
-#circleApp .rings{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:0 0 1.25rem}
+#circleApp .rings{display:grid;grid-template-columns:1fr 1fr;gap:14px 1.75rem;width:var(--dial);margin:0 auto 1.5rem}
 #circleApp .rtile{
   display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;
   padding-top:9px;border-top:2px solid var(--red);
@@ -577,12 +543,12 @@ body::after{
   display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
 }
 #circleApp .hub .hk{
-  font-family:var(--font-display);font-weight:700;font-size:max(26px,calc(var(--dial)*.11));line-height:1;
+  font-family:var(--font-display);font-weight:700;font-size:max(26px,calc(var(--dial)*.09));line-height:1;
   color:var(--ink);
   text-shadow:0 0 12px color-mix(in srgb, var(--red-ink) 85%, transparent),
               0 0 32px color-mix(in srgb, var(--red) 65%, transparent);
 }
-#circleApp .hub .hm{font-family:var(--font-mono);font-size:max(9px,calc(var(--dial)*.029));color:var(--ink-soft);margin-top:5px;letter-spacing:.04em}
+#circleApp .hub .hm{font-family:var(--font-mono);font-size:max(10px,calc(var(--dial)*.022));color:var(--ink-soft);margin-top:5px;letter-spacing:.04em}
 #circleApp .ptr{
   position:absolute;left:50%;top:-8px;margin-left:-7px;
   width:0;height:0;
@@ -590,9 +556,9 @@ body::after{
   border-right:7px solid transparent;
   border-top:12px solid var(--red);
 }
-#circleApp .seg{display:flex;gap:0;border-radius:var(--radius);overflow:hidden;margin:1.75rem 0 1rem;border:1px solid var(--line-strong)}
-#circleApp .seg-b{flex:1;height:38px;border:0;background:transparent;color:var(--ink-soft);
-  font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+#circleApp .seg{display:inline-flex;gap:0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--line-strong)}
+#circleApp .seg-b{height:38px;padding:0 26px;border:0;background:transparent;color:var(--ink-soft);
+  font-family:var(--font-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
 #circleApp .seg-b+.seg-b{border-left:1px solid var(--line-strong)}
 #circleApp .seg-b.on{background:var(--paper-raised);color:var(--ink)}
 #circleApp .panel.off{display:none}
@@ -601,7 +567,7 @@ body::after{
 #circleApp .sw{display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11px;
   letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);cursor:pointer}
 #circleApp .sw input{width:14px;height:14px;accent-color:var(--red);cursor:pointer}
-#circleApp .ring{display:block;width:100%;max-width:320px;margin:0 auto;height:auto}
+#circleApp .ring{display:block;width:100%;max-width:400px;margin:0 auto;height:auto}
 #circleApp .rline{fill:var(--line-strong);stroke:none}
 #circleApp .rseam{stroke:var(--ink-mute);fill:none;stroke-width:.8;stroke-dasharray:3 3}
 #circleApp .cnode rect{fill:var(--paper);stroke:var(--line-strong);stroke-width:.8;cursor:pointer}
@@ -616,7 +582,7 @@ body::after{
 #circleApp .tones{font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);text-align:center;
   border-top:1px solid var(--line);padding-top:12px;margin-top:6px;line-height:1.7}
 #circleApp .role{
-  font-family:var(--font-mono);font-size:10px;
+  font-family:var(--font-mono);font-size:11px;
   letter-spacing:.14em;text-transform:uppercase;color:var(--ink-mute);
 }
 #circleApp .staffline, #circleApp .barline{stroke:var(--ink-soft);stroke-width:.8}
@@ -646,7 +612,7 @@ body::after{
 #circleApp .keyline .enh{border:0;margin:0;padding:0;line-height:1.6}
 #circleApp .detail{margin-top:0}
 #circleApp .chords-hint{
-  font-family:var(--font-mono);font-size:10px;color:var(--ink-mute);
+  font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);
   line-height:1.5;margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line);
 }
 #circleApp .dhead{
@@ -654,46 +620,45 @@ body::after{
   border-bottom:1px solid var(--line-strong);padding-bottom:6px;
 }
 #circleApp .dname{
-  font-family:var(--font-display);font-weight:700;font-size:26px;color:var(--ink);line-height:1;
+  font-family:var(--font-display);font-weight:700;font-size:36px;color:var(--ink);line-height:1;
 }
 #circleApp .dname.ro{color:var(--red-ink);text-shadow:0 0 8px color-mix(in srgb, var(--red) 55%, transparent)}
 #circleApp .dname.ri{color:var(--teal);text-shadow:0 0 8px color-mix(in srgb, var(--teal) 55%, transparent)}
-#circleApp .dnum{font-family:var(--font-mono);font-size:14px;color:var(--ink-soft)}
+#circleApp .dnum{font-family:var(--font-mono);font-size:18px;color:var(--ink-soft)}
 #circleApp .dsub{
   display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
-  font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);
-  padding:7px 0 0;line-height:1.6;
+  font-family:var(--font-mono);font-size:14px;color:var(--ink-soft);
+  padding:8px 0 0;line-height:1.6;
 }
 #circleApp .dtones{color:var(--ink-soft)}
-#circleApp .fig{margin-top:1.1rem}
+#circleApp .figs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.5rem 3rem;margin-top:1.5rem}
 #circleApp .figbar{
   display:flex;justify-content:space-between;align-items:baseline;
   border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:4px;
 }
-#circleApp .rng{font-family:var(--font-mono);font-size:10px;color:var(--ink-mute);letter-spacing:.03em}
-#circleApp .gstaff{display:block;width:100%;max-width:430px;height:auto;margin:0 auto}
+#circleApp .rng{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);letter-spacing:.03em}
+#circleApp .gstaff{display:block;width:100%;height:auto}
 #circleApp .ledger{stroke:var(--ink-soft);stroke-width:.8}
 #circleApp .bracket{stroke:var(--ink);stroke-width:1.4;fill:none;stroke-linejoin:miter}
 #circleApp .clef-hook{stroke:var(--ink);stroke-width:2;fill:none;stroke-linecap:round}
 #circleApp .clef-dot{fill:var(--ink)}
 #circleApp .head.root{stroke-width:2.6}
-#circleApp .deg{font-family:var(--font-mono);font-size:9.5px;fill:var(--ink-mute)}
+#circleApp .nm{font-family:var(--font-display);font-weight:700;font-size:12.5px;fill:var(--ink)}
+#circleApp .nm.ro{fill:var(--red-ink)}
+#circleApp .nm.ri{fill:var(--teal)}
+#circleApp .deg{font-family:var(--font-mono);font-size:10px;fill:var(--ink-soft)}
 #circleApp .deg.rootdeg{fill:var(--ink)}
 #circleApp .deg.ro{fill:var(--red-ink)}
 #circleApp .deg.ri{fill:var(--teal)}
 /* reminders sit back from the notes they annotate */
 #circleApp .acc-court{stroke:var(--ink-mute)}
 #circleApp .paren{stroke:var(--ink-mute);stroke-width:.9;fill:none;stroke-linecap:round}
-#circleApp .viewopts{
-  display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;
-  border-bottom:1px solid var(--line);padding-bottom:10px;margin:-.35rem 0 1rem;
-}
 #circleApp .ottline{stroke:var(--ink-soft);stroke-width:.9;fill:none;stroke-dasharray:3 2.5}
 #circleApp .otttext{font-family:var(--font-mono);font-size:10px;fill:var(--ink-soft);font-style:italic}
 
 #circleApp .reg{
   display:flex;align-items:center;justify-content:center;gap:10px;
-  margin-top:1.1rem;border-top:1px solid var(--line);padding-top:12px;
+  margin-top:1.75rem;border-top:1px solid var(--line);padding-top:14px;
 }
 #circleApp .regb{
   height:32px;padding:0 12px;
@@ -713,21 +678,30 @@ body::after{
 }
 #circleApp .segsm button+button{border-left:1px solid var(--line-strong)}
 #circleApp .segsm button.on{background:var(--paper-raised);color:var(--ink)}
+#sheetRows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:3rem}
 #circleApp .srow{
-  display:grid;grid-template-columns:74px minmax(0,1fr);
+  display:grid;grid-template-columns:104px minmax(0,1fr);
   gap:10px;align-items:center;
-  padding:8px 0;border-bottom:1px solid var(--line);
+  padding:10px 8px;border-bottom:1px solid var(--line);
 }
-#circleApp .srow:last-child{border-bottom:0}
 #circleApp .srow.tonic .snum{color:var(--red-ink)}
 #circleApp .srow.tonic2:not(.tonic) .snum{color:var(--teal)}
 #circleApp .srow.tonic2:not(.tonic){background:var(--paper-raised)}
 #circleApp .srow.tonic{background:var(--paper-raised)}
 #circleApp .sgut{padding-left:2px}
-#circleApp .snum{font-family:var(--font-mono);font-size:12px;color:var(--ink)}
-#circleApp .ssym{font-family:var(--font-display);font-weight:500;font-size:15px;color:var(--ink);line-height:1.25}
-#circleApp .smode{font-family:var(--font-mono);font-size:9.5px;color:var(--ink-mute);line-height:1.35;margin-top:2px}
-#circleApp .srow .gstaff{max-width:none}
+#circleApp .snum{font-family:var(--font-mono);font-size:14px;color:var(--ink)}
+#circleApp .ssym{font-family:var(--font-display);font-weight:500;font-size:18px;color:var(--ink);line-height:1.25}
+#circleApp .smode{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);line-height:1.35;margin-top:2px}
+@media (max-width:1000px){
+  #circleApp .ex-wheels{grid-template-columns:1fr}
+  #circleApp .chord-zone{justify-self:center}
+  #circleApp .figs, #sheetRows{grid-template-columns:1fr}
+}
+@media (max-width:640px){
+  #circleApp .explorer{padding:1.25rem 1rem 3rem}
+  #circleApp .rings{gap:10px 1rem}
+  #circleApp .rname{font-size:17px}
+}
 </style>
 </head>
 <body data-tab="fretboard">
@@ -764,90 +738,87 @@ body::after{
 </section>
 
 <section class="app-panel" id="circleApp" role="tabpanel" aria-labelledby="tab-circle" hidden>
-<div class="key-explorer">
+<div class="explorer">
 
-<aside class="side-panel" id="chordsCard">
-  <div class="chead">
-    <span class="role">Diatonic chords</span>
-    <label class="sw"><input type="checkbox" id="sev"> Sevenths</label>
-  </div>
-  <div class="assign" role="group" aria-label="Which ring a tapped chord sets">
-    <button type="button" class="chip o" id="asgO" aria-pressed="true">Outer ring</button>
-    <button type="button" class="chip i" id="asgI" aria-pressed="false">Inner ring</button>
-  </div>
-  <div id="ring"></div>
-  <p class="chords-hint" id="chordsHint"></p>
-</aside>
-
-<div class="wheel-stage" id="wheelCard">
-<header>
+<header class="ex-head">
   <h1>Circle of fifths</h1>
+  <div class="mrow"><span class="mlabel">Scale</span><div class="chips" id="famBtns" role="group" aria-label="Scale family"></div></div>
 </header>
 
-<div class="modes">
-  <div class="mrow"><span class="mlabel">Scale</span><div class="chips" id="famBtns" role="group" aria-label="Scale family"></div></div>
-</div>
-
-<div class="rings" aria-live="polite">
-  <div class="rtile o"><span class="role">Outer ring</span><span class="rname" id="n1"></span><span class="ralias" id="n1n"></span></div>
-  <div class="rtile i"><span class="role">Inner ring</span><span class="rname" id="n2"></span><span class="ralias" id="n2n"></span></div>
-</div>
-
-<div class="stage" tabindex="0" role="group" aria-label="Circle of fifths. Click a key, or use the left and right arrow keys to turn the wheel.">
-  <div class="wheel" id="wheel"><div class="ring2"></div></div>
-  <div class="hub"><div class="hk" id="hk">C</div><div class="hm" id="hm">major · —</div></div>
-  <div class="ptr"></div>
-</div>
-
-<div class="keyline">
-  <div class="enh" id="enh"></div>
-</div>
-</div>
-
-<aside class="side-panel" id="notationCard">
-<div class="seg">
-  <button class="seg-b on" id="tabF">Focus</button>
-  <button class="seg-b" id="tabS">Sheet</button>
-</div>
-
-<div class="viewopts">
-  <label class="sw"><input type="checkbox" id="court" checked> Courtesy accidentals</label>
-</div>
-
-<div class="panel" id="panelF">
-  <div class="detail">
-    <div class="dhead">
-      <div class="dname" id="dName"></div>
-      <div class="dnum" id="dNum"></div>
+<div class="ex-wheels">
+  <div class="wheel-stage" id="wheelCard">
+    <div class="rings" aria-live="polite">
+      <div class="rtile o"><span class="role">Outer ring</span><span class="rname" id="n1"></span><span class="ralias" id="n1n"></span></div>
+      <div class="rtile i"><span class="role">Inner ring</span><span class="rname" id="n2"></span><span class="ralias" id="n2n"></span></div>
     </div>
-    <div class="dsub"><span id="dMode"></span><span class="dtones" id="tones"></span></div>
-    <div class="fig">
-      <div class="figbar"><span class="role">Scale in steps</span><span class="rng" id="rngScale"></span></div>
-      <div id="figScale"></div>
+
+    <div class="stage" tabindex="0" role="group" aria-label="Circle of fifths. Click a key, or use the left and right arrow keys to turn the wheel.">
+      <div class="wheel" id="wheel"><div class="ring2"></div></div>
+      <div class="hub"><div class="hk" id="hk">C</div><div class="hm" id="hm">major · —</div></div>
+      <div class="ptr"></div>
     </div>
-    <div class="fig">
-      <div class="figbar"><span class="role">Arpeggio in thirds</span><span class="rng" id="rngArp"></span></div>
-      <div id="figArp"></div>
+    <div class="keyline"><div class="enh" id="enh"></div></div>
+  </div>
+
+  <aside class="chord-zone" id="chordsCard">
+    <div class="chead">
+      <span class="role">Diatonic chords</span>
+      <label class="sw"><input type="checkbox" id="sev"> Sevenths</label>
     </div>
-    <div class="reg">
-      <button class="regb" id="octDn" aria-label="Move the figures down an octave">Octave −</button>
-      <span class="regr" id="octRead"></span>
-      <button class="regb" id="octUp" aria-label="Move the figures up an octave">Octave +</button>
+    <div class="assign" role="group" aria-label="Which ring a tapped chord sets">
+      <button type="button" class="chip o" id="asgO" aria-pressed="true">Outer ring</button>
+      <button type="button" class="chip i" id="asgI" aria-pressed="false">Inner ring</button>
+    </div>
+    <div id="ring"></div>
+    <p class="chords-hint" id="chordsHint"></p>
+  </aside>
+</div>
+
+<section class="notation-zone" id="notationCard" aria-label="Notation">
+  <div class="nhead">
+    <div class="seg">
+      <button class="seg-b on" id="tabF">Focus</button>
+      <button class="seg-b" id="tabS">Sheet</button>
+    </div>
+    <label class="sw"><input type="checkbox" id="court" checked> Courtesy accidentals</label>
+  </div>
+
+  <div class="panel" id="panelF">
+    <div class="detail">
+      <div class="dhead">
+        <div class="dname" id="dName"></div>
+        <div class="dnum" id="dNum"></div>
+      </div>
+      <div class="dsub"><span id="dMode"></span><span class="dtones" id="tones"></span></div>
+      <div class="figs">
+        <div class="fig">
+          <div class="figbar"><span class="role">Scale in steps</span><span class="rng" id="rngScale"></span></div>
+          <div id="figScale"></div>
+        </div>
+        <div class="fig">
+          <div class="figbar"><span class="role">Arpeggio in thirds</span><span class="rng" id="rngArp"></span></div>
+          <div id="figArp"></div>
+        </div>
+      </div>
+      <div class="reg">
+        <button class="regb" id="octDn" aria-label="Move the figures down an octave">Octave −</button>
+        <span class="regr" id="octRead"></span>
+        <button class="regb" id="octUp" aria-label="Move the figures up an octave">Octave +</button>
+      </div>
     </div>
   </div>
-</div>
 
-<div class="panel off" id="panelS">
-  <div class="chead">
-    <span class="role">All seven degrees</span>
-    <div class="segsm">
-      <button class="on" id="figScl">Scales</button>
-      <button id="figArpB">Arpeggios</button>
+  <div class="panel off" id="panelS">
+    <div class="chead">
+      <span class="role">All seven degrees</span>
+      <div class="segsm">
+        <button class="on" id="figScl">Scales</button>
+        <button id="figArpB">Arpeggios</button>
+      </div>
     </div>
+    <div id="sheetRows"></div>
   </div>
-  <div id="sheetRows"></div>
-</div>
-</aside>
+</section>
 
 </div>
 </section>
@@ -1989,8 +1960,8 @@ function needAcc(n,f){
 const LTR='CDEFGAB';
 const GSP=8, GHS=4;              /* line spacing, and one diatonic step */
 const TY=70, BY=102;             /* treble bottom line E4, bass top line A3 */
-const GW=430, GH=178;
-const OTT_UP=10, OTT_DN=158, LABY=170;  /* reserved lanes: ottava, ottava, captions */
+const GW=430, GH=196;
+const OTT_UP=10, OTT_DN=158, LABN=173, LABY=189;  /* reserved lanes: ottava, ottava, note names, degrees */
 const TREBLE=[30,32,34,36,38];   /* E4 G4 B4 D5 F5 */
 const BASSL=[18,20,22,24,26];    /* G2 B2 D3 F3 A3 */
 const LX=2, CLEFX=10, SIGX=40;
@@ -2166,6 +2137,9 @@ function grandStaff(n,P,altF,M){
     }
     svg.appendChild(el('ellipse',{cx,cy:y,rx:5.2,ry:3.7,
       'class':'head'+(i===0?' root':'')+ring(P.list[i]),transform:`rotate(-20 ${cx} ${y})`}));
+    const nm=el('text',{x:cx,y:LABN,'text-anchor':'middle','class':'nm'+ring(P.list[i])});
+    nm.textContent=fname(P.list[i]);
+    svg.appendChild(nm);
     const t=el('text',{x:cx,y:LABY,'text-anchor':'middle','class':'deg'+(i===0?' rootdeg':'')+ring(P.list[i])});
     t.textContent=P.labs[i];
     svg.appendChild(t);
