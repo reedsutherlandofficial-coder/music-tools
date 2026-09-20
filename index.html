@@ -246,6 +246,12 @@ body::after{
 #fretApp .savestate{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);margin-right:2px}
 #fretApp .savestate.bad{color:var(--red-ink)}
 #fretApp .card-actions{display:flex;gap:4px}
+#fretApp .controls label.chk{display:flex;align-items:center;gap:5px;cursor:pointer}
+#fretApp .controls label.chk input{width:14px;height:14px;margin:0;accent-color:var(--red);cursor:pointer}
+#fretApp .card-footer{display:flex;align-items:center;gap:12px}
+#fretApp .card-footer .exportMsg{flex:1;text-align:right;font-family:var(--font-mono);font-size:12px;color:var(--ink-soft)}
+#fretApp .card-footer .exportMsg.bad{color:var(--red-ink)}
+#fretApp .exportBtns{display:flex;gap:4px}
 
 /* controls ---------------------------------------------------------------- */
 #fretApp button{
@@ -376,6 +382,19 @@ body::after{
 #fretApp .card-top input.title-input:hover,
 #fretApp .card-top input.title-input:focus{border-bottom-color:var(--line-strong);outline:none}
 #fretApp .card-top input.title-input::placeholder{color:var(--ink-mute)}
+/* print pages (also the dialog's preview) and the print stylesheet -------- */
+#printRoot{display:none}
+.pp{position:relative;overflow:hidden;box-sizing:border-box}
+.pi{position:absolute}
+.pi svg{display:block;width:100%;height:100%}
+@media print{
+  html,body{background:#fff !important;margin:0;padding:0;min-height:0}
+  body::before,body::after{display:none !important}
+  body>*:not(#printRoot){display:none !important}
+  #printRoot{display:block !important}
+  .pp{break-after:page;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .pp:last-child{break-after:auto;page-break-after:auto}
+}
 /* versions dialog --------------------------------------------------------- */
 #fretApp dialog.versions{
   width:min(640px,calc(100vw - 2rem));max-height:min(82vh,760px);
@@ -405,6 +424,24 @@ body::after{
 #fretApp .vlist .vmeta{grid-column:1;font-family:var(--font-mono);font-size:12px;color:var(--ink-soft)}
 #fretApp .vlist .vbtns{grid-column:2;grid-row:1 / span 2;display:flex;gap:6px}
 #fretApp .vlist .vempty{display:block;padding:14px 0;color:var(--ink-soft);font-size:13px}
+#fretApp dialog.printdlg{width:min(1100px,calc(100vw - 2rem))}
+#fretApp .pbody{display:grid;grid-template-columns:280px minmax(0,1fr);gap:20px;padding:16px 20px 20px;min-height:0;overflow:auto}
+#fretApp .popts{display:flex;flex-direction:column;gap:12px}
+#fretApp .popts > *, #fretApp .pactions > *{flex-shrink:0}   /* a squeezed column must scroll, not crush its buttons */
+#fretApp .pfield{display:grid;grid-template-columns:78px 1fr;align-items:center;gap:10px}
+#fretApp .pfield label{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+#fretApp .pfield select{width:100%;height:34px}
+#fretApp .pinfo{margin:2px 0 0;font-family:var(--font-mono);font-size:12px;line-height:1.5;color:var(--ink-soft)}
+#fretApp .pinfo.warn{color:var(--red-ink)}
+#fretApp .pactions{display:flex;flex-direction:column;gap:8px}
+#fretApp .pactions .prow{display:flex;gap:8px}
+#fretApp .pactions .prow button{flex:1}
+#fretApp .pnote{margin:4px 0 0;font-size:12px;line-height:1.5;color:var(--ink-soft)}
+#fretApp .ppreview{max-height:calc(min(82vh,760px) - 90px);overflow:auto;padding:14px;background:color-mix(in srgb, var(--paper) 55%, #000);border:1px solid var(--line);border-radius:var(--radius)}
+#fretApp .pv{position:relative;margin:0 auto;box-shadow:0 6px 24px rgba(0,0,0,.55)}
+#fretApp .pv .pp{position:absolute;left:0;top:0;transform-origin:0 0}
+#fretApp .pvcap{text-align:center;font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);margin:8px 0 16px}
+@media (max-width:860px){ #fretApp .pbody{grid-template-columns:1fr} #fretApp .ppreview{max-height:none} }
 #fretApp .vfile{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 #fretApp .vmsg{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);flex:1 1 100%}
 #fretApp .vmsg.bad{color:var(--red-ink)}
@@ -784,7 +821,7 @@ body::after{
   <div class="spacer"></div>
   <span class="savestate" id="saveState" role="status" aria-live="polite"></span>
   <button id="versionsBtn">Versions</button>
-  <button id="exportPngBtn">Export PNG</button>
+  <button id="printOpenBtn">Print &amp; export</button>
 </div>
 
 <div id="diagrams"></div>
@@ -817,6 +854,38 @@ body::after{
       <input type="file" id="importFile" accept="application/json,.json" hidden>
       <span class="vmsg" id="versionMsg" role="status" aria-live="polite"></span>
     </div>
+  </div>
+</dialog>
+
+<dialog class="versions printdlg" id="printDlg" aria-labelledby="printTitle">
+  <form method="dialog" class="vhead">
+    <h2 id="printTitle">Print &amp; export</h2>
+    <button class="small ghost" value="close">Close</button>
+  </form>
+  <div class="pbody">
+    <div class="popts">
+      <div class="pfield"><label for="pPaper">Paper</label>
+        <select id="pPaper"><option value="letter">Letter</option><option value="a4">A4</option></select></div>
+      <div class="pfield"><label for="pPage">Page</label>
+        <select id="pPage"><option value="auto">Match the neck</option><option value="landscape">Landscape</option><option value="portrait">Portrait</option></select></div>
+      <div class="pfield"><label for="pColors">Colours</label>
+        <select id="pColors"><option value="light">Light, for paper</option><option value="theme">Match the app theme</option></select></div>
+      <div class="pfield"><label for="pCols">Per row</label>
+        <select id="pCols"><option value="auto">Automatic</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
+      <div class="pfield"><label for="pMargin">Margins</label>
+        <select id="pMargin"><option value="0.25">Narrow</option><option value="0.5">Normal</option><option value="0.75">Wide</option></select></div>
+      <p class="pinfo" id="printInfo" role="status" aria-live="polite"></p>
+      <div class="pactions">
+        <button class="primary" id="printBtn">Print or save as PDF</button>
+        <div class="prow">
+          <button class="small" id="sheetPngBtn">Sheet as PNG</button>
+          <button class="small" id="sheetSvgBtn">Sheet as SVG</button>
+        </div>
+        <p class="vmsg" id="printMsg" role="status" aria-live="polite"></p>
+        <p class="pnote">To save a PDF, choose "Save as PDF" as the destination in your browser's print window. Each diagram also has its own PNG, SVG and Copy image buttons underneath it. The colour choice above applies to all of them.</p>
+      </div>
+    </div>
+    <div class="ppreview" id="printPreview" aria-label="Page preview"></div>
   </div>
 </dialog>
 </section>
@@ -906,6 +975,8 @@ body::after{
 
 </div>
 </section>
+
+<div id="printRoot" aria-hidden="true"></div>
 <script>
 (function(){
 
@@ -1077,7 +1148,10 @@ function defaultState(){
     octaveMode: false,
     rootPickActive: false,
     shiftSemitones: 0,      // cumulative half-step shift applied to placed markers via Shift control
-    title: ''
+    title: '',
+    titleAuto: true,        // the title follows the generated pattern until someone edits it
+    showLegend: true,       // which colour is which interval
+    showTuning: true        // the tuning, written under the neck
   };
 }
 
@@ -1133,6 +1207,11 @@ function createDiagram(initial, after){
         </select>
       </div>
       <div class="group">
+        <label>Caption</label>
+        <label class="chk"><input type="checkbox" class="legendChk" ${state.showLegend ? 'checked' : ''}> Legend</label>
+        <label class="chk"><input type="checkbox" class="tuningChk" ${state.showTuning ? 'checked' : ''}> Tuning</label>
+      </div>
+      <div class="group">
         <button class="small toggle octaveBtn" title="When on, clicking a note also fills every octave/unison of it">Octave mode</button>
       </div>
       <div class="group">
@@ -1169,6 +1248,12 @@ function createDiagram(initial, after){
     </div>
     <div class="card-footer">
       <span class="hint">Root · <strong class="rootLabel">none</strong></span>
+      <span class="exportMsg" role="status" aria-live="polite"></span>
+      <span class="exportBtns">
+        <button class="small ghost copyImgBtn" title="Copy this diagram as an image">Copy image</button>
+        <button class="small ghost pngBtn" title="Download this diagram as a PNG">PNG</button>
+        <button class="small ghost svgBtn" title="Download this diagram as a vector SVG">SVG</button>
+      </span>
     </div>
   `;
 
@@ -1200,7 +1285,13 @@ function createDiagram(initial, after){
     canvas: card.querySelector('.fretCanvas'),
     rootLabel: card.querySelector('.rootLabel'),
     removeBtn: card.querySelector('.removeBtn'),
-    duplicateBtn: card.querySelector('.duplicateBtn')
+    duplicateBtn: card.querySelector('.duplicateBtn'),
+    legendChk: card.querySelector('.legendChk'),
+    tuningChk: card.querySelector('.tuningChk'),
+    copyImgBtn: card.querySelector('.copyImgBtn'),
+    pngBtn: card.querySelector('.pngBtn'),
+    svgBtn: card.querySelector('.svgBtn'),
+    exportMsg: card.querySelector('.exportMsg')
   };
 
   const diagram = { id, state, el };
@@ -1258,6 +1349,7 @@ function wireEvents(diagram){
 
   el.titleInput.addEventListener('input', () => {
     state.title = el.titleInput.value;
+    state.titleAuto = false;   // once it's yours, generating a pattern leaves it alone
     scheduleRender(diagram);
   });
 
@@ -1338,14 +1430,21 @@ function wireEvents(diagram){
   el.shiftUpBtn.addEventListener('click', () => shiftMarkers(diagram, 1));
 
   el.genScaleBtn.addEventListener('click', () => {
-    generateFromFormula(diagram, SCALES[el.scaleSel.value].intervals, el.keySel.value);
+    const sc = SCALES[el.scaleSel.value];
+    generateFromFormula(diagram, sc.intervals, el.keySel.value, el.keySel.value + ' ' + sc.label);
   });
 
   el.genChordBtn.addEventListener('click', () => {
-    generateFromFormula(diagram, CHORDS[el.chordSel.value].intervals, el.keySel.value);
+    const ch = CHORDS[el.chordSel.value];
+    generateFromFormula(diagram, ch.intervals, el.keySel.value, el.keySel.value + ' ' + ch.label + ' chord');
   });
 
   el.duplicateBtn.addEventListener('click', () => duplicateDiagram(diagram));
+  el.legendChk.addEventListener('change', () => { state.showLegend = el.legendChk.checked; render(diagram); });
+  el.tuningChk.addEventListener('change', () => { state.showTuning = el.tuningChk.checked; render(diagram); });
+  el.pngBtn.addEventListener('click', () => exportDiagramPNG(diagram));
+  el.svgBtn.addEventListener('click', () => exportDiagramSVG(diagram));
+  el.copyImgBtn.addEventListener('click', () => copyDiagramImage(diagram));
   // a picker change alone doesn't redraw, but it is part of what gets saved
   [el.keySel, el.scaleSel, el.chordSel].forEach(sel => sel.addEventListener('change', scheduleCheckpoint));
 
@@ -1381,8 +1480,10 @@ function allPositionsForPC(state, targetPC){
   return result;
 }
 
-function generateFromFormula(diagram, intervals, keyName){
+function generateFromFormula(diagram, intervals, keyName, label){
   const { state } = diagram;
+  // name the diagram after the pattern, until the title has been edited by hand
+  if (label && state.titleAuto){ state.title = label; diagram.el.titleInput.value = label; }
   const rootPC = pc(keyName);
   state.rootPC = rootPC;
   state.notes.clear();
@@ -1555,8 +1656,9 @@ function handleCanvasClick(diagram, evt){
 
   // "Primary" = along the neck's length (frets). "Secondary" = across the
   // strings. Which screen axis each maps to depends on orientation.
-  const primaryRel = (vertical ? clickY : clickX) - primaryOrigin;
-  const secondaryRel = (vertical ? clickX : clickY) - secondaryOrigin;
+  const oy = diagram.oy || 0;   // a wrapped title pushes the neck down
+  const primaryRel = (vertical ? clickY - oy : clickX) - primaryOrigin;
+  const secondaryRel = (vertical ? clickX : clickY - oy) - secondaryOrigin;
 
   const rawIdx = Math.round(secondaryRel / STRING_H);
   if (rawIdx < 0 || rawIdx >= numStrings) return;
@@ -1597,35 +1699,127 @@ function handleCanvasClick(diagram, evt){
   render(diagram);
 }
 
-function render(diagram){
-  scheduleCheckpoint();   // every state change ends in a render; theme repaints dedupe away
-  const { state, el } = diagram;
-  const vertical = pageOrientation === 'portrait';
-  const t = getTheme().canvas;
-  const units = totalFretUnits(state);
-  const numStrings = state.strings.length;
-  const primaryExtent = units * FRET_W;             // length of the neck (along the frets)
-  const secondaryExtent = (numStrings - 1) * STRING_H; // spread of the strings
+// ---- drawing -----------------------------------------------------------------
+// One drawing routine serves the screen, print and every export. It takes any
+// object that speaks the small slice of the Canvas 2D API used here: a real
+// canvas on screen, and SvgContext (below) for print pages and SVG files, which
+// keeps those vector. Geometry lives in diagramGeometry, so none of them can
+// drift apart.
+const INTERVAL_NAMES = ['root','minor 2nd','major 2nd','minor 3rd','major 3rd','perfect 4th','tritone','perfect 5th','minor 6th','major 6th','minor 7th','major 7th'];
 
-  const primaryOrigin = vertical ? V_TOP_PAD : LEFT_PAD;
-  const secondaryOrigin = vertical ? V_LEFT_PAD : TOP_PAD;
+// Paper palette: white ground, ink-friendly neck, and twelve interval colours
+// all dark enough for a white label (>= 5.2:1). Same fifths-ordered hue scheme
+// as the themes. It ignores the app theme on purpose.
+const PRINT_FONT = '"Chivo Mono", "Noto Music", monospace';
+const PRINT_LIGHT = {
+  bg:'#FFFFFF', titleInk:'#111111', titleFont:'700 17px ' + PRINT_FONT,
+  neckGradTop:'#F7F4EC', neckGradBottom:'#EFEADF', inlay:'rgba(0,0,0,0.13)',
+  nutColor:'#222222', fretWire:'rgba(0,0,0,0.38)', string:'rgba(0,0,0,0.62)',
+  stringLabel:'#111111', stringLabelFont:'600 12px ' + PRINT_FONT,
+  fretNum:'#555555', fretNumFont:'500 11px ' + PRINT_FONT,
+  markerDefault:'#5B5F66', markerStroke:'rgba(0,0,0,0.35)',
+  markerText:'#FFFFFF', markerFont:'700 10.5px ' + PRINT_FONT,
+  intervals:['#B3470C','#2164AB','#726500','#7D4A97','#00794D','#9F3D4E',
+             '#007198','#8F5400','#5A56AA','#447215','#944077','#007977']
+};
 
+// one shared measuring surface, so line-breaking is decided the same way for
+// canvas and SVG output
+const measureCtx = document.createElement('canvas').getContext('2d');
+function textWidth(text, font){ measureCtx.font = font; return measureCtx.measureText(text).width; }
+function wrapText(text, font, maxWidth){
+  const lines = []; let cur = '';
+  const push = (word) => {
+    // a single word wider than the line is broken by characters
+    let chunk = '';
+    for (const ch of word){
+      if (chunk && textWidth(chunk + ch, font) > maxWidth){ lines.push(chunk); chunk = ch; } else chunk += ch;
+    }
+    return chunk;
+  };
+  for (const w of String(text).split(/\s+/).filter(Boolean)){
+    const next = cur ? cur + ' ' + w : w;
+    if (textWidth(next, font) <= maxWidth){ cur = next; continue; }
+    if (cur) lines.push(cur);
+    cur = textWidth(w, font) <= maxWidth ? w : push(w);
+  }
+  if (cur) lines.push(cur);
+  return lines.length ? lines : [''];
+}
+
+function tuningLabel(state){
+  const label = TUNINGS[state.instrument].presets[state.preset].label;
+  return /\(/.test(label) ? label : label + ' (' + state.strings.slice().reverse().join(' ') + ')';
+}
+// the intervals actually on the neck, so the legend never explains a colour
+// that isn't there
+function legendIntervals(state){
+  if (state.rootPC === null) return [];
+  const present = new Set();
+  state.notes.forEach(key => {
+    const [s, f] = key.split('_').map(Number);
+    if (f < state.firstFret || f > state.lastFret) return;
+    present.add(((fretPC(state, s, f) - state.rootPC) % 12 + 12) % 12);
+  });
+  return [...present].sort((a, b) => a - b);
+}
+function layoutCaptions(state, t, width){
+  const font = t.fretNumFont, inner = width - 28;
+  const rows = []; let row = [], x = 0;
+  (state.showLegend ? legendIntervals(state) : []).forEach(i => {
+    const text = INTERVAL_LABELS[i] + ' ' + INTERVAL_NAMES[i];
+    const w = 19 + textWidth(text, font);
+    if (row.length && x + w > inner){ rows.push(row); row = []; x = 0; }
+    row.push({ i, text, x }); x += w + 18;
+  });
+  if (row.length) rows.push(row);
+  const tuning = state.showTuning ? wrapText('Tuning: ' + tuningLabel(state), font, inner) : [];
+  const height = (rows.length ? rows.length * 20 + 4 : 0) + (tuning.length ? tuning.length * 16 + 4 : 0);
+  return { rows, tuning, height };
+}
+function describeDiagram(state){
+  const inRange = [...state.notes].filter(k => { const f = +k.split('_')[1]; return f >= state.firstFret && f <= state.lastFret; }).length;
+  return [state.title, TUNINGS[state.instrument].label + ' fretboard, ' + tuningLabel(state),
+    'frets ' + state.firstFret + ' to ' + state.lastFret,
+    inRange + (inRange === 1 ? ' marked note' : ' marked notes'),
+    state.rootPC !== null ? 'root ' + NOTE_NAMES[state.rootPC] : ''].filter(Boolean).join('. ');
+}
+
+function diagramGeometry(state, vertical, t){
+  const units = totalFretUnits(state), numStrings = state.strings.length;
+  const primaryExtent = units * FRET_W;                 // length of the neck (along the frets)
+  const secondaryExtent = (numStrings - 1) * STRING_H;  // spread of the strings
   const width = vertical
     ? V_LEFT_PAD + secondaryExtent + V_RIGHT_PAD
     : LEFT_PAD + primaryExtent + RIGHT_PAD;
-  const height = vertical
+  // a long title wraps rather than running off the diagram; everything else
+  // moves down by the extra lines (oy)
+  const titleLines = state.title ? wrapText(state.title, t.titleFont, width - 28) : [];
+  const oy = Math.max(0, titleLines.length - 1) * 22;
+  const baseH = vertical
     ? V_TOP_PAD + primaryExtent + V_BOTTOM_PAD
     : TOP_PAD + secondaryExtent + BOTTOM_PAD + 24;
+  const cap = layoutCaptions(state, t, width);
+  return {
+    vertical, numStrings, primaryExtent, secondaryExtent, width, oy, baseH, titleLines, cap,
+    height: oy + baseH + (cap.height ? cap.height + 6 : 0),
+    primaryOrigin: vertical ? V_TOP_PAD : LEFT_PAD,
+    secondaryOrigin: vertical ? V_LEFT_PAD : TOP_PAD
+  };
+}
+
+function drawDiagram(ctx, state, { t, geo }){
+  const { vertical, numStrings, primaryExtent, secondaryExtent, primaryOrigin, secondaryOrigin, width, height, oy } = geo;
 
   // Maps a (primary, secondary) offset pair — primary = along the neck's
-  // length, secondary = across the strings — onto actual canvas x/y. This
-  // is the only place orientation logic lives; every drawing routine below
-  // works purely in primary/secondary terms. Text is always drawn upright;
-  // only these positions swap axes.
+  // length, secondary = across the strings — onto actual x/y. This is the only
+  // place orientation logic lives; every drawing routine below works purely in
+  // primary/secondary terms. Text is always drawn upright; only these
+  // positions swap axes.
   function toXY(primaryRel, secondaryRel){
     return vertical
-      ? { x: secondaryOrigin + secondaryRel, y: primaryOrigin + primaryRel }
-      : { x: primaryOrigin + primaryRel, y: secondaryOrigin + secondaryRel };
+      ? { x: secondaryOrigin + secondaryRel, y: oy + primaryOrigin + primaryRel }
+      : { x: primaryOrigin + primaryRel, y: oy + secondaryOrigin + secondaryRel };
   }
   // String display order is mirrored in vertical mode so the low string
   // ends up on the left, matching how chord charts are conventionally drawn.
@@ -1634,27 +1828,16 @@ function render(diagram){
     return idx * STRING_H;
   }
 
-  const canvas = el.canvas;
-  canvas.style.width = width + 'px';
-  canvas.style.height = height + 'px';
-  canvas.width = width * DPR;
-  canvas.height = height * DPR;
-
-  const ctx = canvas.getContext('2d');
-  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  ctx.clearRect(0, 0, width, height);
-
   // background
   ctx.fillStyle = t.bg;
   ctx.fillRect(0, 0, width, height);
 
-  // title (always top-left, unrotated, regardless of neck orientation)
-  if (state.title){
-    ctx.fillStyle = t.titleInk;
-    ctx.font = t.titleFont;
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillText(state.title, 14, 28);
-  }
+  // title (top-left, unrotated, regardless of neck orientation)
+  ctx.fillStyle = t.titleInk;
+  ctx.font = t.titleFont;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  geo.titleLines.forEach((line, i) => ctx.fillText(line, 14, 28 + i * 22));
 
   // neck bounding box, in primary/secondary terms
   const pPad0 = -6, pPad1 = primaryExtent + 6;
@@ -1792,6 +1975,150 @@ function render(diagram){
     }
   });
 
+  // captions: which colour is which interval, and what it is tuned to
+  if (geo.cap.height){
+    let y = oy + geo.baseH + 2;
+    ctx.font = t.fretNumFont;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    geo.cap.rows.forEach(row => {
+      row.forEach(it => {
+        ctx.beginPath();
+        ctx.arc(14 + it.x + 6.5, y + 10, 6.5, 0, Math.PI * 2);
+        ctx.fillStyle = t.intervals[it.i];
+        ctx.fill();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = t.markerStroke;
+        ctx.stroke();
+        ctx.fillStyle = t.stringLabel;
+        ctx.fillText(it.text, 14 + it.x + 19, y + 14);
+      });
+      y += 20;
+    });
+    if (geo.cap.rows.length) y += 4;
+    ctx.fillStyle = t.stringLabel;
+    geo.cap.tuning.forEach(line => { ctx.fillText(line, 14, y + 12); y += 16; });
+  }
+}
+
+// ---- an SVG-writing stand-in for a canvas context ---------------------------------
+// Only what drawDiagram uses: paths (lines, full circles, rounded corners),
+// fills and strokes, one linear gradient, text, and translate/scale so several
+// diagrams can share one sheet. Colours are written as hex plus an opacity
+// attribute because editors like Illustrator and Inkscape don't all read rgba().
+const svgNum = (v) => +Number(v).toFixed(3);
+const svgEsc = (str) => String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+function svgColor(c){
+  c = String(c).trim();
+  let m = /^#([0-9a-f]{3})$/i.exec(c);
+  if (m) return { hex: '#' + m[1].split('').map(x => x + x).join('').toUpperCase(), a: 1 };
+  if ((m = /^#([0-9a-f]{6})$/i.exec(c))) return { hex: '#' + m[1].toUpperCase(), a: 1 };
+  if ((m = /^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+)\s*)?\)$/i.exec(c))){
+    const hx = (v) => Math.round(+v).toString(16).padStart(2, '0');
+    return { hex: ('#' + hx(m[1]) + hx(m[2]) + hx(m[3])).toUpperCase(), a: m[4] === undefined ? 1 : +m[4] };
+  }
+  return { hex: c, a: 1 };
+}
+let svgUid = 0;
+class SvgContext {
+  constructor(width, height){
+    this.width = width; this.height = height;
+    this.body = []; this.grads = [];
+    this.fillStyle = '#000'; this.strokeStyle = '#000'; this.lineWidth = 1;
+    this.font = '10px sans-serif'; this.textAlign = 'left'; this.textBaseline = 'alphabetic';
+    this.path = []; this.cx = 0; this.cy = 0;
+    this.m = [1, 0, 0, 1, 0, 0]; this.stack = [];
+  }
+  save(){ this.stack.push(this.m.slice()); }
+  restore(){ const m = this.stack.pop(); if (m) this.m = m; }
+  translate(x, y){ const m = this.m; this.m = [m[0], m[1], m[2], m[3], m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]]; }
+  scale(sx, sy){ const m = this.m; this.m = [m[0] * sx, m[1] * sx, m[2] * sy, m[3] * sy, m[4], m[5]]; }
+  setTransform(a, b, c, d, e, f){ this.m = [a, b, c, d, e, f]; }
+  clearRect(){}
+  _xf(){
+    const m = this.m;
+    return (m[0] === 1 && m[1] === 0 && m[2] === 0 && m[3] === 1 && m[4] === 0 && m[5] === 0)
+      ? '' : ' transform="matrix(' + m.map(svgNum).join(' ') + ')"';
+  }
+  _paint(style, attr){
+    if (style && style._svgId) return ' ' + attr + '="url(#' + style._svgId + ')"';
+    const c = svgColor(style);
+    return ' ' + attr + '="' + svgEsc(c.hex) + '"' + (c.a < 1 ? ' ' + attr + '-opacity="' + svgNum(c.a) + '"' : '');
+  }
+  createLinearGradient(x0, y0, x1, y1){
+    const g = { _svgId: 'fg' + (++svgUid), stops: [], addColorStop(o, c){ this.stops.push([o, c]); } };
+    this.grads.push({ g, x0, y0, x1, y1 });
+    return g;
+  }
+  fillRect(x, y, w, h){
+    this.body.push('<rect x="' + svgNum(x) + '" y="' + svgNum(y) + '" width="' + svgNum(w) + '" height="' + svgNum(h) + '"' + this._paint(this.fillStyle, 'fill') + this._xf() + '/>');
+  }
+  beginPath(){ this.path = []; }
+  moveTo(x, y){ this.path.push('M' + svgNum(x) + ' ' + svgNum(y)); this.cx = x; this.cy = y; }
+  lineTo(x, y){ this.path.push('L' + svgNum(x) + ' ' + svgNum(y)); this.cx = x; this.cy = y; }
+  closePath(){ this.path.push('Z'); }
+  arc(x, y, r){   // full circles only, which is all that is drawn
+    this.path.push('M' + svgNum(x + r) + ' ' + svgNum(y) + 'A' + svgNum(r) + ' ' + svgNum(r) + ' 0 1 1 ' + svgNum(x - r) + ' ' + svgNum(y) +
+      'A' + svgNum(r) + ' ' + svgNum(r) + ' 0 1 1 ' + svgNum(x + r) + ' ' + svgNum(y) + 'Z');
+  }
+  arcTo(x1, y1, x2, y2, r){
+    const v1x = this.cx - x1, v1y = this.cy - y1, v2x = x2 - x1, v2y = y2 - y1;
+    const l1 = Math.hypot(v1x, v1y), l2 = Math.hypot(v2x, v2y);
+    const u1x = v1x / l1, u1y = v1y / l1, u2x = v2x / l2, u2y = v2y / l2;
+    const cross = u1x * u2y - u1y * u2x;
+    if (!l1 || !l2 || !r || Math.abs(cross) < 1e-9){ this.lineTo(x1, y1); return; }
+    const d = r / Math.tan(Math.acos(Math.max(-1, Math.min(1, u1x * u2x + u1y * u2y))) / 2);
+    this.lineTo(x1 + u1x * d, y1 + u1y * d);
+    const ex = x1 + u2x * d, ey = y1 + u2y * d;
+    this.path.push('A' + svgNum(r) + ' ' + svgNum(r) + ' 0 0 ' + (cross > 0 ? 0 : 1) + ' ' + svgNum(ex) + ' ' + svgNum(ey));
+    this.cx = ex; this.cy = ey;
+  }
+  fill(){
+    if (this.path.length) this.body.push('<path d="' + this.path.join('') + '"' + this._paint(this.fillStyle, 'fill') + this._xf() + '/>');
+  }
+  stroke(){
+    if (this.path.length) this.body.push('<path d="' + this.path.join('') + '" fill="none"' + this._paint(this.strokeStyle, 'stroke') + ' stroke-width="' + svgNum(this.lineWidth) + '"' + this._xf() + '/>');
+  }
+  fillText(text, x, y){
+    const f = /^(?:(\d{3}|normal|bold)\s+)?([\d.]+)px\s+(.+)$/.exec(this.font) || [];
+    const anchor = { left: 'start', start: 'start', center: 'middle', right: 'end', end: 'end' }[this.textAlign] || 'start';
+    this.body.push('<text x="' + svgNum(x) + '" y="' + svgNum(y) + '" font-family="' + svgEsc((f[3] || 'monospace').replace(/"/g, "'")) +
+      '" font-size="' + (f[2] || 10) + '" font-weight="' + (f[1] || 400) + '" text-anchor="' + anchor + '"' +
+      (this.textBaseline === 'middle' ? ' dominant-baseline="central"' : '') + this._paint(this.fillStyle, 'fill') + this._xf() + '>' + svgEsc(text) + '</text>');
+  }
+  toSVG(description, title){
+    const defs = this.grads.length ? '<defs>' + this.grads.map(({ g, x0, y0, x1, y1 }) =>
+      '<linearGradient id="' + g._svgId + '" gradientUnits="userSpaceOnUse" x1="' + svgNum(x0) + '" y1="' + svgNum(y0) + '" x2="' + svgNum(x1) + '" y2="' + svgNum(y1) + '">' +
+      g.stops.map(([o, c]) => { const k = svgColor(c); return '<stop offset="' + o + '" stop-color="' + svgEsc(k.hex) + '"' + (k.a < 1 ? ' stop-opacity="' + svgNum(k.a) + '"' : '') + '/>'; }).join('') +
+      '</linearGradient>').join('') + '</defs>' : '';
+    const w = svgNum(this.width), h = svgNum(this.height);
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" role="img">' +
+      '<title>' + svgEsc(title || description || 'Fretboard diagram') + '</title>' + (description ? '<desc>' + svgEsc(description) + '</desc>' : '') +
+      defs + this.body.join('') + '</svg>';
+  }
+}
+
+function render(diagram){
+  scheduleCheckpoint();   // every state change ends in a render; theme repaints dedupe away
+  const { state, el } = diagram;
+  const vertical = pageOrientation === 'portrait';
+  const t = getTheme().canvas;
+  const geo = diagramGeometry(state, vertical, t);
+  diagram.oy = geo.oy;   // hit-testing needs to know how far a wrapped title pushed the neck down
+
+  const canvas = el.canvas;
+  canvas.style.width = geo.width + 'px';
+  canvas.style.height = geo.height + 'px';
+  canvas.width = geo.width * DPR;
+  canvas.height = geo.height * DPR;
+  canvas.setAttribute('role', 'img');
+  canvas.setAttribute('aria-label', describeDiagram(state));
+
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.clearRect(0, 0, geo.width, geo.height);
+  drawDiagram(ctx, state, { t, geo });
+
   // footer state sync
   el.rootLabel.textContent = state.rootPC !== null ? NOTE_NAMES[state.rootPC] : 'none';
   el.octaveBtn.classList.toggle('active', state.octaveMode);
@@ -1840,30 +2167,6 @@ function downloadDataUrl(dataUrl, filename){
   a.remove();
 }
 
-function exportAllAsPng(){
-  if (diagrams.length === 0) return;
-  const gap = 24;
-  const widths = diagrams.map(d => d.el.canvas.width / DPR);
-  const heights = diagrams.map(d => d.el.canvas.height / DPR);
-  const totalW = Math.max(...widths) + 40;
-  const totalH = heights.reduce((a, b) => a + b + gap, 0) + 20;
-
-  const combo = document.createElement('canvas');
-  combo.width = totalW * DPR;
-  combo.height = totalH * DPR;
-  const ctx = combo.getContext('2d');
-  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  ctx.fillStyle = getTheme().canvas.bg;
-  ctx.fillRect(0, 0, totalW, totalH);
-
-  let y = 20;
-  diagrams.forEach((d, i) => {
-    ctx.drawImage(d.el.canvas, 20, y, widths[i], heights[i]);
-    y += heights[i] + gap;
-  });
-
-  downloadDataUrl(combo.toDataURL('image/png'), 'fretboard-diagrams.png');
-}
 
 
 // ---- the sheet: autosave, undo, versions, sharing ---------------------------
@@ -1889,7 +2192,8 @@ function serializeDiagram(d){
     return as - bs || af - bf;
   });
   return {
-    title: s.title, instrument: s.instrument, preset: s.preset,
+    title: s.title, titleAuto: s.titleAuto, showLegend: s.showLegend, showTuning: s.showTuning,
+    instrument: s.instrument, preset: s.preset,
     firstFret: s.firstFret, lastFret: s.lastFret, notes,
     rootPC: s.rootPC, displayMode: s.displayMode, shift: s.shiftSemitones,
     key: d.el.keySel.value, scale: d.el.scaleSel.value, chord: d.el.chordSel.value
@@ -1916,8 +2220,13 @@ function sanitizeDiagram(d){
       if (si < stringCount && f >= firstFret && f <= lastFret && !seen.has(key)) { seen.add(key); notes.push(key); }
     }
   }
+  const title = typeof d.title === 'string' ? d.title.slice(0, 120) : '';
   return {
-    title: typeof d.title === 'string' ? d.title.slice(0, 120) : '',
+    title,
+    // sheets saved before these existed: an untitled diagram was still waiting for its name
+    titleAuto: typeof d.titleAuto === 'boolean' ? d.titleAuto : title === '',
+    showLegend: d.showLegend !== false,
+    showTuning: d.showTuning !== false,
     instrument, preset, firstFret, lastFret, notes,
     rootPC: Number.isInteger(d.rootPC) && d.rootPC >= 0 && d.rootPC < 12 ? d.rootPC : null,
     displayMode: DISPLAY_MODES.includes(d.displayMode) ? d.displayMode : 'name',
@@ -1935,7 +2244,8 @@ function sanitizeSheet(raw){
 }
 function initialFrom(c){
   return {
-    title: c.title, instrument: c.instrument, preset: c.preset,
+    title: c.title, titleAuto: c.titleAuto, showLegend: c.showLegend, showTuning: c.showTuning,
+    instrument: c.instrument, preset: c.preset,
     strings: TUNINGS[c.instrument].presets[c.preset].strings.slice(),
     firstFret: c.firstFret, lastFret: c.lastFret, notes: new Set(c.notes),
     rootPC: c.rootPC, displayMode: c.displayMode, shiftSemitones: c.shift,
@@ -2025,7 +2335,7 @@ document.addEventListener('keydown', (e) => {
 function duplicateDiagram(diagram){
   if (diagrams.length >= MAX_DIAGRAMS) return;
   const clean = sanitizeDiagram(serializeDiagram(diagram));
-  if (clean.title) clean.title = (clean.title + ' (copy)').slice(0, 120);
+  if (clean.title){ clean.title = (clean.title + ' (copy)').slice(0, 120); clean.titleAuto = false; }
   const copy = createDiagram(initialFrom(clean), diagram);
   copy.el.card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
@@ -2183,6 +2493,220 @@ document.getElementById('importFile').addEventListener('change', async (e) => {
   renderVersions();
 });
 
+// ---- print and image export --------------------------------------------------------
+// Paper is laid out by planLayout and drawn as inline SVG, so a printout or a
+// saved PDF stays vector: crisp at any size, and text stays text. The dialog's
+// preview is the same pages, scaled down, so it shows what will print.
+const PAPER = {
+  letter: { w: 816, h: 1056, page: ['8.5in', '11in'] },   // CSS px at 96 per inch
+  a4:     { w: 794, h: 1123, page: ['210mm', '297mm'] }
+};
+const PRINT_KEY = 'musictools.fretboard.print';
+function sanitizePrefs(raw){
+  const r = raw && typeof raw === 'object' ? raw : {};
+  return {
+    paper: typeof r.paper === 'string' && own(PAPER, r.paper) ? r.paper : 'letter',
+    page: ['auto', 'landscape', 'portrait'].includes(r.page) ? r.page : 'auto',
+    colors: r.colors === 'theme' ? 'theme' : 'light',
+    cols: [1, 2, 3, 4].includes(r.cols) ? r.cols : 'auto',
+    margin: [0.25, 0.5, 0.75].includes(r.margin) ? r.margin : 0.5
+  };
+}
+let prefs = sanitizePrefs(readJSON(PRINT_KEY));
+const paletteFor = (mode) => mode === 'theme' ? getTheme().canvas : PRINT_LIGHT;
+const drawingOf = (state, palette) => ({ state, t: palette, geo: diagramGeometry(state, pageOrientation === 'portrait', palette) });
+const svgOfDrawing = (d) => { const c = new SvgContext(d.geo.width, d.geo.height); drawDiagram(c, d.state, d); return c.toSVG(describeDiagram(d.state)); };
+const fileStem = (state) => (state.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'fretboard';
+
+// Every diagram shares one scale, so a fret is the same size on every diagram
+// on the sheet. That scale is the largest at which the widest diagram fits its
+// cell and the tallest fits the page, so a neck can never be cut off.
+function planLayout(sizes, { pw, ph, margin, gap, cols }){
+  const cw = pw - 2 * margin, chh = ph - 2 * margin;
+  const wMax = Math.max(...sizes.map(z => z.w)), hMax = Math.max(...sizes.map(z => z.h));
+  const fit = (c) => Math.min(((cw - gap * (c - 1)) / c) / wMax, chh / hMax, 1);
+  let c = cols;
+  if (c === 'auto'){                         // as many per row as keep the size within reach of one per row
+    c = 1;
+    for (let k = 2; k <= Math.min(4, sizes.length); k++) if (fit(k) >= fit(1) * 0.85) c = k;
+  }
+  c = Math.max(1, Math.min(c, sizes.length));
+  const scale = fit(c), cellW = (cw - gap * (c - 1)) / c;
+  const pages = []; let page = null, y = 0;
+  for (let i = 0; i < sizes.length; i += c){
+    const row = sizes.slice(i, i + c);
+    const h = Math.max(...row.map(z => z.h)) * scale;
+    if (!page || (y > 0 && y + h > chh + 0.5)){ page = { items: [] }; pages.push(page); y = 0; }
+    row.forEach((z, j) => {
+      const w = z.w * scale;
+      page.items.push({ idx: i + j, x: margin + j * (cellW + gap) + (cellW - w) / 2, y: margin + y, w, h: z.h * scale });
+    });
+    y += h + gap;
+  }
+  return { pages, cols: c, scale, pw, ph };
+}
+function currentPlan(){
+  const palette = paletteFor(prefs.colors);
+  const drawings = diagrams.map(d => drawingOf(d.state, palette));
+  const paper = PAPER[prefs.paper];
+  const landscape = prefs.page === 'auto' ? pageOrientation !== 'portrait' : prefs.page === 'landscape';
+  const plan = planLayout(drawings.map(d => ({ w: d.geo.width, h: d.geo.height })),
+    { pw: landscape ? paper.h : paper.w, ph: landscape ? paper.w : paper.h, margin: prefs.margin * 96, gap: 20, cols: prefs.cols });
+  return { plan, drawings, palette, landscape, paper };
+}
+function pageElement(cp, pg){
+  const sec = document.createElement('section');
+  sec.className = 'pp';
+  sec.style.width = cp.plan.pw + 'px'; sec.style.height = cp.plan.ph + 'px'; sec.style.background = cp.palette.bg;
+  pg.items.forEach(it => {
+    const box = document.createElement('div');
+    box.className = 'pi';
+    box.style.cssText = 'left:' + svgNum(it.x) + 'px;top:' + svgNum(it.y) + 'px;width:' + svgNum(it.w) + 'px;height:' + svgNum(it.h) + 'px';
+    box.innerHTML = svgOfDrawing(cp.drawings[it.idx]);    // every dynamic string in it is XML-escaped
+    sec.appendChild(box);
+  });
+  return sec;
+}
+
+// ---- the dialog ----
+const printDlg = document.getElementById('printDlg');
+const sayPrint = (text, bad) => { const m = document.getElementById('printMsg'); m.textContent = text; m.classList.toggle('bad', !!bad); };
+function renderPreview(){
+  const cp = currentPlan(), host = document.getElementById('printPreview');
+  host.replaceChildren();
+  const k = Math.min(1, Math.max(240, host.clientWidth - 28) / cp.plan.pw);
+  cp.plan.pages.forEach((pg, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'pv';
+    wrap.style.width = svgNum(cp.plan.pw * k) + 'px'; wrap.style.height = svgNum(cp.plan.ph * k) + 'px';
+    const page = pageElement(cp, pg);
+    page.style.transform = 'scale(' + k + ')';
+    wrap.appendChild(page);
+    const cap = document.createElement('div');
+    cap.className = 'pvcap'; cap.textContent = 'Page ' + (i + 1) + ' of ' + cp.plan.pages.length;
+    host.append(wrap, cap);
+  });
+  const pt = 10.5 * 0.75 * cp.plan.scale;     // the smallest text on a diagram: the marker labels
+  const n = cp.plan.pages.length, d = diagrams.length;
+  const info = document.getElementById('printInfo');
+  info.textContent = d + (d === 1 ? ' diagram' : ' diagrams') + ' on ' + n + (n === 1 ? ' page' : ' pages') + ' · ' +
+    cp.plan.cols + ' per row · ' + Math.round(cp.plan.scale * 100) + '% size · smallest text ' + pt.toFixed(1) + ' pt' +
+    (pt < 6 ? '. That is small; a wider page or fewer per row will help.' : '');
+  info.classList.toggle('warn', pt < 6);
+}
+function openPrint(){
+  if (checkpointTimer) commitCheckpoint();
+  document.getElementById('pPaper').value = prefs.paper;
+  document.getElementById('pPage').value = prefs.page;
+  document.getElementById('pColors').value = prefs.colors;
+  document.getElementById('pCols').value = String(prefs.cols);
+  document.getElementById('pMargin').value = String(prefs.margin);
+  sayPrint('');
+  printDlg.showModal();
+  renderPreview();
+}
+document.getElementById('printOpenBtn').addEventListener('click', openPrint);
+printDlg.addEventListener('click', (e) => { if (e.target === printDlg) printDlg.close(); });
+[['pPaper', 'paper', String], ['pPage', 'page', String], ['pColors', 'colors', String],
+ ['pCols', 'cols', v => v === 'auto' ? 'auto' : +v], ['pMargin', 'margin', Number]].forEach(([id, key, cast]) => {
+  document.getElementById(id).addEventListener('change', (e) => {
+    prefs = sanitizePrefs({ ...prefs, [key]: cast(e.target.value) });
+    writeJSON(PRINT_KEY, prefs);
+    renderPreview();
+  });
+});
+document.getElementById('printBtn').addEventListener('click', () => {
+  const cp = currentPlan(), root = document.getElementById('printRoot');
+  root.replaceChildren(...cp.plan.pages.map(pg => pageElement(cp, pg)));
+  let st = document.getElementById('pageStyle');
+  if (!st){ st = document.createElement('style'); st.id = 'pageStyle'; document.head.appendChild(st); }
+  const [pw, ph] = cp.landscape ? [cp.paper.page[1], cp.paper.page[0]] : cp.paper.page;
+  st.textContent = '@page{size:' + pw + ' ' + ph + ';margin:0}';
+  window.print();
+});
+
+// ---- images and vector files ----
+function download(blob, name){
+  const url = URL.createObjectURL(blob);
+  downloadDataUrl(url, name);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+const blobOf = (canvas) => new Promise(res => canvas.toBlob(res, 'image/png'));
+// fixed density, independent of the screen it is made on: 3x the drawing, about 290 dpi
+function canvasOfDrawing(d, k){
+  const c = document.createElement('canvas');
+  c.width = Math.ceil(d.geo.width * k); c.height = Math.ceil(d.geo.height * k);
+  const ctx = c.getContext('2d');
+  ctx.setTransform(k, 0, 0, k, 0, 0);
+  drawDiagram(ctx, d.state, d);
+  return c;
+}
+function flash(diagram, text, bad){
+  const m = diagram.el.exportMsg;
+  m.textContent = text; m.classList.toggle('bad', !!bad);
+  clearTimeout(m._t); m._t = setTimeout(() => { m.textContent = ''; }, 4500);
+}
+async function exportDiagramPNG(diagram){
+  download(await blobOf(canvasOfDrawing(drawingOf(diagram.state, paletteFor(prefs.colors)), 3)), fileStem(diagram.state) + '.png');
+  flash(diagram, 'Saved a PNG.');
+}
+function exportDiagramSVG(diagram){
+  const svg = '<?xml version="1.0" encoding="UTF-8"?>\n' + svgOfDrawing(drawingOf(diagram.state, paletteFor(prefs.colors)));
+  download(new Blob([svg], { type: 'image/svg+xml' }), fileStem(diagram.state) + '.svg');
+  flash(diagram, 'Saved an SVG.');
+}
+async function copyDiagramImage(diagram){
+  const canvas = canvasOfDrawing(drawingOf(diagram.state, paletteFor(prefs.colors)), 3);
+  try {
+    if (!navigator.clipboard || !window.ClipboardItem) throw new Error('unsupported');
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blobOf(canvas) })]);
+    flash(diagram, 'Copied as an image.');
+  } catch (e) { flash(diagram, 'This browser will not copy images from here. Use PNG instead.', true); }
+}
+// the whole sheet as one picture: the same layout, on one unbroken page
+function sheetLayout(){
+  const palette = paletteFor(prefs.colors);
+  const drawings = diagrams.map(d => drawingOf(d.state, palette));
+  const W = 1248;
+  const plan = planLayout(drawings.map(d => ({ w: d.geo.width, h: d.geo.height })), { pw: W, ph: 1e7, margin: 24, gap: 20, cols: prefs.cols });
+  const items = plan.pages[0].items;
+  return { drawings, items, palette, W, H: Math.max(...items.map(i => i.y + i.h)) + 24 };
+}
+async function exportSheetPNG(){
+  const L = sheetLayout();
+  let k = 3;
+  while (k > 1 && (L.W * k * L.H * k > 14e6 || L.H * k > 16000)) k -= 0.5;
+  if (L.W * k * L.H * k > 14e6){ sayPrint('This sheet is too large for one PNG. Use the SVG, or export the diagrams one at a time.', true); return; }
+  const c = document.createElement('canvas');
+  c.width = Math.ceil(L.W * k); c.height = Math.ceil(L.H * k);
+  const ctx = c.getContext('2d');
+  ctx.setTransform(k, 0, 0, k, 0, 0);
+  ctx.fillStyle = L.palette.bg; ctx.fillRect(0, 0, L.W, L.H);
+  L.items.forEach(it => {
+    const d = L.drawings[it.idx];
+    ctx.save(); ctx.translate(it.x, it.y); ctx.scale(it.w / d.geo.width, it.w / d.geo.width);
+    drawDiagram(ctx, d.state, d);
+    ctx.restore();
+  });
+  download(await blobOf(c), 'fretboard-sheet.png');
+  sayPrint('Saved the sheet as a PNG.');
+}
+function exportSheetSVG(){
+  const L = sheetLayout();
+  const ctx = new SvgContext(L.W, L.H);
+  ctx.fillStyle = L.palette.bg; ctx.fillRect(0, 0, L.W, L.H);
+  L.items.forEach(it => {
+    const d = L.drawings[it.idx];
+    ctx.save(); ctx.translate(it.x, it.y); ctx.scale(it.w / d.geo.width, it.w / d.geo.width);
+    drawDiagram(ctx, d.state, d);
+    ctx.restore();
+  });
+  download(new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n' + ctx.toSVG('Fretboard sheet with ' + diagrams.length + ' diagrams', 'Fretboard sheet')], { type: 'image/svg+xml' }), 'fretboard-sheet.svg');
+  sayPrint('Saved the sheet as an SVG.');
+}
+document.getElementById('sheetPngBtn').addEventListener('click', exportSheetPNG);
+document.getElementById('sheetSvgBtn').addEventListener('click', exportSheetSVG);
+
 function bootSheet(){
   const shared = takeSharedSheet();
   const clean = shared || sanitizeSheet(readJSON(SHEET_KEY)) || sanitizeSheet({ diagrams: [{}] });
@@ -2199,7 +2723,6 @@ function bootSheet(){
 document.getElementById('addDiagramBtn').addEventListener('click', () => {
   createDiagram({ title: '' });
 });
-document.getElementById('exportPngBtn').addEventListener('click', exportAllAsPng);
 document.getElementById('landscapeBtn').addEventListener('click', () => setPageOrientation('landscape'));
 document.getElementById('portraitBtn').addEventListener('click', () => setPageOrientation('portrait'));
 
