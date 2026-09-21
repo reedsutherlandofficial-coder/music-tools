@@ -232,6 +232,10 @@ body::after{
 #fretApp .seg2 button + button{border-left:1px solid var(--line-strong)}
 #fretApp .seg2 button:hover{background:var(--line);color:var(--ink)}
 #fretApp .seg2 button[aria-pressed="true"]{background:var(--paper-raised);color:var(--red-ink);box-shadow:inset 0 -2px 0 var(--red)}
+#fretApp .emphChips{display:inline-flex;flex-wrap:wrap;gap:4px;align-items:center}
+#fretApp .emphChips .none{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft)}
+#fretApp .emphChips .emph{min-width:30px;padding:0 8px}
+#fretApp .emphChips .emph[aria-pressed="true"]{border-color:var(--red);color:var(--red-ink);box-shadow:inset 0 -2px 0 var(--red)}
 #fretApp .patstate{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;color:var(--ink-soft);min-width:5ch}
 #fretApp .controls label.chk{display:flex;align-items:center;gap:5px;cursor:pointer}
 #fretApp .controls label.chk input{width:14px;height:14px;margin:0;accent-color:var(--red);cursor:pointer}
@@ -447,7 +451,10 @@ body::after{
 #fretApp .canvas-wrap{
   overflow-x:auto;
 }
-#fretApp canvas{display:block;cursor:pointer;touch-action:none}
+#fretApp .canvas-inner{position:relative;width:max-content}
+/* the strip over the fret numbers is the one place a drag is captured, so the neck itself can still scroll by touch */
+#fretApp .strip{position:absolute;touch-action:none;cursor:crosshair}
+#fretApp canvas{display:block;cursor:pointer}   /* the page keeps its touch scrolling */
 /* the cursor says what a click will do */
 #fretApp canvas[data-tool="octave"]{cursor:copy}
 #fretApp canvas[data-tool="root"]{cursor:crosshair}
@@ -864,6 +871,8 @@ body::after{
         <select id="pColors"><option value="light">Light, for paper</option><option value="theme">Match the app theme</option></select></div>
       <div class="pfield"><label for="pBg">Images</label>
         <select id="pBg"><option value="clear">Clear background</option><option value="solid">Solid background</option></select></div>
+      <div class="pfield"><label for="pCrop">Frames</label>
+        <select id="pCrop"><option value="none">Whole neck, outside dimmed</option><option value="frame">Crop to the frame</option></select></div>
       <div class="pfield"><label for="pCols">Per row</label>
         <select id="pCols"><option value="auto">Automatic</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
       <div class="pfield"><label for="pMargin">Margins</label>
@@ -1145,6 +1154,9 @@ function defaultState(){
     pattern: '',            // 'scale:id' / 'chord:id' while the notes still follow it; '' once edited by hand
     combine: 'replace',     // choosing a pattern: replace the notes, or add to them
     collapsed: false,       // controls folded away
+    frame: null,            // {from, to}: a span of frets to study; the rest of the neck recedes
+    zoom: 'fit',            // 'fit' (never wider than the window) or a scale, 1 = 100%
+    emphasis: [],           // intervals picked out; the others recede
     title: '',
     titleAuto: true,        // the title follows the generated pattern until someone edits it
     showLegend: true,       // which colour is which interval
@@ -1206,6 +1218,27 @@ function createDiagram(initial, after){
         <label class="chk"><input type="checkbox" class="tuningChk" ${state.showTuning ? 'checked' : ''}> Tuning</label>
       </div>
       <div class="group">
+        <label>Highlight</label>
+        <span class="emphChips" role="group" aria-label="Intervals to pick out"></span>
+        <button class="small ghost emphClearBtn" title="Show every interval at full strength">Show all</button>
+      </div>
+      <div class="group">
+        <label>Frame</label>
+        <input type="number" class="frameFromInput" placeholder="from" aria-label="Frame starts at fret">
+        <input type="number" class="frameToInput" placeholder="to" aria-label="Frame ends at fret">
+        <button class="small frameLeftBtn" aria-label="Slide the frame one fret toward the nut"><svg class="arr" viewBox="0 0 12 12" aria-hidden="true"><path d="M10 6H2M5.5 2.5 2 6l3.5 3.5"/></svg></button>
+        <button class="small frameRightBtn" aria-label="Slide the frame one fret toward the body"><svg class="arr" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6h8M6.5 2.5 10 6 6.5 9.5"/></svg></button>
+        <button class="small ghost frameClearBtn">Clear</button>
+      </div>
+      <div class="group">
+        <label>Zoom</label>
+        <select class="zoomSel" aria-label="Zoom">
+          <option value="fit">Fit width</option><option value="1">100%</option><option value="1.5">150%</option>
+          <option value="2">200%</option><option value="3">300%</option><option value="custom" hidden>Custom</option>
+        </select>
+        <button class="small zoomFrameBtn">To frame</button>
+      </div>
+      <div class="group">
         <label>Click does</label>
         <div class="seg2 toolSeg" role="group" aria-label="What clicking the neck does">
           <button type="button" data-tool="place" title="Click a spot to put a note there, or take it away">Place / remove</button>
@@ -1230,7 +1263,10 @@ function createDiagram(initial, after){
       </div>
     </div>
     <div class="canvas-wrap">
-      <canvas class="fretCanvas"></canvas>
+      <div class="canvas-inner">
+        <canvas class="fretCanvas"></canvas>
+        <div class="strip" aria-hidden="true" title="Drag along the fret numbers to frame a span of frets. Drag inside the frame to slide it, or an edge to resize it. Click outside it to clear."></div>
+      </div>
     </div>
     <div class="card-footer">
       <span class="hint">Root · <strong class="rootLabel">none</strong></span>
@@ -1267,6 +1303,17 @@ function createDiagram(initial, after){
     shiftUpBtn: card.querySelector('.shiftUpBtn'),
     shiftLabel: card.querySelector('.shiftLabel'),
     canvas: card.querySelector('.fretCanvas'),
+    wrap: card.querySelector('.canvas-wrap'),
+    strip: card.querySelector('.strip'),
+    emphChips: card.querySelector('.emphChips'),
+    emphClearBtn: card.querySelector('.emphClearBtn'),
+    frameFromInput: card.querySelector('.frameFromInput'),
+    frameToInput: card.querySelector('.frameToInput'),
+    frameLeftBtn: card.querySelector('.frameLeftBtn'),
+    frameRightBtn: card.querySelector('.frameRightBtn'),
+    frameClearBtn: card.querySelector('.frameClearBtn'),
+    zoomSel: card.querySelector('.zoomSel'),
+    zoomFrameBtn: card.querySelector('.zoomFrameBtn'),
     rootLabel: card.querySelector('.rootLabel'),
     collapseBtn: card.querySelector('.collapseBtn'),
     removeBtn: card.querySelector('.removeBtn'),
@@ -1286,6 +1333,17 @@ function createDiagram(initial, after){
   populateTuningSelect(el.tuningSel);
   populateKeySelect(el.keySel);
   populatePatternSelect(el.patternSel);
+
+  // 'fit' follows the wrapper's width, so the neck is refitted as the window changes
+  // (and when a hidden tab is shown, when its width first becomes real)
+  if (typeof ResizeObserver !== 'undefined'){
+    diagram.lastW = 0;
+    diagram.ro = new ResizeObserver(() => {
+      const w = Math.round(el.wrap.clientWidth);
+      if (w !== diagram.lastW){ diagram.lastW = w; if (state.zoom === 'fit') scheduleRender(diagram); }
+    });
+    diagram.ro.observe(el.wrap);
+  }
 
   wireEvents(diagram);
   render(diagram);
@@ -1403,6 +1461,42 @@ function syncControls(diagram){
   const sh = state.shiftSemitones;
   el.shiftLabel.textContent = (sh > 0 ? '+' + sh : String(sh)) +
     (sh !== 0 && state.rootPC !== null ? ' · ' + NOTE_NAMES[((state.rootPC - sh) % 12 + 12) % 12] + ' to ' + NOTE_NAMES[state.rootPC] : '');
+  // frame
+  const hasFrame = !!state.frame;
+  [el.frameFromInput, el.frameToInput].forEach(i => { i.min = state.firstFret; i.max = state.lastFret; });
+  if (focus !== el.frameFromInput) el.frameFromInput.value = hasFrame ? state.frame.from : '';
+  if (focus !== el.frameToInput) el.frameToInput.value = hasFrame ? state.frame.to : '';
+  const why = (ok, yes, no) => ok ? yes : no;
+  el.frameClearBtn.disabled = !hasFrame; el.frameClearBtn.title = why(hasFrame, 'Clear the frame', 'There is no frame to clear');
+  el.zoomFrameBtn.disabled = !hasFrame; el.zoomFrameBtn.title = why(hasFrame, 'Zoom in so the frame fills the view', 'Draw a frame first');
+  el.frameLeftBtn.disabled = !hasFrame || state.frame.from <= state.firstFret;
+  el.frameRightBtn.disabled = !hasFrame || state.frame.to >= state.lastFret;
+  el.frameLeftBtn.title = why(!el.frameLeftBtn.disabled, 'Slide the frame one fret toward the nut', hasFrame ? 'The frame is already at the nut end' : 'Draw a frame first');
+  el.frameRightBtn.title = why(!el.frameRightBtn.disabled, 'Slide the frame one fret toward the body', hasFrame ? 'The frame is already at the far end' : 'Draw a frame first');
+  // zoom
+  const z = state.zoom, custom = el.zoomSel.querySelector('option[value="custom"]');
+  if (z === 'fit' || ['1', '1.5', '2', '3'].includes(String(z))) el.zoomSel.value = String(z);
+  else { custom.textContent = Math.round(z * 100) + '%'; el.zoomSel.value = 'custom'; }
+  // highlight: one button per interval actually on the neck
+  const present = legendIntervals(state), key = present.join(',');
+  if (el.emphChips.dataset.key !== key){
+    el.emphChips.replaceChildren();
+    if (!present.length){
+      const none = document.createElement('span');
+      none.className = 'none'; none.textContent = 'set a root to pick out intervals';
+      el.emphChips.appendChild(none);
+    }
+    present.forEach(i => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'small emph'; b.dataset.i = i;
+      b.textContent = INTERVAL_LABELS[i]; b.title = INTERVAL_NAMES[i] + ': pick it out';
+      b.addEventListener('click', () => { toggleEmphasis(state, i); render(diagram); });
+      el.emphChips.appendChild(b);
+    });
+    el.emphChips.dataset.key = key;
+  }
+  el.emphChips.querySelectorAll('.emph').forEach(b => b.setAttribute('aria-pressed', String(state.emphasis.includes(+b.dataset.i))));
+  el.emphClearBtn.disabled = state.emphasis.length === 0;
   el.card.classList.toggle('collapsed', state.collapsed);
   el.collapseBtn.setAttribute('aria-expanded', String(!state.collapsed));
   el.collapseBtn.textContent = state.collapsed ? 'Show controls' : 'Hide controls';
@@ -1410,6 +1504,108 @@ function syncControls(diagram){
     state.pattern ? patternTitle(state.pattern, state.key) : (state.notes.size ? 'custom notes' : 'no notes yet'),
     'frets ' + state.firstFret + '–' + state.lastFret].join(' · ');
 }
+// ---- frame, zoom, highlight ----------------------------------------------------
+// A frame marks any span of frets and everything outside it recedes, so a
+// pattern can be studied in place without hiding the rest of the neck.
+function clampFrame(fr, first, last){
+  if (!fr) return null;
+  const lo = Math.max(first, Math.min(fr.from, fr.to)), hi = Math.min(last, Math.max(fr.from, fr.to));
+  return lo <= hi ? { from: lo, to: hi } : null;
+}
+function toggleEmphasis(state, i){
+  const set = new Set(state.emphasis);
+  if (set.has(i)) set.delete(i); else set.add(i);
+  state.emphasis = [...set].sort((a, b) => a - b);
+}
+// 'fit' never exceeds the wrapper, and never enlarges past 100%
+const zoomFactor = (state, geo, avail) => state.zoom === 'fit' ? (avail > 0 ? Math.min(1, avail / geo.width) : 1) : state.zoom;
+function frameSpan(state){   // the frame's extent along the neck, in the diagram's own units
+  const fr = state.frame;
+  return fr ? [wireX(state, fr.from) - FRET_W / 2, wireX(state, fr.to) + FRET_W / 2] : null;
+}
+// keep the frame in view when the neck is bigger than its wrapper
+function ensureFrameVisible(diagram, center){
+  const { state, el } = diagram, g = diagram.geo, k = diagram.k || 1, span = frameSpan(state);
+  if (!span || !g) return;
+  if (!g.vertical){
+    const x0 = (g.primaryOrigin + span[0]) * k, x1 = (g.primaryOrigin + span[1]) * k;
+    const v0 = el.wrap.scrollLeft, v1 = v0 + el.wrap.clientWidth;
+    if (center || x0 < v0 || x1 > v1) el.wrap.scrollLeft = Math.max(0, (x0 + x1) / 2 - el.wrap.clientWidth / 2);
+  } else {
+    const top = el.canvas.getBoundingClientRect().top + window.scrollY;
+    const y0 = top + (g.oy + g.primaryOrigin + span[0]) * k, y1 = top + (g.oy + g.primaryOrigin + span[1]) * k;
+    if (center || y0 < window.scrollY || y1 > window.scrollY + window.innerHeight){
+      window.scrollTo({ top: Math.max(0, (y0 + y1) / 2 - window.innerHeight / 2), behavior: 'smooth' });
+    }
+  }
+}
+function zoomToFrame(diagram){
+  const { state, el } = diagram, span = frameSpan(state);
+  if (!span || !diagram.geo) return;
+  const len = span[1] - span[0] + FRET_W * 2;                       // a fret of context each side
+  const avail = diagram.geo.vertical ? window.innerHeight * 0.8 : el.wrap.clientWidth;
+  state.zoom = Math.round(Math.min(4, Math.max(0.5, avail / len)) * 100) / 100;
+  render(diagram);
+  ensureFrameVisible(diagram, true);
+}
+// Dragging along the fret numbers: a new span from where you start; inside an
+// existing frame it slides, and at an edge it resizes. A click (no drag) outside
+// the frame clears it. The strip is its own element so the neck keeps normal
+// touch scrolling.
+function wireStrip(diagram){
+  const { el, state } = diagram, strip = el.strip;
+  let drag = null;
+  const primaryAt = (evt) => {
+    const g = diagram.geo, r = el.canvas.getBoundingClientRect(), k = diagram.k || 1;
+    return (g.vertical ? evt.clientY - r.top : evt.clientX - r.left) / k - (g.vertical ? g.oy + g.primaryOrigin : g.primaryOrigin);
+  };
+  const fretAt = (P) => Math.max(state.firstFret, Math.min(state.lastFret, fretStart(state) + Math.round(P / FRET_W)));
+  const modeAt = (P) => {
+    const span = frameSpan(state), tol = 9 / (diagram.k || 1);
+    if (!span) return 'new';
+    if (Math.abs(P - span[0]) <= tol) return 'left';
+    if (Math.abs(P - span[1]) <= tol) return 'right';
+    return P > span[0] && P < span[1] ? 'move' : 'new';
+  };
+  strip.addEventListener('pointerdown', (evt) => {
+    if (evt.button) return;
+    const P = primaryAt(evt), fr = state.frame;
+    drag = { mode: modeAt(P), anchor: fretAt(P), from: fr ? fr.from : 0, to: fr ? fr.to : 0, moved: false, had: !!fr };
+    try { strip.setPointerCapture(evt.pointerId); } catch (e) {}
+    evt.preventDefault();
+  });
+  strip.addEventListener('pointermove', (evt) => {
+    const P = primaryAt(evt);
+    if (!drag){
+      const m = modeAt(P), v = diagram.geo.vertical;
+      strip.style.cursor = m === 'left' || m === 'right' ? (v ? 'ns-resize' : 'ew-resize') : m === 'move' ? 'grab' : 'crosshair';
+      return;
+    }
+    const f = fretAt(P);
+    if (f === drag.anchor && !drag.moved) return;   // still a click
+    drag.moved = true;
+    let a, b;
+    if (drag.mode === 'new'){ a = Math.min(drag.anchor, f); b = Math.max(drag.anchor, f); }
+    else if (drag.mode === 'left'){ a = Math.min(f, drag.to); b = drag.to; }
+    else if (drag.mode === 'right'){ a = drag.from; b = Math.max(f, drag.from); }
+    else {
+      const w = drag.to - drag.from;
+      a = Math.max(state.firstFret, Math.min(state.lastFret - w, drag.from + (f - drag.anchor)));
+      b = a + w;
+      strip.style.cursor = 'grabbing';
+    }
+    state.frame = { from: a, to: b };
+    scheduleRender(diagram);
+  });
+  const end = () => {
+    if (!drag) return;
+    const d = drag; drag = null;
+    if (!d.moved && d.mode === 'new' && d.had){ state.frame = null; render(diagram); }
+  };
+  strip.addEventListener('pointerup', end);
+  strip.addEventListener('pointercancel', () => { drag = null; });
+}
+
 function syncCollapseAll(){
   const open = diagrams.some(d => !d.state.collapsed);
   const b = document.getElementById('collapseAllBtn');
@@ -1461,6 +1657,7 @@ function wireEvents(diagram){
   const rangeChanged = () => {
     if (state.pattern) applyPattern(diagram, state.pattern, state.key, false);
     else pruneOutOfRangeNotes(state);
+    state.frame = clampFrame(state.frame, state.firstFret, state.lastFret);
     render(diagram);
   };
   el.firstFretInput.addEventListener('change', () => {
@@ -1495,6 +1692,39 @@ function wireEvents(diagram){
   el.shiftDownBtn.addEventListener('click', () => shiftMarkers(diagram, -1));
   el.shiftUpBtn.addEventListener('click', () => shiftMarkers(diagram, 1));
 
+  // frame, zoom and highlight
+  wireStrip(diagram);
+  const frameFromInputs = () => {
+    const fa = el.frameFromInput.value.trim(), fb = el.frameToInput.value.trim();
+    // a frame needs both ends: emptying a field of an existing frame clears it
+    // (typing just one end when there is no frame makes a one-fret frame)
+    if ((fa === '' && fb === '') || (state.frame && (fa === '' || fb === ''))) state.frame = null;
+    else {
+      const a = Number(fa === '' ? fb : fa), b = Number(fb === '' ? fa : fb);
+      if (!Number.isFinite(a) || !Number.isFinite(b)) return;
+      state.frame = clampFrame({ from: Math.round(a), to: Math.round(b) }, state.firstFret, state.lastFret);
+    }
+    render(diagram); ensureFrameVisible(diagram);
+  };
+  el.frameFromInput.addEventListener('change', frameFromInputs);
+  el.frameToInput.addEventListener('change', frameFromInputs);
+  const slide = (dir) => {
+    const fr = state.frame; if (!fr) return;
+    const w = fr.to - fr.from, a = Math.max(state.firstFret, Math.min(state.lastFret - w, fr.from + dir));
+    state.frame = { from: a, to: a + w };
+    render(diagram); ensureFrameVisible(diagram);
+  };
+  el.frameLeftBtn.addEventListener('click', () => slide(-1));
+  el.frameRightBtn.addEventListener('click', () => slide(1));
+  el.frameClearBtn.addEventListener('click', () => { state.frame = null; render(diagram); });
+  el.zoomSel.addEventListener('change', () => {
+    if (el.zoomSel.value === 'custom') return;
+    state.zoom = el.zoomSel.value === 'fit' ? 'fit' : Number(el.zoomSel.value);
+    render(diagram); ensureFrameVisible(diagram);
+  });
+  el.zoomFrameBtn.addEventListener('click', () => zoomToFrame(diagram));
+  el.emphClearBtn.addEventListener('click', () => { state.emphasis = []; render(diagram); });
+
   el.collapseBtn.addEventListener('click', () => { state.collapsed = !state.collapsed; render(diagram); });
   el.duplicateBtn.addEventListener('click', () => duplicateDiagram(diagram));
   el.legendChk.addEventListener('change', () => { state.showLegend = el.legendChk.checked; render(diagram); });
@@ -1507,6 +1737,7 @@ function wireEvents(diagram){
     if (diagrams.length <= 1) return;
     const idx = diagrams.findIndex(d => d.id === diagram.id);
     if (idx >= 0) diagrams.splice(idx, 1);
+    if (diagram.ro) diagram.ro.disconnect();
     el.card.remove();
     layoutCards();
     syncCollapseAll();
@@ -1688,8 +1919,13 @@ function shiftMarkers(diagram, delta){
 function handleCanvasClick(diagram, evt){
   const { state, el } = diagram;
   const rect = el.canvas.getBoundingClientRect();
-  const clickX = evt.clientX - rect.left;
-  const clickY = evt.clientY - rect.top;
+  const k = diagram.k || 1;                       // the neck may be drawn at other than 100%
+  const clickX = (evt.clientX - rect.left) / k;
+  const clickY = (evt.clientY - rect.top) / k;
+
+  // the legend doubles as a highlighter: click an interval to pick it out
+  const hit = diagram.geo && diagram.geo.legendHits.find(h => clickX >= h.x && clickX <= h.x + h.w && clickY >= h.y && clickY <= h.y + h.h);
+  if (hit){ toggleEmphasis(state, hit.i); render(diagram); return; }
 
   const vertical = pageOrientation === 'portrait';
   const numStrings = state.strings.length;
@@ -1814,7 +2050,7 @@ function layoutCaptions(state, t, width){
     const text = INTERVAL_LABELS[i] + ' ' + INTERVAL_NAMES[i];
     const w = 19 + textWidth(text, font);
     if (row.length && x + w > inner){ rows.push(row); row = []; x = 0; }
-    row.push({ i, text, x }); x += w + 18;
+    row.push({ i, text, x, w }); x += w + 18;
   });
   if (row.length) rows.push(row);
   const tuning = state.showTuning ? wrapText('Tuning: ' + tuningLabel(state), font, inner) : [];
@@ -1826,7 +2062,8 @@ function describeDiagram(state){
   return [state.title, TUNINGS[state.instrument].label + ' fretboard, ' + tuningLabel(state),
     'frets ' + state.firstFret + ' to ' + state.lastFret,
     inRange + (inRange === 1 ? ' marked note' : ' marked notes'),
-    state.rootPC !== null ? 'root ' + NOTE_NAMES[state.rootPC] : ''].filter(Boolean).join('. ');
+    state.rootPC !== null ? 'root ' + NOTE_NAMES[state.rootPC] : '',
+    state.frame ? 'framed on frets ' + state.frame.from + ' to ' + state.frame.to : ''].filter(Boolean).join('. ');
 }
 
 function diagramGeometry(state, vertical, t){
@@ -1844,16 +2081,28 @@ function diagramGeometry(state, vertical, t){
     ? V_TOP_PAD + primaryExtent + V_BOTTOM_PAD
     : TOP_PAD + secondaryExtent + BOTTOM_PAD + 24;
   const cap = layoutCaptions(state, t, width);
+  const primaryOrigin = vertical ? V_TOP_PAD : LEFT_PAD;
+  const secondaryOrigin = vertical ? V_LEFT_PAD : TOP_PAD;
+  // the band the fret numbers sit in: dragging along it marks a frame
+  const strip = vertical
+    ? { x: secondaryOrigin + secondaryExtent + STRING_H / 2, y: oy + primaryOrigin - 8, w: 36, h: primaryExtent + 16 }
+    : { x: primaryOrigin - 8, y: oy + secondaryOrigin + secondaryExtent + STRING_H / 2, w: primaryExtent + 16, h: 28 };
+  // each legend item's box, so a click on the legend can pick out its interval
+  const legendTop = oy + baseH + 2;
+  const legendHits = cap.rows.flatMap((row, r) => row.map(it => ({ i: it.i, x: 14 + it.x - 3, y: legendTop + r * 20, w: it.w + 4, h: 20 })));
   return {
-    vertical, numStrings, primaryExtent, secondaryExtent, width, oy, baseH, titleLines, cap,
+    vertical, numStrings, primaryExtent, secondaryExtent, width, oy, baseH, titleLines, cap, strip, legendHits,
     height: oy + baseH + (cap.height ? cap.height + 6 : 0),
-    primaryOrigin: vertical ? V_TOP_PAD : LEFT_PAD,
-    secondaryOrigin: vertical ? V_LEFT_PAD : TOP_PAD
+    primaryOrigin, secondaryOrigin
   };
 }
 
 function drawDiagram(ctx, state, { t, geo, transparent }){
   const { vertical, numStrings, primaryExtent, secondaryExtent, primaryOrigin, secondaryOrigin, width, height, oy } = geo;
+  // Picking out intervals lets the rest recede. Only intervals that are on the
+  // neck count, so choosing one that is absent can't fade everything.
+  const present = legendIntervals(state);
+  const emph = new Set((state.emphasis || []).filter(i => present.includes(i)));
 
   // Maps a (primary, secondary) offset pair — primary = along the neck's
   // length, secondary = across the strings — onto actual x/y. This is the only
@@ -1991,8 +2240,9 @@ function drawDiagram(ctx, state, { t, geo, transparent }){
 
     let color = t.markerDefault;
     let label = '';
+    let interval = null;
     if (state.rootPC !== null){
-      const interval = ((p - state.rootPC) % 12 + 12) % 12;
+      interval = ((p - state.rootPC) % 12 + 12) % 12;
       color = t.intervals[interval];
       if (state.displayMode === 'name') label = NOTE_NAMES[p];
       else if (state.displayMode === 'interval') label = INTERVAL_LABELS[interval];
@@ -2000,6 +2250,7 @@ function drawDiagram(ctx, state, { t, geo, transparent }){
       if (state.displayMode === 'name') label = NOTE_NAMES[p];
     }
 
+    ctx.globalAlpha = emph.size && interval !== null && !emph.has(interval) ? 0.22 : 1;
     ctx.beginPath();
     ctx.arc(x, y, MARKER_R, 0, Math.PI * 2);
     ctx.fillStyle = color;
@@ -2019,7 +2270,32 @@ function drawDiagram(ctx, state, { t, geo, transparent }){
       ctx.textAlign = 'left';
       ctx.textBaseline = 'alphabetic';
     }
+    ctx.globalAlpha = 1;
   });
+
+  // A frame: everything outside it recedes under a veil in the page's own
+  // colour, and the span itself is outlined. Only the neck's outer corners are
+  // rounded, so the veil sits inside the neck's shape.
+  const fr = state.frame;
+  if (fr && fr.to >= state.firstFret && fr.from <= state.lastFret){
+    const a = Math.max(pPad0, wireX(state, Math.max(fr.from, state.firstFret)) - FRET_W / 2);
+    const z = Math.min(pPad1, wireX(state, Math.min(fr.to, state.lastFret)) + FRET_W / 2);
+    const veil = withAlpha(t.bg, 0.62);
+    const patch = (p0, p1, startSide) => {
+      const c0 = toXY(p0, sPad0), c1 = toXY(p1, sPad1);
+      const round = vertical ? (startSide ? [1, 1, 0, 0] : [0, 0, 1, 1]) : (startSide ? [1, 0, 0, 1] : [0, 1, 1, 0]);
+      roundRectSome(ctx, Math.min(c0.x, c1.x), Math.min(c0.y, c1.y), Math.abs(c1.x - c0.x), Math.abs(c1.y - c0.y), 6, round);
+      ctx.fillStyle = veil;
+      ctx.fill();
+    };
+    if (a > pPad0 + 0.5) patch(pPad0, a, true);
+    if (z < pPad1 - 0.5) patch(z, pPad1, false);
+    const o0 = toXY(a, sPad0 - 3), o1 = toXY(z, sPad1 + 3);
+    roundRect(ctx, Math.min(o0.x, o1.x), Math.min(o0.y, o1.y), Math.abs(o1.x - o0.x), Math.abs(o1.y - o0.y), 4);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = t.titleInk;
+    ctx.stroke();
+  }
 
   // captions: which colour is which interval, and what it is tuned to
   if (geo.cap.height){
@@ -2029,6 +2305,8 @@ function drawDiagram(ctx, state, { t, geo, transparent }){
     ctx.textBaseline = 'alphabetic';
     geo.cap.rows.forEach(row => {
       row.forEach(it => {
+        const on = emph.has(it.i);
+        ctx.globalAlpha = emph.size && !on ? 0.4 : 1;
         ctx.beginPath();
         ctx.arc(14 + it.x + 6.5, y + 10, 6.5, 0, Math.PI * 2);
         ctx.fillStyle = t.intervals[it.i];
@@ -2038,6 +2316,13 @@ function drawDiagram(ctx, state, { t, geo, transparent }){
         ctx.stroke();
         ctx.fillStyle = t.stringLabel;
         ctx.fillText(it.text, 14 + it.x + 19, y + 14);
+        if (on){   // a chosen interval is boxed
+          roundRect(ctx, 14 + it.x - 3, y, it.w + 4, 20, 4);
+          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = t.titleInk;
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
       });
       y += 20;
     });
@@ -2070,7 +2355,7 @@ class SvgContext {
   constructor(width, height){
     this.width = width; this.height = height;
     this.body = []; this.grads = [];
-    this.fillStyle = '#000'; this.strokeStyle = '#000'; this.lineWidth = 1;
+    this.fillStyle = '#000'; this.strokeStyle = '#000'; this.lineWidth = 1; this.globalAlpha = 1;
     this.font = '10px sans-serif'; this.textAlign = 'left'; this.textBaseline = 'alphabetic';
     this.path = []; this.cx = 0; this.cy = 0;
     this.m = [1, 0, 0, 1, 0, 0]; this.stack = [];
@@ -2088,8 +2373,8 @@ class SvgContext {
   }
   _paint(style, attr){
     if (style && style._svgId) return ' ' + attr + '="url(#' + style._svgId + ')"';
-    const c = svgColor(style);
-    return ' ' + attr + '="' + svgEsc(c.hex) + '"' + (c.a < 1 ? ' ' + attr + '-opacity="' + svgNum(c.a) + '"' : '');
+    const c = svgColor(style), a = c.a * this.globalAlpha;
+    return ' ' + attr + '="' + svgEsc(c.hex) + '"' + (a < 1 ? ' ' + attr + '-opacity="' + svgNum(a) + '"' : '');
   }
   createLinearGradient(x0, y0, x1, y1){
     const g = { _svgId: 'fg' + (++svgUid), stops: [], addColorStop(o, c){ this.stops.push([o, c]); } };
@@ -2151,17 +2436,24 @@ function render(diagram){
   const t = getTheme().canvas;
   const geo = diagramGeometry(state, vertical, t);
   diagram.oy = geo.oy;   // hit-testing needs to know how far a wrapped title pushed the neck down
+  // 'fit' shrinks the neck to the wrapper (never past it) and a set zoom scales it; either way the
+  // drawing itself is unchanged, only its scale on the page
+  const k = zoomFactor(state, geo, el.wrap.clientWidth);
+  diagram.geo = geo; diagram.k = k;
 
   const canvas = el.canvas;
-  canvas.style.width = geo.width + 'px';
-  canvas.style.height = geo.height + 'px';
-  canvas.width = geo.width * DPR;
-  canvas.height = geo.height * DPR;
+  canvas.style.width = geo.width * k + 'px';
+  canvas.style.height = geo.height * k + 'px';
+  canvas.width = Math.ceil(geo.width * k * DPR);
+  canvas.height = Math.ceil(geo.height * k * DPR);
+  const st = el.strip.style;
+  st.left = geo.strip.x * k + 'px'; st.top = geo.strip.y * k + 'px';
+  st.width = geo.strip.w * k + 'px'; st.height = geo.strip.h * k + 'px';
   canvas.setAttribute('role', 'img');
   canvas.setAttribute('aria-label', describeDiagram(state));
 
   const ctx = canvas.getContext('2d');
-  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.setTransform(DPR * k, 0, 0, DPR * k, 0, 0);
   ctx.clearRect(0, 0, geo.width, geo.height);
   // the page is the ground: only the neck is opaque, so the diagram sits on the sheet
   drawDiagram(ctx, state, { t, geo, transparent: true });
@@ -2171,6 +2463,25 @@ function render(diagram){
   syncCollapseAll();
 }
 
+// a colour with an alpha, in the rgba() form a canvas reads (SvgContext turns it back into hex + opacity)
+function withAlpha(hex, a){
+  const n = parseInt(svgColor(hex).hex.slice(1), 16);
+  return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')';
+}
+// a rectangle with only some corners rounded: [top-left, top-right, bottom-right, bottom-left]
+function roundRectSome(ctx, x, y, w, h, r, [tl, tr, br, bl]){
+  ctx.beginPath();
+  ctx.moveTo(x + (tl ? r : 0), y);
+  ctx.lineTo(x + w - (tr ? r : 0), y);
+  if (tr) ctx.arcTo(x + w, y, x + w, y + r, r); else ctx.lineTo(x + w, y);
+  ctx.lineTo(x + w, y + h - (br ? r : 0));
+  if (br) ctx.arcTo(x + w, y + h, x + w - r, y + h, r); else ctx.lineTo(x + w, y + h);
+  ctx.lineTo(x + (bl ? r : 0), y + h);
+  if (bl) ctx.arcTo(x, y + h, x, y + h - r, r); else ctx.lineTo(x, y + h);
+  ctx.lineTo(x, y + (tl ? r : 0));
+  if (tl) ctx.arcTo(x, y, x + r, y, r); else ctx.lineTo(x, y);
+  ctx.closePath();
+}
 function roundRect(ctx, x, y, w, h, r){
   ctx.beginPath();
   ctx.moveTo(x + r, y);
@@ -2247,7 +2558,8 @@ function serializeDiagram(d){
     instrument: s.instrument, preset: s.preset,
     firstFret: s.firstFret, lastFret: s.lastFret, notes,
     rootPC: s.rootPC, displayMode: s.displayMode, shift: s.shiftSemitones,
-    key: s.key, pattern: s.pattern, combine: s.combine, collapsed: s.collapsed
+    key: s.key, pattern: s.pattern, combine: s.combine, collapsed: s.collapsed,
+    frame: s.frame, zoom: s.zoom, emphasis: s.emphasis
   };
 }
 const serializeSheet = () => ({ v: 1, orientation: pageOrientation, diagrams: diagrams.map(serializeDiagram) });
@@ -2271,6 +2583,14 @@ function sanitizeDiagram(d){
       if (si < stringCount && f >= firstFret && f <= lastFret && !seen.has(key)) { seen.add(key); notes.push(key); }
     }
   }
+  // a frame is a span inside the fret range; anything else is no frame
+  let frame = null;
+  if (d.frame && typeof d.frame === 'object' && Number.isInteger(d.frame.from) && Number.isInteger(d.frame.to)){
+    frame = clampFrame({ from: d.frame.from, to: d.frame.to }, firstFret, lastFret);
+  }
+  const zoom = typeof d.zoom === 'number' && Number.isFinite(d.zoom) ? Math.round(Math.min(4, Math.max(0.25, d.zoom)) * 100) / 100 : 'fit';
+  const emphasis = Array.isArray(d.emphasis)
+    ? [...new Set(d.emphasis.filter(n => Number.isInteger(n) && n >= 0 && n < 12))].sort((a, b) => a - b) : [];
   const title = typeof d.title === 'string' ? d.title.slice(0, 120) : '';
   return {
     title,
@@ -2287,7 +2607,8 @@ function sanitizeDiagram(d){
     // never a promise that the notes follow anything, so they start out as custom notes
     pattern: typeof d.pattern === 'string' && patternDef(d.pattern) ? d.pattern : '',
     combine: d.combine === 'add' ? 'add' : 'replace',
-    collapsed: d.collapsed === true
+    collapsed: d.collapsed === true,
+    frame, zoom, emphasis
   };
 }
 function sanitizeSheet(raw){
@@ -2303,7 +2624,8 @@ function initialFrom(c){
     strings: TUNINGS[c.instrument].presets[c.preset].strings.slice(),
     firstFret: c.firstFret, lastFret: c.lastFret, notes: new Set(c.notes),
     rootPC: c.rootPC, displayMode: c.displayMode, shiftSemitones: c.shift,
-    key: c.key, pattern: c.pattern, combine: c.combine, collapsed: c.collapsed
+    key: c.key, pattern: c.pattern, combine: c.combine, collapsed: c.collapsed,
+    frame: c.frame ? { ...c.frame } : null, zoom: c.zoom, emphasis: c.emphasis.slice()
   };
 }
 
@@ -2313,7 +2635,7 @@ function applySheet(clean){
   try {
     pendingRenders.forEach(h => cancelAnimationFrame(h));
     pendingRenders.clear();
-    diagrams.splice(0).forEach(d => d.el.card.remove());
+    diagrams.splice(0).forEach(d => { if (d.ro) d.ro.disconnect(); d.el.card.remove(); });
     setPageOrientation(clean.orientation);
     clean.diagrams.forEach(c => createDiagram(initialFrom(c)));
   } finally { restoring = false; }
@@ -2565,13 +2887,25 @@ function sanitizePrefs(raw){
     // the ground of PNG, SVG and copied images; clear leaves only the neck opaque.
     // (an earlier version called this key `png`)
     bg: (r.bg !== undefined ? r.bg : r.png) === 'solid' ? 'solid' : 'clear',
+    crop: r.crop === 'frame' ? 'frame' : 'none',   // a framed diagram: whole neck with the rest receded, or just the frame
     cols: [1, 2, 3, 4].includes(r.cols) ? r.cols : 'auto',
     margin: [0.25, 0.5, 0.75].includes(r.margin) ? r.margin : 0.5
   };
 }
 let prefs = sanitizePrefs(readJSON(PRINT_KEY));
 const paletteFor = (mode) => mode === 'theme' ? getTheme().canvas : PRINT_LIGHT;
-const drawingOf = (state, palette) => ({ state, t: palette, geo: diagramGeometry(state, pageOrientation === 'portrait', palette) });
+// Cropping to a frame is just the same diagram over the frame's frets: it keeps the
+// string names, fret numbers and inlays, and looks like a diagram made for that span.
+const outputState = (state) => {
+  if (prefs.crop !== 'frame' || !state.frame) return state;
+  const { from, to } = state.frame;
+  const notes = new Set([...state.notes].filter(k => { const f = +k.split('_')[1]; return f >= from && f <= to; }));
+  return { ...state, firstFret: from, lastFret: to, notes, frame: null };
+};
+const drawingOf = (state, palette) => {
+  const st = outputState(state);
+  return { state: st, t: palette, geo: diagramGeometry(st, pageOrientation === 'portrait', palette) };
+};
 const svgOfDrawing = (d, transparent) => { const c = new SvgContext(d.geo.width, d.geo.height); drawDiagram(c, d.state, { ...d, transparent }); return c.toSVG(describeDiagram(d.state)); };
 const fileStem = (state) => (state.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'fretboard';
 
@@ -2657,6 +2991,7 @@ function openPrint(){
   document.getElementById('pPage').value = prefs.page;
   document.getElementById('pColors').value = prefs.colors;
   document.getElementById('pBg').value = prefs.bg;
+  document.getElementById('pCrop').value = prefs.crop;
   document.getElementById('pCols').value = String(prefs.cols);
   document.getElementById('pMargin').value = String(prefs.margin);
   sayPrint('');
@@ -2665,7 +3000,7 @@ function openPrint(){
 }
 document.getElementById('printOpenBtn').addEventListener('click', openPrint);
 printDlg.addEventListener('click', (e) => { if (e.target === printDlg) printDlg.close(); });
-[['pPaper', 'paper', String], ['pPage', 'page', String], ['pColors', 'colors', String], ['pBg', 'bg', String],
+[['pPaper', 'paper', String], ['pPage', 'page', String], ['pColors', 'colors', String], ['pBg', 'bg', String], ['pCrop', 'crop', String],
  ['pCols', 'cols', v => v === 'auto' ? 'auto' : +v], ['pMargin', 'margin', Number]].forEach(([id, key, cast]) => {
   document.getElementById(id).addEventListener('change', (e) => {
     prefs = sanitizePrefs({ ...prefs, [key]: cast(e.target.value) });
