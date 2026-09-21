@@ -1,2 +1,5 @@
 .claude/
 CHANGES.md
+
+# browser tests: installed packages
+tests/node_modules/

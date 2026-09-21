@@ -1,0 +1,13 @@
+{
+  "name": "music-tools-tests",
+  "private": true,
+  "type": "module",
+  "description": "Browser tests for music-tools (index.html), driven through puppeteer-core",
+  "scripts": {
+    "test": "node run-all.mjs"
+  },
+  "engines": { "node": ">=20" },
+  "devDependencies": {
+    "puppeteer-core": "^25.11.0"
+  }
+}
