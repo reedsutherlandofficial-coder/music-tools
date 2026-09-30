@@ -19,6 +19,7 @@ Needs Node 20+ and Chrome. The runner looks in the usual places; if yours is els
 | Suite | Covers |
 |---|---|
 | `circle.test.mjs` | Circle of fifths: chord picking, ring readout, note colours, layout at three widths |
+| `circle-fretboard.test.mjs` | Circle of fifths' fretboard view: Notation/Fretboard switch, Guitar/Bass, Focus + Sheet, Sevenths |
 | `themes.test.mjs` | Theme switching and fallback for old ids, fonts (no OS fallback), palette on the fretboard |
 | `fretboard.test.mjs` | Autosave, undo/redo, duplicate, saved versions, share links, file import/export, hostile input |
 | `fretboard-controls.test.mjs` | Live patterns, Add mode, tuning keeping pitches, the click tools, Invert, Move pattern, collapse in place |

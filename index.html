@@ -774,6 +774,16 @@ body::after{
 #circleApp .snum{font-family:var(--font-mono);font-size:14px;color:var(--ink)}
 #circleApp .ssym{font-family:var(--font-display);font-weight:500;font-size:18px;color:var(--ink);line-height:1.25}
 #circleApp .smode{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);line-height:1.35;margin-top:2px}
+
+/* ---- fretboard view ------------------------------------------------------
+   Neck diagrams read wide and short, unlike the staff figures, so this view
+   drops the two-column layouts down to one. The SVG itself always carries
+   its own pixel viewBox (it's rendered by the fretboard tool's engine), so
+   sizing it here is just width:100%/height:auto, same as the staff's gstaff. */
+#circleApp .fig svg, #circleApp .sstaff svg{display:block;width:100%;height:auto}
+#circleApp .figs.fb{grid-template-columns:1fr}
+#sheetRows.fb{grid-template-columns:1fr}
+#circleApp .hide{display:none}
 @media (max-width:1000px){
   #circleApp .ex-wheels{grid-template-columns:1fr}
   #circleApp .chord-zone{justify-self:center}
@@ -932,11 +942,19 @@ body::after{
 
 <section class="notation-zone" id="notationCard" aria-label="Notation">
   <div class="nhead">
+    <div class="seg" role="group" aria-label="Notation or fretboard">
+      <button class="seg-b on" id="viewNotation">Notation</button>
+      <button class="seg-b" id="viewFretboard">Fretboard</button>
+    </div>
     <div class="seg">
       <button class="seg-b on" id="tabF">Focus</button>
       <button class="seg-b" id="tabS">Sheet</button>
     </div>
-    <label class="sw"><input type="checkbox" id="court" checked> Courtesy accidentals</label>
+    <label class="sw" id="courtRow"><input type="checkbox" id="court" checked> Courtesy accidentals</label>
+    <div class="segsm hide" id="instRow" role="group" aria-label="Instrument">
+      <button class="on" id="instGuitar">Guitar</button>
+      <button id="instBass">Bass</button>
+    </div>
   </div>
 
   <div class="panel" id="panelF">
@@ -946,7 +964,7 @@ body::after{
         <div class="dnum" id="dNum"></div>
       </div>
       <div class="dsub"><span id="dMode"></span><span class="dtones" id="tones"></span></div>
-      <div class="figs">
+      <div class="figs" id="figsRow">
         <div class="fig">
           <div class="figbar"><span class="role">Scale in steps</span><span class="rng" id="rngScale"></span></div>
           <div id="figScale"></div>
@@ -956,7 +974,7 @@ body::after{
           <div id="figArp"></div>
         </div>
       </div>
-      <div class="reg">
+      <div class="reg" id="regRow">
         <button class="regb" id="octDn" aria-label="Move the figures down an octave">Octave −</button>
         <span class="regr" id="octRead"></span>
         <button class="regb" id="octUp" aria-label="Move the figures up an octave">Octave +</button>
@@ -1048,6 +1066,35 @@ function applyTheme(themeKey){
   diagrams.forEach(d => render(d));
 }
 window.setFretboardTheme = applyTheme;
+
+// The circle of fifths borrows this to draw its own read-only fretboard
+// figures (every occurrence of a diatonic scale or arpeggio's pitch classes,
+// themed the same as this tool's own diagrams) without duplicating the neck
+// renderer. pcs is any iterable of pitch classes 0-11; rootPC may be null.
+window.renderFretboardFigure = function({ instrument, rootPC, pcs, title, frets }){
+  const inst = instrument === 'bass' ? 'bass' : 'guitar';
+  const preset = inst === 'bass' ? 'standard4' : 'standard6';
+  const state = Object.assign(defaultState(), {
+    instrument: inst, preset,
+    strings: TUNINGS[inst].presets[preset].strings.slice(),
+    firstFret: 0, lastFret: frets || 12,
+    rootPC: rootPC === undefined ? null : rootPC,
+    title: title || '',
+    showTuning: false
+  });
+  const allowed = new Set(pcs || []);
+  const openPCs = stringPitchClasses(state);
+  for (let s = 0; s < openPCs.length; s++){
+    for (let f = state.firstFret; f <= state.lastFret; f++){
+      if (allowed.has(((openPCs[s] + f) % 12 + 12) % 12)) state.notes.add(s + '_' + f);
+    }
+  }
+  const t = getTheme().canvas;
+  const geo = diagramGeometry(state, false, t);
+  const ctx = new SvgContext(geo.width, geo.height);
+  drawDiagram(ctx, state, { t, geo, transparent: false });
+  return { svg: ctx.toSVG(describeDiagram(state), title), width: geo.width, height: geo.height };
+};
 
 const TUNINGS = {
   guitar: {
@@ -3508,7 +3555,26 @@ function figureStaff(n,f,i,kind,oct,M){
   return {svg:grandStaff(n,P,f.alt===null?null:n+f.alt,M), range:rangeText(P)};
 }
 
-
+/* ---- fretboard figures ---------------------------------------------------
+   The fretboard tool's own neck renderer draws these (window.renderFretboardFigure),
+   so this just supplies the two things it needs in its terms: a chromatic
+   pitch class per note (F is a line-of-fifths coordinate throughout this
+   file; a fifth is +7 semitones, so pc = 7F mod 12, independent of spelling)
+   and the note set itself - the full diatonic scale, or one degree's stacked
+   thirds (triad or, with the Sevenths switch, seventh chord). */
+function fifthsToPc(F){ return ((7*F)%12+12)%12 }
+function scalePCsOf(n,f){ return f.deg.map(d=>fifthsToPc(n+d)) }
+function chordPCsOf(n,f,i,sev){
+  const t=[i,(i+2)%7,(i+4)%7];
+  if(sev) t.push((i+6)%7);
+  return t.map(k=>fifthsToPc(n+f.deg[k]));
+}
+function fretboardFigure(n,f,i,kind){
+  const rootPC=fifthsToPc(n+f.deg[i]);
+  const pcs=kind==='scale' ? scalePCsOf(n,f) : chordPCsOf(n,f,i,sevenths);
+  const title=kind==='scale' ? `${fname(n+f.deg[i])} ${f.modes[i].name}` : `${chordName(n,f,i,sevenths)} arpeggio`;
+  return window.renderFretboardFigure ? window.renderFretboardFigure({instrument:fbInstrument, rootPC, pcs, title}) : {svg:''};
+}
 
 /* ---- diatonic chords -----------------------------------------------------
    The seven diatonic triads are seven consecutive positions on the same line
@@ -3781,6 +3847,11 @@ function place(){
    are what a bass player or a flute player reaches for from there. */
 let octShift=0, sheetKind='scale';
 const SHIFT_MIN=-2, SHIFT_MAX=2;
+/* Fretboard view: the same seven chords, drawn as a neck instead of a staff.
+   Every occurrence of the chord's (or scale's) pitch classes is marked across
+   the whole visible neck, so there's no register to track - the octave
+   controls above are a notation-only concept and hide in this mode. */
+let fbMode=false, fbInstrument='guitar';
 
 function renderChords(){
   const p=POS[((step%12)+12)%12], f=FAMILIES[fam];
@@ -3800,19 +3871,25 @@ function ringMarks(n,f,i){
 
 function renderDetail(){
   const p=POS[((step%12)+12)%12], f=FAMILIES[fam], i=selChord;
-  const oct=baseOctave(p.n,f,i)+octShift;
   const M=ringMarks(p.n,f,i);
-  const sc=figureStaff(p.n,f,i,'scale',oct,M), ar=figureStaff(p.n,f,i,'arp',oct,M);
   $('dName').className='dname'+(M.base ? ' '+M.base : '');
   $('dName').textContent=chordName(p.n,f,i,sevenths);
   $('dNum').textContent=numeral(f,i,mo,sevenths);
   $('dMode').textContent=`${fname(p.n+f.deg[i])} ${f.modes[i].name}`;
   $('tones').textContent=chordTones(p.n,f,i,sevenths);
-  $('figScale').replaceChildren(sc.svg); $('rngScale').textContent=sc.range;
-  $('figArp').replaceChildren(ar.svg);   $('rngArp').textContent=ar.range;
-  $('octRead').textContent=`Root ${fname(p.n+f.deg[i])}${Math.floor(placeFigure(p.n,f,i,'arp',oct).sounding[0]/7)}`;
-  $('octDn').disabled=octShift<=SHIFT_MIN;
-  $('octUp').disabled=octShift>=SHIFT_MAX;
+  if(fbMode){
+    const sc=fretboardFigure(p.n,f,i,'scale'), ar=fretboardFigure(p.n,f,i,'arp');
+    $('figScale').innerHTML=sc.svg; $('rngScale').textContent='';
+    $('figArp').innerHTML=ar.svg;   $('rngArp').textContent='';
+  } else {
+    const oct=baseOctave(p.n,f,i)+octShift;
+    const sc=figureStaff(p.n,f,i,'scale',oct,M), ar=figureStaff(p.n,f,i,'arp',oct,M);
+    $('figScale').replaceChildren(sc.svg); $('rngScale').textContent=sc.range;
+    $('figArp').replaceChildren(ar.svg);   $('rngArp').textContent=ar.range;
+    $('octRead').textContent=`Root ${fname(p.n+f.deg[i])}${Math.floor(placeFigure(p.n,f,i,'arp',oct).sounding[0]/7)}`;
+    $('octDn').disabled=octShift<=SHIFT_MIN;
+    $('octUp').disabled=octShift>=SHIFT_MAX;
+  }
 }
 
 /* Sheet view: the same seven chords the ring holds, unrolled top to bottom in
@@ -3832,12 +3909,14 @@ function renderSheet(){
     const c=div('smode'); c.textContent=f.modes[di].name;
     g.append(a,b,c);
     const s=div('sstaff');
-    s.appendChild(figureStaff(p.n,f,di,sheetKind,sheetOct,ringMarks(p.n,f,di)).svg);
+    if(fbMode) s.innerHTML=fretboardFigure(p.n,f,di,sheetKind).svg;
+    else s.appendChild(figureStaff(p.n,f,di,sheetKind,sheetOct,ringMarks(p.n,f,di)).svg);
     r.append(g,s);
     r.addEventListener('click',()=>{selChord=di;showView('focus')});
     rows.appendChild(r);
   });
   $('sheetRows').replaceChildren(rows);
+  $('sheetRows').classList.toggle('fb',fbMode);
 }
 
 function showView(which){
@@ -3867,6 +3946,33 @@ $('figArpB').addEventListener('click',function(){
 });
 $('octDn').addEventListener('click',function(){ if(octShift>SHIFT_MIN){ octShift--; reflow() } });
 $('octUp').addEventListener('click',function(){ if(octShift<SHIFT_MAX){ octShift++; reflow() } });
+
+/* Notation/Fretboard is a display choice, not a different tool: Focus and
+   Sheet, the key, the mode, Sevenths - everything else carries straight over.
+   Courtesy accidentals and the octave register only mean something for
+   notation, so they swap out for the instrument choice in fretboard mode. */
+function setFbMode(fb){
+  fbMode=fb;
+  $('viewNotation').classList.toggle('on',!fb);
+  $('viewFretboard').classList.toggle('on',fb);
+  $('courtRow').classList.toggle('hide',fb);
+  $('instRow').classList.toggle('hide',!fb);
+  $('regRow').classList.toggle('hide',fb);
+  $('figsRow').classList.toggle('fb',fb);
+  reflow();
+}
+$('viewNotation').addEventListener('click',()=>setFbMode(false));
+$('viewFretboard').addEventListener('click',()=>setFbMode(true));
+$('instGuitar').addEventListener('click',function(){
+  fbInstrument='guitar'; this.classList.add('on'); $('instBass').classList.remove('on'); reflow();
+});
+$('instBass').addEventListener('click',function(){
+  fbInstrument='bass'; this.classList.add('on'); $('instGuitar').classList.remove('on'); reflow();
+});
+// the fretboard figures are themed like the fretboard tool's own diagrams,
+// so a theme change has to redraw them too; the shell calls this alongside
+// window.setFretboardTheme.
+window.refreshCircleFretboard=()=>{ if(fbMode) reflow(); };
 
 /* One snapshot of the current view — family, both rings, wheel position — for
    the shell to park in its hash slot. It is overwritten in place on every
@@ -4029,6 +4135,12 @@ setAssign('outer'); syncFam(); label(); place();
   // Terminal's Chivo Mono (and the accidentals subset) are the only eager
   // fonts. Every other theme names its own faces (`fonts`) and they are fetched
   // the first time it is picked.
+  // Both apps' own canvases/SVGs read the shared theme tokens but don't
+  // repaint themselves when they change - each exposes one hook for this.
+  function repaintTools(){
+    if(window.setFretboardTheme) window.setFretboardTheme(theme);
+    if(window.refreshCircleFretboard) window.refreshCircleFretboard();
+  }
   const fontsRequested = new Set();
   function ensureFonts(key){
     const spec = THEMES[key].fonts;
@@ -4040,9 +4152,7 @@ setAssign('outer'); syncFam(); label(); place();
     // The fretboard's canvas text won't repaint itself once a face arrives, so
     // wait for the faces this theme uses and redraw once.
     link.addEventListener('load', ()=>{
-      Promise.all(spec.load.map((f)=>document.fonts.load(f))).then(()=>{
-        if(window.setFretboardTheme) window.setFretboardTheme(theme);
-      }).catch(()=>{});
+      Promise.all(spec.load.map((f)=>document.fonts.load(f))).then(repaintTools).catch(()=>{});
     });
     document.head.appendChild(link);
   }
@@ -4054,7 +4164,7 @@ setAssign('outer'); syncFam(); label(); place();
     Promise.all([
       document.fonts.load('400 1em "Chivo Mono"'), document.fonts.load('700 1em "Chivo Mono"'),
       document.fonts.load('1em "Noto Music"', '\u266D\u266E\u266F')
-    ]).then(()=>{ if(window.setFretboardTheme) window.setFretboardTheme(theme); }).catch(()=>{});
+    ]).then(repaintTools).catch(()=>{});
   }
   if(baseLink.sheet) baseFontsReady(); else baseLink.addEventListener('load', baseFontsReady);
 
@@ -4065,7 +4175,7 @@ setAssign('outer'); syncFam(); label(); place();
     Object.keys(vars).forEach((name)=>{ root.setProperty(name, vars[name]); });
     if(meta) meta.setAttribute('content', vars['--paper']);
     if(pick.value !== theme) pick.value = theme;
-    if(window.setFretboardTheme) window.setFretboardTheme(theme);
+    repaintTools();
     if(writeHash) writeHashSafely();
   }
 
