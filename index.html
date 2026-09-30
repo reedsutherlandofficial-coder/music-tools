@@ -3640,6 +3640,13 @@ function chordTones(n,f,i,sev){
 function spanOf(f){
   return f.deg.map((d,i)=>i).sort((a,b)=>f.deg[b]-f.deg[a]);
 }
+/* Same seven degrees, same descending-fifths cycle, just rotated to start on
+   whichever one the caller names - so the sheet can read out from the chord
+   you're actually focused on rather than always from the top of the ring. */
+function spanFrom(f,start){
+  const span=spanOf(f), k=span.indexOf(start);
+  return span.slice(k).concat(span.slice(0,k));
+}
 
 const RC=150, RR=106, NW=68, NH=36, STEPA=360/7;
 /* mi anchors the ring (outer mode); mi2 is the inner ring's mode, marked too */
@@ -3893,7 +3900,9 @@ function renderDetail(){
 }
 
 /* Sheet view: the same seven chords the ring holds, unrolled top to bottom in
-   ring order so the descending-fifths reading survives the change of shape. */
+   ring order so the descending-fifths reading survives the change of shape -
+   but starting from the outer ring's own chord, so the list reads out from
+   whatever the player is actually focused on. */
 function renderSheet(){
   const p=POS[((step%12)+12)%12], f=FAMILIES[fam];
   /* one register for the whole sheet, taken from the tonic, so the rows can be
@@ -3901,7 +3910,7 @@ function renderSheet(){
      and per-row octave fitting would hide exactly that. */
   const sheetOct=baseOctave(p.n,f,mo)+octShift;
   const rows=document.createDocumentFragment();
-  spanOf(f).forEach(di=>{
+  spanFrom(f,mo).forEach(di=>{
     const r=div('srow'+(di===mo?' tonic':'')+(di===mi?' tonic2':''));
     const g=div('sgut');
     const a=div('snum'); a.textContent=numeral(f,di,mo,sevenths);

@@ -38,8 +38,14 @@ await pg.click('#tabS');
 await pg.$$eval('.srow',rs=>rs.find(r=>r.querySelector('.ssym').textContent==='Dm').click());
 ok('neither-ring figure: ink base, C orange, A teal', (await cnt('#figScale .head.ro'))===1 && (await cnt('#figScale .head.ri'))===1 && (await cnt('#figScale .head:not(.ro):not(.ri)'))===6, [await cnt('#figScale .head.ro'),await cnt('#figScale .head.ri'),await cnt('#figScale .head:not(.ro):not(.ri)')].join('/'));
 ok('name neutral class', await pg.$eval('#dName',e=>!e.classList.contains('ro')&&!e.classList.contains('ri')));
-await pg.click('#tabS'); 
+await pg.click('#tabS');
 ok('sheet: outer+inner rows marked', (await cnt('.srow.tonic'))===1 && (await cnt('.srow.tonic2'))===1);
+// sheet order starts on the outer ring's own chord, then continues the same
+// descending-fifths cycle around from there
+await pg.goto(url+'#circle/terminal/0.0.5.0'); await pg.waitForSelector('#famBtns .chip');
+await pg.click('#asgO'); await tap('F'); await pg.click('#tabS');
+ok('sheet starts on outer ring chord, then cycles in fourths', (await pg.$$eval('.srow .ssym',es=>es.map(e=>e.textContent).join(' '))) === 'F B° Em Am Dm G C', await pg.$$eval('.srow .ssym',es=>es.map(e=>e.textContent).join(' ')));
+await tap('C'); // undo the tap above: later checks expect the major family's remembered outer ring still at C
 // family switch, memory, long names fit
 await pg.$$eval('#famBtns .chip',bs=>bs[2].click());
 ok('family=Harmonic minor readout', (await T('#n1')).includes('Harmonic minor'), await T('#n1'));
